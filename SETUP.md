@@ -137,33 +137,42 @@ python -m http.server 3000
 
 ---
 
-## Step 6: Complete Startup Commands (Daily Use)
+## Step 6: Easy Startup with Automated Script
 
-Create a file `start-all.ps1` in the root directory for easy startup:
+**Option 1: One-Click Startup (RECOMMENDED)**
+
+Just double-click `start-dev.ps1` in the project root, or run:
 
 ```powershell
-# Create startup script
-@"
-Write-Host "Starting Healio Development Environment..." -ForegroundColor Green
+.\start-dev.ps1
+```
 
-# Start MongoDB if not running
-`$mongoStatus = docker ps -q -f name=healio-mongodb
-if (-not `$mongoStatus) {
-    Write-Host "Starting MongoDB..." -ForegroundColor Yellow
-    docker start healio-mongodb
-    Start-Sleep -Seconds 3
-}
+This automatically:
+- ✅ Checks Docker status
+- ✅ Starts MongoDB if needed
+- ✅ Opens Backend in a new terminal
+- ✅ Opens Frontend in a new terminal
 
-Write-Host "MongoDB is running" -ForegroundColor Green
-Write-Host "Backend: cd backend && .\venv\Scripts\Activate.ps1 && uvicorn app.main:app --reload --host 127.0.0.1 --port 5000" -ForegroundColor Cyan
-Write-Host "Frontend: cd frontend && python -m http.server 3000" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Manual steps:"
-Write-Host "1. Open terminal 1: cd backend && .\venv\Scripts\Activate.ps1 && uvicorn app.main:app --reload --host 127.0.0.1 --port 5000"
-Write-Host "2. Open terminal 2: cd frontend && python -m http.server 3000"
-"@ | Out-File -FilePath start-all.ps1 -Encoding UTF8
+**To stop all services:**
+```powershell
+.\stop-dev.ps1
+```
 
-Write-Host "Created start-all.ps1" -ForegroundColor Green
+**Option 2: Manual Startup**
+
+If you prefer manual control:
+
+```powershell
+# Terminal 1: Backend
+cd backend
+.\venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --host 127.0.0.1 --port 5000
+
+# Terminal 2: Frontend  
+cd frontend
+python -m http.server 3000
+
+# MongoDB runs automatically via Docker
 ```
 
 ---

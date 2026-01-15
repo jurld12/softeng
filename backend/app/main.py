@@ -12,6 +12,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from config import settings
+from app.database import Database
+from app.api.routes import auth, patients, doctors, admin
 
 
 @asynccontextmanager
@@ -24,14 +26,14 @@ async def lifespan(app: FastAPI):
     print(f"🗄️  MongoDB: {settings.mongodb_database}")
     print(f"🔐 JWT Expiration: {settings.jwt_expiration_hours} hours")
     
-    # TODO: Initialize database connection
-    # TODO: Create indexes
+    # Initialize database connection
+    await Database.connect_db()
     
     yield
     
     # Shutdown
     print("👋 Healio Backend shutting down...")
-    # TODO: Close database connections
+    await Database.close_db()
 
 
 # Create FastAPI app
@@ -76,12 +78,11 @@ async def root():
     }
 
 
-# TODO: Include routers
-# from app.api.routes import auth, patients, doctors, admin
-# app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-# app.include_router(patients.router, prefix="/patients", tags=["Patients"])
-# app.include_router(doctors.router, prefix="/doctor", tags=["Doctors"])
-# app.include_router(admin.router, prefix="/admin", tags=["Admin"])
+# Include API routers
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(patients.router, prefix="/patients", tags=["Patients"])
+app.include_router(doctors.router, prefix="/doctor", tags=["Doctors"])
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 
 if __name__ == "__main__":
