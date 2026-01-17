@@ -11,6 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from app.models.schemas import BiometricEntry, BiometricResponse, DashboardSummary, AlertResponse, AchievementResponse
 from app.database import get_database
 from app.middleware.auth import get_current_patient
+from app.services.alerts import check_and_create_alert
 
 
 router = APIRouter()
@@ -95,8 +96,14 @@ async def add_biometric_entry(
     result = await db.biometrics.insert_one(biometric_doc)
     biometric_doc["_id"] = str(result.inserted_id)
     
-    # TODO: Check for alerts based on thresholds
-    # await check_and_create_alerts(db, user_id, entry.metric, entry.value)
+    # Check for alerts based on thresholds
+    await check_and_create_alert(
+        db, 
+        user_id, 
+        entry.metric, 
+        entry.value, 
+        biometric_doc["timestamp"]
+    )
     
     return biometric_doc
 
@@ -142,20 +149,67 @@ async def get_biometric_entries(
 @router.get("/me/alerts", response_model=List[AlertResponse])
 async def get_patient_alerts(
     acknowledged: Optional[bool] = Query(None),
+    severity: Optional[str] = Query(None, description="Filter by severity: low, medium, high"),
     current_user: dict = Depends(get_current_patient),
     db = Depends(get_database)
 ):
     """
-    Get patient alerts
+    Get patient alerts with optional filters
     """
     user_id = str(current_user["_id"])
     
     query = {"user_id": user_id}
     if acknowledged is not None:
         query["acknowledged"] = acknowledged
+    if severity:
+        query["severity"] = severity
     
     cursor = db.alerts.find(query).sort("created_at", -1).limit(50)
     
+    alerts = []
+    async for alert in cursor:
+        alert["_id"] = str(alert["_id"])
+        alerts.append(alert)
+    
+    return alerts
+
+
+@router.patch("/me/alerts/{alert_id}/acknowledge")
+async def acknowledge_alert_endpoint(
+    alert_id: str,
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """
+    Acknowledge an alert
+    """
+    from app.services.alerts import acknowledge_alert
+    
+    user_id = str(current_user["_id"])
+    
+    # Verify alert belongs to current user
+    alert = await db.alerts.find_one({"_id": alert_id})
+    if not alert:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Alert not found"
+        )
+    
+    if alert["user_id"] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot acknowledge another user's alert"
+        )
+    
+    success = await acknowledge_alert(db, alert_id, user_id)
+    
+    if success:
+        return {"message": "Alert acknowledged successfully"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to acknowledge alert"
+        )
     alerts = []
     async for alert in cursor:
         alert["_id"] = str(alert["_id"])

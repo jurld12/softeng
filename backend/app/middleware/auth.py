@@ -4,6 +4,7 @@ Authentication and authorization middleware
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
+from bson import ObjectId
 import sys
 from pathlib import Path
 
@@ -22,6 +23,8 @@ async def get_current_user(
     """
     Dependency to get current authenticated user from JWT token
     """
+    print("🔐 Auth middleware triggered!")
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -29,7 +32,10 @@ async def get_current_user(
     )
     
     token = credentials.credentials
+    print(f"🔐 Token received: {token[:50]}...")
+    
     payload = decode_access_token(token)
+    print(f"🔐 Payload decoded: {payload}")
     
     if payload is None:
         raise credentials_exception
@@ -38,10 +44,16 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
     
-    # Get user from database
-    user = await db.users.find_one({"_id": user_id})
+    # Get user from database - convert string ID to ObjectId
+    try:
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+    except Exception as e:
+        # Invalid ObjectId format
+        print(f"❌ Error looking up user: {e}")
+        raise credentials_exception
     
     if user is None:
+        print(f"❌ User not found with ID: {user_id}")
         raise credentials_exception
     
     if not user.get("active", True):
