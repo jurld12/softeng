@@ -77,3 +77,6 @@ function getAuthHeaders() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CONFIG, getApiUrl, getAuthHeaders };
 }
+
+// Export shorthand for direct access
+const API_BASE_URL = CONFIG.API_BASE_URL;
