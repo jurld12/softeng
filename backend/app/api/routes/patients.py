@@ -2,16 +2,20 @@
 Patient-specific routes: dashboard, biometrics, alerts, achievements
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from datetime import datetime, timedelta
 from typing import Optional, List
 import sys
 from pathlib import Path
+import io
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from app.models.schemas import BiometricEntry, BiometricResponse, DashboardSummary, AlertResponse, AchievementResponse
 from app.database import get_database
 from app.middleware.auth import get_current_patient
 from app.services.alerts import check_and_create_alert
+from app.services.export import generate_csv_report, generate_pdf_report
+from app.services import gamification
 
 
 router = APIRouter()
@@ -104,6 +108,16 @@ async def add_biometric_entry(
         entry.value, 
         biometric_doc["timestamp"]
     )
+    
+    # Award points for data entry
+    await gamification.award_points(db, user_id, "data_entry")
+    
+    # Check and award badges
+    newly_awarded_badges = await gamification.check_and_award_badges(db, user_id)
+    
+    # Add badge info to response (optional)
+    if newly_awarded_badges:
+        biometric_doc["badges_earned"] = newly_awarded_badges
     
     return biometric_doc
 
@@ -236,6 +250,134 @@ async def get_patient_achievements(
         achievements.append(achievement)
     
     return achievements
+
+
+@router.get("/me/gamification")
+async def get_gamification_summary(
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """
+    Get complete gamification summary including points, badges, streaks
+    """
+    user_id = str(current_user["_id"])
+    summary = await gamification.get_gamification_summary(db, user_id)
+    return summary
+
+
+@router.get("/me/points")
+async def get_user_points(
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """
+    Get user's points, rank, and level
+    """
+    user_id = str(current_user["_id"])
+    points_info = await gamification.get_user_points(db, user_id)
+    return points_info
+
+
+@router.get("/me/badges")
+async def get_user_badges(
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """
+    Get all badges earned by user
+    """
+    user_id = str(current_user["_id"])
+    badges = await gamification.get_user_badges(db, user_id)
+    return {"badges": badges}
+
+
+@router.get("/me/streak")
+async def get_user_streak(
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """
+    Get user's current streak (consecutive days with entries)
+    """
+    user_id = str(current_user["_id"])
+    streak = await gamification.get_user_streak(db, user_id)
+    return {"current_streak": streak}
+
+
+@router.get("/me/export")
+async def export_health_report(
+    format: str = Query(..., description="Export format: csv or pdf"),
+    from_date: Optional[datetime] = Query(None, description="Start date"),
+    to_date: Optional[datetime] = Query(None, description="End date"),
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """
+    Export health report in CSV or PDF format
+    """
+    user_id = str(current_user["_id"])
+    user_name = current_user.get("name", "Patient")
+    
+    # Validate format
+    if format.lower() not in ['csv', 'pdf']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid format. Must be 'csv' or 'pdf'"
+        )
+    
+    # Build query for biometric data
+    query = {"user_id": user_id}
+    if from_date or to_date:
+        query["timestamp"] = {}
+        if from_date:
+            query["timestamp"]["$gte"] = from_date
+        if to_date:
+            query["timestamp"]["$lte"] = to_date
+    
+    # Fetch biometric data
+    cursor = db.biometrics.find(query).sort("timestamp", -1).limit(1000)
+    biometrics = []
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        biometrics.append(doc)
+    
+    # Generate report based on format
+    if format.lower() == 'csv':
+        csv_content = generate_csv_report(biometrics, user_name)
+        
+        # Create filename with date range
+        filename = f"healio_report_{user_name.replace(' ', '_')}"
+        if from_date:
+            filename += f"_from_{from_date.strftime('%Y%m%d')}"
+        if to_date:
+            filename += f"_to_{to_date.strftime('%Y%m%d')}"
+        filename += ".csv"
+        
+        return StreamingResponse(
+            io.StringIO(csv_content),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    
+    else:  # PDF
+        from_date_str = from_date.strftime('%Y-%m-%d') if from_date else None
+        to_date_str = to_date.strftime('%Y-%m-%d') if to_date else None
+        
+        pdf_content = generate_pdf_report(biometrics, user_name, from_date_str, to_date_str)
+        
+        # Create filename with date range
+        filename = f"healio_report_{user_name.replace(' ', '_')}"
+        if from_date:
+            filename += f"_from_{from_date.strftime('%Y%m%d')}"
+        if to_date:
+            filename += f"_to_{to_date.strftime('%Y%m%d')}"
+        filename += ".pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_content),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
 
 
 # Helper function

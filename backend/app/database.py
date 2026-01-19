@@ -63,6 +63,13 @@ class Database:
         # Achievements collection indexes
         await db.achievements.create_index([("user_id", ASCENDING)])
         
+        # Gamification collection indexes
+        await db.user_points.create_index([("user_id", ASCENDING)], unique=True)
+        await db.user_points.create_index([("total_points", DESCENDING)])
+        await db.user_badges.create_index([("user_id", ASCENDING)])
+        await db.user_badges.create_index([("badge_id", ASCENDING)])
+        await db.points_history.create_index([("user_id", ASCENDING), ("timestamp", DESCENDING)])
+        
         print("✅ Database indexes created")
 
 
