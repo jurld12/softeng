@@ -6,7 +6,8 @@
 
 const CONFIG = {
     // Backend API Configuration (EDIT HERE TO CHANGE PORT)
-    API_BASE_URL: 'http://127.0.0.1:5000',
+    // Change this to your laptop's IP address (find it with: ipconfig in PowerShell)
+    API_BASE_URL: 'http://YOUR_LAPTOP_IP:5000',  // Example: 'http://192.168.1.100:5000'
     
     // API Endpoints
     ENDPOINTS: {

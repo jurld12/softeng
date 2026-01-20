@@ -69,10 +69,10 @@ Start-Process powershell -ArgumentList @(
     "Write-Host '========================================' -ForegroundColor Cyan; " +
     "Write-Host ''; " +
     ".\venv\Scripts\Activate.ps1; " +
-    "Write-Host 'Starting FastAPI server on http://127.0.0.1:5000' -ForegroundColor Green; " +
+    "Write-Host 'Starting FastAPI server on http://0.0.0.0:5000' -ForegroundColor Green; " +
     "Write-Host 'API Docs: http://127.0.0.1:5000/docs' -ForegroundColor Cyan; " +
     "Write-Host ''; " +
-    "uvicorn app.main:app --reload --host 127.0.0.1 --port 5000"
+    "uvicorn app.main:app --reload --host 0.0.0.0 --port 5000"
 )
 Write-Host "✅ Backend terminal opened" -ForegroundColor Green
 Start-Sleep -Seconds 2

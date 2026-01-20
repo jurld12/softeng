@@ -46,6 +46,10 @@ app = FastAPI(
 
 # Configure CORS
 origins = settings.allowed_origins.split(",")
+# Allow null origin for file:// protocol during development
+if settings.environment == "development":
+    origins.append("null")
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
