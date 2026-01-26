@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healio - Patient Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Theme CSS (must come before custom CSS) -->
+    <link rel="stylesheet" href="css/theme.css">
+    
+    <!-- Custom Dashboard CSS -->
+    <link rel="stylesheet" href="css/dashboard-bootstrap.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-icon bg-gradient-primary">
+                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Healio</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="#" class="nav-item-custom active">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item-custom">
+                <i class="bi bi-file-medical"></i>
+                <span>Health Records</span>
+            </a>
+            <a href="#" class="nav-item-custom">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item-custom">
+                <i class="bi bi-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="#" class="nav-item-custom">
+                <i class="bi bi-capsule"></i>
+                <span>Medications</span>
+            </a>
+            <a href="#" class="nav-item-custom">
+                <i class="bi bi-question-circle"></i>
+                <span>Help & Support</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="d-flex align-items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=7c3aed&color=fff" alt="Profile" class="rounded-circle" width="40" height="40">
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark small" id="sidebarUserName">Sarah Johnson</div>
+                    <div class="text-muted" style="font-size: 12px;" id="sidebarUserEmail">sarah@example.com</div>
+                </div>
+                <button class="btn btn-sm btn-light" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="greeting-title mb-1" id="greetingText">Good Afternoon, Sarah 👋</h1>
+                        <p class="greeting-subtitle mb-0">Your health is your wealth!</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn-icon">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        <button class="btn-icon">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid px-4 pb-4">
+            <div class="row g-4">
+                <!-- Left Column - Profile -->
+                <div class="col-lg-4">
+                    <div class="profile-card">
+                        <div class="card-body">
+                            <!-- Profile Header -->
+                            <div class="text-center pb-3 border-bottom border-healio">
+                                <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=7c3aed&color=fff&size=72" 
+                                     alt="Profile" 
+                                     class="profile-avatar rounded-circle mb-3">
+                                <h2 class="h5 fw-bold mb-0" id="profileName">Sarah Johnson</h2>
+                            </div>
+
+                            <!-- Profile Stats -->
+                            <div class="profile-stats text-center">
+                                <span class="profile-stat-item" id="profileAge">32 years</span>
+                                <span class="profile-stat-item" id="profileGender">Female</span>
+                                <span class="profile-stat-item" id="profileBlood">O+</span>
+                                <span class="profile-stat-item" id="profileHeight">165 cm</span>
+                                <span class="profile-stat-item" id="profileWeight">58 kg</span>
+                            </div>
+
+                            <!-- Profile Details -->
+                            <div class="pt-3">
+                                <div class="mb-3">
+                                    <div class="detail-label">Phone</div>
+                                    <div class="detail-value" id="profilePhone">+1 (555) 123-4567</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="detail-label">Email</div>
+                                    <div class="detail-value" id="profileEmail">sarah.johnson@email.com</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="detail-label">Date of Birth</div>
+                                    <div class="detail-value" id="profileDOB">March 15, 1992</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="detail-label">Address</div>
+                                    <div class="detail-value" id="profileAddress">123 Health St, Wellness City</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="detail-label">Allergies</div>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <span class="badge bg-light text-dark">Penicillin</span>
+                                        <span class="badge bg-light text-dark">Pollen</span>
+                                    </div>
+                                </div>
+                                <div class="mb-0">
+                                    <div class="detail-label">Emergency Contact</div>
+                                    <div class="detail-value" id="profileEmergency">John Johnson - +1 (555) 987-6543</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Dashboard Content -->
+                <div class="col-lg-8">
+                    <!-- Vitals Section -->
+                    <div class="section-card mb-4">
+                        <div class="mb-4">
+                            <h2 class="section-title">Vitals</h2>
+                            <p class="section-subtitle mb-0">Track and monitor your health metrics</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <!-- Blood Sugar -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="vital-card vital-card-critical">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="vital-title">Blood Sugar</span>
+                                        <span class="badge badge-critical vital-status">Critical</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="vital-icon">
+                                            <i class="bi bi-activity" style="font-size: 28px;"></i>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="vital-value" id="bloodSugarValue">--</div>
+                                            <div class="vital-unit">mg/dL</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Heart Rate -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="vital-card vital-card-critical">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="vital-title">Heart Rate</span>
+                                        <span class="badge badge-critical vital-status">Critical</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="vital-icon">
+                                            <i class="bi bi-heart-pulse" style="font-size: 28px;"></i>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="vital-value" id="heartRateValue">--</div>
+                                            <div class="vital-unit">bpm</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Daily Steps -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="vital-card vital-card-attention">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="vital-title">Daily Steps</span>
+                                        <span class="badge badge-attention vital-status">Attention</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="vital-icon">
+                                            <i class="bi bi-bar-chart-steps" style="font-size: 28px;"></i>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="vital-value" id="stepsValue">--</div>
+                                            <div class="vital-unit">steps</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sleep Duration -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="vital-card vital-card-attention">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="vital-title">Sleep Duration</span>
+                                        <span class="badge badge-attention vital-status">Attention</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="vital-icon">
+                                            <i class="bi bi-moon" style="font-size: 28px;"></i>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="vital-value" id="sleepValue">--</div>
+                                            <div class="vital-unit">hours</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Blood Pressure -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="vital-card vital-card-critical">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="vital-title">Blood Pressure</span>
+                                        <span class="badge badge-critical vital-status">Critical</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="vital-icon">
+                                            <i class="bi bi-droplet" style="font-size: 28px;"></i>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="vital-value" id="bpValue">--/--</div>
+                                            <div class="vital-unit">mmHg</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Blood Oxygen -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="vital-card vital-card-critical">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="vital-title">Blood Oxygen</span>
+                                        <span class="badge badge-critical vital-status">Critical</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="vital-icon">
+                                            <i class="bi bi-wind" style="font-size: 28px;"></i>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="vital-value" id="oxygenValue">--</div>
+                                            <div class="vital-unit">%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medications Section -->
+                    <div class="section-card mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="section-title mb-0">Medications</h2>
+                            <a href="#" class="text-healio-primary text-decoration-none fw-semibold">See All 💊</a>
+                        </div>
+                        
+                        <div class="d-flex flex-column gap-3">
+                            <div class="medication-item d-flex align-items-center gap-3">
+                                <div class="medication-icon">💊</div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 mb-1 fw-semibold">Fenofibrate (50mg)</h3>
+                                    <p class="text-muted small mb-0">Take with food every morning</p>
+                                </div>
+                                <button class="btn btn-sm btn-light">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+
+                            <div class="medication-item d-flex align-items-center gap-3">
+                                <div class="medication-icon">💊</div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 mb-1 fw-semibold">Fenofibrate (20mg)</h3>
+                                    <p class="text-muted small mb-0">Take with food every morning</p>
+                                </div>
+                                <button class="btn btn-sm btn-light">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+
+                            <div class="medication-item d-flex align-items-center gap-3">
+                                <div class="medication-icon">💊</div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 mb-1 fw-semibold">Fenofibrate (15mg)</h3>
+                                    <p class="text-muted small mb-0">3 tablets, 3 times a day</p>
+                                </div>
+                                <button class="btn btn-sm btn-light">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointments Section -->
+                    <div class="section-card">
+                        <h2 class="section-title mb-4">Upcoming Appointments</h2>
+                        
+                        <div class="d-flex flex-column gap-3">
+                            <div class="appointment-item d-flex align-items-center gap-3">
+                                <div class="doctor-avatar">DB</div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 mb-1 fw-semibold">Dr. Benjamin III</h3>
+                                    <p class="text-muted small mb-0">7 Oct 2021 🕐 08:00 - 10:00 AM</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary">Reschedule</button>
+                            </div>
+
+                            <div class="appointment-item d-flex align-items-center gap-3">
+                                <div class="doctor-avatar">SW</div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 mb-1 fw-semibold">Dr. Sarah Williams</h3>
+                                    <p class="text-muted small mb-0">8 Oct 2021 🕐 2:00 - 4:00 PM</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary">Reschedule</button>
+                            </div>
+
+                            <div class="appointment-item d-flex align-items-center gap-3">
+                                <div class="doctor-avatar">MC</div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 mb-1 fw-semibold">Dr. Michael Chen</h3>
+                                    <p class="text-muted small mb-0">9 Oct 2021 🕐 10:00 AM - 12:00 PM</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary">Reschedule</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dashboard JS -->
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

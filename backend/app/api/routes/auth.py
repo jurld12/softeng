@@ -39,17 +39,22 @@ async def register(user_data: UserRegister, db = Depends(get_database)):
     
     # Create user document
     user_doc = {
-        "name": user_data.name,
+        "name": user_data.full_name,
         "email": user_data.email,
+        "phone": user_data.phone,
         "password_hash": hash_password(user_data.password),
         "role": user_data.role,
         "active": True,
         "created_at": datetime.utcnow(),
         "profile": {
+            "date_of_birth": user_data.date_of_birth,
+            "gender": user_data.gender,
+            "address": user_data.address,
+            "blood_type": user_data.blood_type,
             "height": user_data.height,
             "weight": user_data.weight,
-            "gender": user_data.gender,
-            "date_of_birth": user_data.date_of_birth
+            "allergies": user_data.allergies or [],
+            "emergency_contact": user_data.emergency_contact
         }
     }
     
@@ -67,7 +72,7 @@ async def register(user_data: UserRegister, db = Depends(get_database)):
         token_type="bearer",
         user_id=user_id,
         role=user_data.role,
-        name=user_data.name
+        name=user_data.full_name
     )
 
 

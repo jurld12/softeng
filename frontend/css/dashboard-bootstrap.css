@@ -1,0 +1,358 @@
+/* Healio Dashboard Custom Styles (Bootstrap Enhanced) */
+/* This file contains custom styling that extends Bootstrap */
+
+/* Sidebar Styling */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    background: var(--healio-bg-primary);
+    border-right: 1px solid var(--healio-border-light);
+    z-index: var(--healio-z-fixed);
+    box-shadow: 1px 0 0 rgba(0,0,0,0.02);
+    overflow-y: auto;
+}
+
+.sidebar-logo {
+    padding: var(--healio-space-lg);
+    border-bottom: 1px solid var(--healio-border-light);
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--healio-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-text {
+    font-size: var(--healio-font-size-3xl);
+    font-weight: var(--healio-font-bold);
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Navigation */
+.nav-menu {
+    padding: var(--healio-space-lg) var(--healio-space-md);
+}
+
+.nav-item-custom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--healio-radius-md);
+    color: var(--healio-text-secondary);
+    text-decoration: none;
+    margin-bottom: 4px;
+    transition: all var(--healio-transition-base);
+    font-weight: var(--healio-font-medium);
+}
+
+.nav-item-custom:hover {
+    background: var(--healio-gray-100);
+    color: var(--healio-text-primary);
+}
+
+.nav-item-custom.active {
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    color: white;
+}
+
+.nav-item-custom svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Sidebar User Section */
+.sidebar-user {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--healio-space-md);
+    border-top: 1px solid var(--healio-border-light);
+    background: var(--healio-bg-primary);
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 280px;
+    min-height: 100vh;
+    background: var(--healio-bg-secondary);
+}
+
+/* Header */
+.dashboard-header {
+    padding: var(--healio-space-lg);
+    background: transparent;
+}
+
+.greeting-title {
+    font-size: var(--healio-font-size-4xl);
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+
+.greeting-subtitle {
+    color: var(--healio-text-muted);
+    font-size: var(--healio-font-size-base);
+}
+
+/* Profile Card */
+.profile-card {
+    position: sticky;
+    top: var(--healio-space-lg);
+    background: var(--healio-bg-primary);
+    border: 1px solid var(--healio-border-light);
+    border-radius: var(--healio-radius-xl);
+    box-shadow: var(--healio-shadow-xs);
+}
+
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    border: 3px solid var(--healio-primary);
+    box-shadow: 0 2px 8px rgba(124,58,237,0.15);
+}
+
+.profile-stats {
+    padding: var(--healio-space-lg) 0;
+    border-bottom: 1px solid var(--healio-border-light);
+}
+
+.profile-stat-item {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--healio-font-size-sm);
+    font-weight: var(--healio-font-medium);
+    color: var(--healio-text-secondary);
+}
+
+.profile-stat-item:not(:last-child)::after {
+    content: "•";
+    margin: 0 8px;
+    color: var(--healio-gray-400);
+}
+
+.detail-label {
+    font-size: var(--healio-font-size-xs);
+    font-weight: var(--healio-font-semibold);
+    color: var(--healio-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    font-size: var(--healio-font-size-base);
+    color: var(--healio-text-primary);
+}
+
+/* Vital Cards */
+.vital-card {
+    background: var(--healio-bg-primary);
+    border: 1px solid var(--healio-border-light);
+    border-radius: var(--healio-radius-md);
+    padding: 18px;
+    transition: all var(--healio-transition-base);
+    box-shadow: var(--healio-shadow-xs);
+}
+
+.vital-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--healio-shadow-md);
+    border-color: rgba(124,58,237,0.3);
+}
+
+.vital-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--healio-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(167,139,250,0.1));
+}
+
+.vital-card-critical .vital-icon {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+    color: var(--healio-critical);
+}
+
+.vital-card-attention .vital-icon {
+    background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05));
+    color: var(--healio-attention);
+}
+
+.vital-card-normal .vital-icon {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));
+    color: var(--healio-normal);
+}
+
+.vital-value {
+    font-size: 32px;
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+    line-height: 1;
+}
+
+.vital-unit {
+    font-size: var(--healio-font-size-sm);
+    color: var(--healio-text-muted);
+    font-weight: var(--healio-font-medium);
+}
+
+.vital-title {
+    font-size: var(--healio-font-size-sm);
+    font-weight: var(--healio-font-semibold);
+    color: var(--healio-text-secondary);
+}
+
+.vital-status {
+    font-size: 10px;
+    font-weight: var(--healio-font-bold);
+    padding: 4px 8px;
+    border-radius: var(--healio-radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* Section Cards */
+.section-card {
+    background: var(--healio-bg-primary);
+    border: 1px solid var(--healio-border-light);
+    border-radius: var(--healio-radius-xl);
+    padding: var(--healio-space-xl);
+    box-shadow: var(--healio-shadow-xs);
+}
+
+.section-title {
+    font-size: var(--healio-font-size-2xl);
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+}
+
+.section-subtitle {
+    font-size: var(--healio-font-size-sm);
+    color: var(--healio-text-muted);
+}
+
+/* Medication & Appointment Items */
+.medication-item,
+.appointment-item {
+    background: var(--healio-bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--healio-radius-md);
+    padding: 14px;
+    transition: all var(--healio-transition-base);
+}
+
+.medication-item:hover,
+.appointment-item:hover {
+    background: var(--healio-gray-100);
+    border-color: rgba(124,58,237,0.1);
+}
+
+.medication-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    border-radius: var(--healio-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.doctor-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--healio-font-bold);
+    font-size: var(--healio-font-size-base);
+}
+
+/* Buttons */
+.btn-icon {
+    width: 48px;
+    height: 48px;
+    border: none;
+    background: var(--healio-bg-primary);
+    border-radius: var(--healio-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--healio-text-secondary);
+    cursor: pointer;
+    transition: all var(--healio-transition-base);
+    box-shadow: var(--healio-shadow-sm);
+    position: relative;
+}
+
+.btn-icon:hover {
+    background: var(--healio-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--healio-shadow-md);
+}
+
+.btn-icon .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--healio-danger);
+    color: white;
+    font-size: 11px;
+    font-weight: var(--healio-font-semibold);
+    padding: 2px 6px;
+    border-radius: var(--healio-radius-full);
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform var(--healio-transition-slow);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .greeting-title {
+        font-size: var(--healio-font-size-3xl);
+    }
+    
+    .vital-value {
+        font-size: 24px;
+    }
+    
+    .profile-card {
+        position: static;
+    }
+}

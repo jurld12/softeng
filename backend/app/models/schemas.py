@@ -27,16 +27,28 @@ class PyObjectId(ObjectId):
 # User Schemas
 class UserRegister(BaseModel):
     """User registration request"""
-    name: str = Field(..., min_length=2, max_length=100)
+    full_name: str = Field(..., min_length=2, max_length=100, alias="name")
     email: EmailStr
     password: str = Field(..., min_length=8)
+    phone: Optional[str] = None
     role: Literal["patient", "doctor", "admin"] = "patient"
     
-    # Optional profile fields
+    # Personal information
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    
+    # Medical information
+    blood_type: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
-    gender: Optional[Literal["male", "female", "other"]] = None
-    date_of_birth: Optional[str] = None
+    allergies: Optional[list[str]] = None
+    
+    # Emergency contact
+    emergency_contact: Optional[str] = None
+    
+    class Config:
+        populate_by_name = True
 
 
 class UserLogin(BaseModel):

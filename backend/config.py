@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     alert_blood_pressure_diastolic_max: int = 90
     alert_blood_glucose_min: int = 70
     alert_blood_glucose_max: int = 140
+    alert_body_temp_min: float = 36.1
+    alert_body_temp_max: float = 37.2
+    alert_blood_oxygen_min: int = 95
+    alert_water_intake_min: int = 1500  # ml per day
+    alert_body_weight_change_threshold: float = 2.0  # kg sudden change
     
     class Config:
         env_file = ".env"

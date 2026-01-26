@@ -1,0 +1,228 @@
+/* Healio Theme Configuration */
+/* All colors and theme variables are defined here for easy customization */
+
+:root {
+    /* Primary Brand Colors */
+    --healio-primary: #7c3aed;
+    --healio-primary-hover: #6d28d9;
+    --healio-primary-light: #a78bfa;
+    --healio-primary-lighter: #ddd6fe;
+    --healio-primary-dark: #5b21b6;
+    
+    /* Secondary Colors */
+    --healio-secondary: #8b5cf6;
+    --healio-secondary-light: #c4b5fd;
+    
+    /* Status Colors */
+    --healio-success: #10b981;
+    --healio-success-light: #d1fae5;
+    --healio-warning: #fbbf24;
+    --healio-warning-light: #fef3c7;
+    --healio-danger: #ef4444;
+    --healio-danger-light: #fee2e2;
+    --healio-info: #3b82f6;
+    --healio-info-light: #dbeafe;
+    
+    /* Critical & Attention States */
+    --healio-critical: #dc2626;
+    --healio-critical-bg: #fef2f2;
+    --healio-attention: #f59e0b;
+    --healio-attention-bg: #fffbeb;
+    --healio-normal: #059669;
+    --healio-normal-bg: #ecfdf5;
+    
+    /* Neutral Grays */
+    --healio-gray-50: #fafafa;
+    --healio-gray-100: #f4f4f5;
+    --healio-gray-200: #e4e4e7;
+    --healio-gray-300: #d4d4d8;
+    --healio-gray-400: #a1a1aa;
+    --healio-gray-500: #71717a;
+    --healio-gray-600: #52525b;
+    --healio-gray-700: #3f3f46;
+    --healio-gray-800: #27272a;
+    --healio-gray-900: #18181b;
+    
+    /* Background Colors */
+    --healio-bg-primary: #ffffff;
+    --healio-bg-secondary: #fafbfc;
+    --healio-bg-tertiary: #f9fafb;
+    
+    /* Border Colors */
+    --healio-border-light: #e8eaed;
+    --healio-border: #d1d5db;
+    --healio-border-dark: #9ca3af;
+    
+    /* Text Colors */
+    --healio-text-primary: #1a1a1a;
+    --healio-text-secondary: #52525b;
+    --healio-text-muted: #71717a;
+    --healio-text-light: #a1a1aa;
+    
+    /* Shadow Levels */
+    --healio-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --healio-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --healio-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --healio-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --healio-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* Border Radius */
+    --healio-radius-sm: 6px;
+    --healio-radius: 8px;
+    --healio-radius-md: 12px;
+    --healio-radius-lg: 16px;
+    --healio-radius-xl: 20px;
+    --healio-radius-full: 9999px;
+    
+    /* Spacing Scale */
+    --healio-space-xs: 4px;
+    --healio-space-sm: 8px;
+    --healio-space-md: 16px;
+    --healio-space-lg: 24px;
+    --healio-space-xl: 32px;
+    --healio-space-2xl: 48px;
+    
+    /* Typography */
+    --healio-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --healio-font-size-xs: 12px;
+    --healio-font-size-sm: 13px;
+    --healio-font-size-base: 14px;
+    --healio-font-size-lg: 16px;
+    --healio-font-size-xl: 18px;
+    --healio-font-size-2xl: 20px;
+    --healio-font-size-3xl: 24px;
+    --healio-font-size-4xl: 28px;
+    
+    /* Font Weights */
+    --healio-font-light: 300;
+    --healio-font-normal: 400;
+    --healio-font-medium: 500;
+    --healio-font-semibold: 600;
+    --healio-font-bold: 700;
+    --healio-font-extrabold: 800;
+    
+    /* Transitions */
+    --healio-transition-fast: 150ms ease;
+    --healio-transition-base: 200ms ease;
+    --healio-transition-slow: 300ms ease;
+    
+    /* Z-index Layers */
+    --healio-z-dropdown: 1000;
+    --healio-z-sticky: 1020;
+    --healio-z-fixed: 1030;
+    --healio-z-modal-backdrop: 1040;
+    --healio-z-modal: 1050;
+    --healio-z-popover: 1060;
+    --healio-z-tooltip: 1070;
+}
+
+/* Bootstrap Variable Overrides */
+/* These override Bootstrap's default theme colors */
+:root {
+    --bs-primary: var(--healio-primary);
+    --bs-primary-rgb: 124, 58, 237;
+    --bs-secondary: var(--healio-secondary);
+    --bs-success: var(--healio-success);
+    --bs-danger: var(--healio-danger);
+    --bs-warning: var(--healio-warning);
+    --bs-info: var(--healio-info);
+    --bs-light: var(--healio-gray-100);
+    --bs-dark: var(--healio-gray-900);
+    
+    --bs-body-font-family: var(--healio-font-family);
+    --bs-body-font-size: var(--healio-font-size-base);
+    --bs-body-color: var(--healio-text-primary);
+    --bs-body-bg: var(--healio-bg-secondary);
+    
+    --bs-border-color: var(--healio-border-light);
+    --bs-border-radius: var(--healio-radius);
+    --bs-border-radius-sm: var(--healio-radius-sm);
+    --bs-border-radius-lg: var(--healio-radius-lg);
+    --bs-border-radius-xl: var(--healio-radius-xl);
+    
+    --bs-link-color: var(--healio-primary);
+    --bs-link-hover-color: var(--healio-primary-hover);
+}
+
+/* Global Styles */
+body {
+    font-family: var(--healio-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Utility Classes */
+.text-healio-primary { color: var(--healio-primary) !important; }
+.text-healio-secondary { color: var(--healio-text-secondary) !important; }
+.text-healio-muted { color: var(--healio-text-muted) !important; }
+
+.bg-healio-primary { background-color: var(--healio-primary) !important; }
+.bg-healio-secondary { background-color: var(--healio-bg-secondary) !important; }
+.bg-healio-tertiary { background-color: var(--healio-bg-tertiary) !important; }
+
+.border-healio { border-color: var(--healio-border-light) !important; }
+
+.shadow-healio-sm { box-shadow: var(--healio-shadow-sm) !important; }
+.shadow-healio { box-shadow: var(--healio-shadow-md) !important; }
+.shadow-healio-lg { box-shadow: var(--healio-shadow-lg) !important; }
+
+.rounded-healio { border-radius: var(--healio-radius-md) !important; }
+.rounded-healio-lg { border-radius: var(--healio-radius-lg) !important; }
+.rounded-healio-xl { border-radius: var(--healio-radius-xl) !important; }
+
+/* Status Badge Variants */
+.badge-critical {
+    background-color: var(--healio-critical);
+    color: white;
+}
+
+.badge-attention {
+    background-color: var(--healio-attention);
+    color: white;
+}
+
+.badge-normal {
+    background-color: var(--healio-normal);
+    color: white;
+}
+
+/* Vital Card Status Variants */
+.vital-card-critical {
+    border-left: 3px solid var(--healio-critical);
+    background-color: var(--healio-critical-bg);
+}
+
+.vital-card-attention {
+    border-left: 3px solid var(--healio-attention);
+    background-color: var(--healio-attention-bg);
+}
+
+.vital-card-normal {
+    border-left: 3px solid var(--healio-normal);
+    background-color: var(--healio-normal-bg);
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary)) !important;
+}
+
+.bg-gradient-primary-light {
+    background: linear-gradient(135deg, var(--healio-primary-light), var(--healio-primary-lighter)) !important;
+}
+
+/* Hover Effects */
+.hover-lift {
+    transition: transform var(--healio-transition-base), box-shadow var(--healio-transition-base);
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--healio-shadow-lg);
+}
+
+/* Focus Styles */
+.focus-healio:focus {
+    outline: 2px solid var(--healio-primary);
+    outline-offset: 2px;
+}

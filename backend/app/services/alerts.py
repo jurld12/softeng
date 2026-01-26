@@ -31,6 +31,23 @@ METRIC_THRESHOLDS = {
         "max": settings.alert_blood_glucose_max,
         "unit": "mg/dL"
     },
+    "body_temp": {
+        "min": settings.alert_body_temp_min,
+        "max": settings.alert_body_temp_max,
+        "unit": "°C"
+    },
+    "blood_oxygen": {
+        "min": settings.alert_blood_oxygen_min,
+        "unit": "%"
+    },
+    "water_intake": {
+        "min": settings.alert_water_intake_min,
+        "unit": "ml"
+    },
+    "body_weight": {
+        "unit": "kg"
+        # Weight alerts handled separately based on change rate
+    }
     # Steps, calories, sleep_hours typically don't need alerts for high values
     # but we can add them if needed
 }
