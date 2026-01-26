@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Healio</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="css/theme.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-container {
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        .login-card {
+            background: var(--healio-bg-primary);
+            border-radius: var(--healio-radius-xl);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+            color: white;
+            padding: 3.5rem 2.5rem;
+            text-align: center;
+        }
+
+        .logo-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: var(--healio-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .login-header h1 {
+            font-size: var(--healio-font-size-4xl);
+            font-weight: var(--healio-font-bold);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: var(--healio-font-size-base);
+        }
+
+        .login-body {
+            padding: 3rem 2.5rem;
+        }
+
+        .form-label {
+            font-weight: var(--healio-font-semibold);
+            color: var(--healio-text-primary);
+            margin-bottom: 0.5rem;
+            font-size: var(--healio-font-size-base);
+        }
+
+        .form-control {
+            border: 1.5px solid var(--healio-border-light);
+            border-radius: var(--healio-radius);
+            padding: 0.875rem 1rem;
+            font-size: var(--healio-font-size-base);
+            transition: all var(--healio-transition-base);
+        }
+
+        .form-control:focus {
+            border-color: var(--healio-primary);
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+        }
+
+        .input-group-text {
+            background: var(--healio-gray-100);
+            border: 1.5px solid var(--healio-border-light);
+            border-right: none;
+            color: var(--healio-text-muted);
+        }
+
+        .input-group .form-control {
+            border-left: none;
+        }
+
+        .input-group:focus-within .input-group-text {
+            border-color: var(--healio-primary);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-weight: var(--healio-font-semibold);
+            border-radius: var(--healio-radius);
+            font-size: var(--healio-font-size-lg);
+            transition: all var(--healio-transition-base);
+            width: 100%;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+            color: white;
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--healio-border-light);
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: var(--healio-text-muted);
+            font-size: var(--healio-font-size-sm);
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--healio-text-secondary);
+            font-size: var(--healio-font-size-base);
+        }
+
+        .signup-link a {
+            color: var(--healio-primary);
+            text-decoration: none;
+            font-weight: var(--healio-font-semibold);
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+
+        .forgot-password a {
+            color: var(--healio-primary);
+            text-decoration: none;
+            font-size: var(--healio-font-size-sm);
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .form-check-label {
+            font-size: var(--healio-font-size-sm);
+            color: var(--healio-text-secondary);
+        }
+
+        .demo-credentials {
+            background: var(--healio-bg-tertiary);
+            border: 1px solid var(--healio-border-light);
+            border-radius: var(--healio-radius);
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-credentials h6 {
+            font-size: var(--healio-font-size-base);
+            font-weight: var(--healio-font-semibold);
+            color: var(--healio-text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .demo-credentials code {
+            background: var(--healio-bg-primary);
+            padding: 0.375rem 0.625rem;
+            border-radius: var(--healio-radius-sm);
+            font-size: var(--healio-font-size-sm);
+            color: var(--healio-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container login-container py-5">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-icon">
+                    <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1>Healio</h1>
+                <p>Your Virtual Health Companion</p>
+            </div>
+
+            <!-- Body -->
+            <div class="login-body">
+                <!-- Alert Messages -->
+                <div id="alertContainer"></div>
+
+                <!-- Demo Credentials (Remove in production) -->
+                <div class="demo-credentials">
+                    <h6><i class="bi bi-info-circle me-2"></i>Demo Credentials</h6>
+                    <div class="small text-muted">
+                        <div>Email: <code>debug@test.com</code></div>
+                        <div>Password: <code>Password123!</code></div>
+                    </div>
+                </div>
+
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   placeholder="your.email@example.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Enter your password" required autocomplete="current-password">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">
+                                Remember me
+                            </label>
+                        </div>
+                        <div class="forgot-password">
+                            <a href="#" onclick="alert('Password reset coming soon!'); return false;">
+                                Forgot password?
+                            </a>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-login" id="submitBtn">
+                        <span id="submitText">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        </span>
+                        <span id="submitSpinner" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Signing in...
+                        </span>
+                    </button>
+                </form>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="signup-link">
+                    Don't have an account? <a href="signup.html">Create one here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Login JS -->
+    <script type="module">
+        import { API_BASE_URL } from './js/config.js';
+
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const alertContainer = document.getElementById('alertContainer');
+
+        // Check if already logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.role === 'patient') {
+                window.location.href = 'dashboard-v2.html';
+            } else if (user.role === 'doctor') {
+                window.location.href = 'doctor-dashboard.html';
+            } else if (user.role === 'admin') {
+                window.location.href = 'admin-dashboard.html';
+            }
+        }
+
+        function showAlert(message, type = 'danger') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.classList.add('d-none');
+            submitSpinner.classList.remove('d-none');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+                
+                // Store authentication data
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('user', JSON.stringify({
+                    id: data.user_id,
+                    email: email,
+                    role: data.role,
+                    full_name: data.name
+                }));
+                
+                // Show success message
+                showAlert('Login successful! Redirecting...', 'success');
+                
+                // Redirect based on role after short delay
+                setTimeout(() => {
+                    if (data.role === 'patient') {
+                        window.location.href = 'dashboard-v2.html';
+                    } else if (data.role === 'doctor') {
+                        window.location.href = 'doctor-dashboard.html';
+                    } else if (data.role === 'admin') {
+                        window.location.href = 'admin-dashboard.html';
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert(error.message || 'Invalid email or password. Please try again.', 'danger');
+                
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.classList.remove('d-none');
+                submitSpinner.classList.add('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
