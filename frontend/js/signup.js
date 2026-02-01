@@ -1,4 +1,5 @@
-import { API_BASE_URL } from './config.js';
+// API Configuration
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 // State
 const allergies = [];
@@ -177,7 +178,7 @@ signupForm.addEventListener('submit', async (e) => {
     }
     
     const formData = {
-        full_name: document.getElementById('fullName').value.trim(),
+        name: document.getElementById('fullName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         password: document.getElementById('password').value,
@@ -226,7 +227,7 @@ signupForm.addEventListener('submit', async (e) => {
         
         // Redirect to login after 2 seconds
         setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = 'login-v2.html';
         }, 2000);
         
     } catch (error) {
@@ -244,15 +245,15 @@ signupForm.addEventListener('submit', async (e) => {
 renderAllergies();
 
 // Check if already logged in
-const token = localStorage.getItem('token');
+const token = localStorage.getItem('healio_access_token');
 if (token) {
     // Already logged in, redirect to dashboard
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.role === 'patient') {
+    const role = localStorage.getItem('healio_user_role');
+    if (role === 'patient') {
         window.location.href = 'dashboard-v2.html';
-    } else if (user.role === 'doctor') {
+    } else if (role === 'doctor') {
         window.location.href = 'doctor-dashboard.html';
-    } else if (user.role === 'admin') {
+    } else if (role === 'admin') {
         window.location.href = 'admin-dashboard.html';
     }
 }

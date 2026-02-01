@@ -84,7 +84,9 @@ class TokenResponse(BaseModel):
 class BiometricEntry(BaseModel):
     """Biometric data entry request"""
     metric: Literal["heart_rate", "steps", "calories", "blood_pressure_systolic", 
-                    "blood_pressure_diastolic", "blood_glucose", "sleep_hours"]
+                    "blood_pressure_diastolic", "blood_glucose", "sleep_hours",
+                    "weight", "blood_oxygen", "body_temperature", "bmi",
+                    "respiratory_rate", "hydration"]
     value: float = Field(..., gt=0)
     unit: Optional[str] = None
     notes: Optional[str] = None

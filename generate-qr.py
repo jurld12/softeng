@@ -109,28 +109,18 @@ def main():
     ip = get_local_ip()
     print(f"\n📡 Your laptop's IP: {ip}")
     
-    # WiFi hotspot settings
+    # WiFi hotspot settings (hardcoded)
     print("\n" + "=" * 50)
     print("STEP 1: WiFi Hotspot QR Code")
     print("=" * 50)
     
-    # Try to auto-detect SSID
-    detected_ssid = get_hotspot_ssid()
-    if detected_ssid:
-        print(f"📡 Detected SSID: {detected_ssid}")
-        use_detected = input("Use this SSID? [Y/n]: ").strip().lower()
-        ssid = detected_ssid if use_detected != 'n' else input("Enter your hotspot SSID: ").strip()
-    else:
-        ssid = input("Enter your hotspot SSID (name): ").strip()
+    ssid = "LAPTOP-EVGFGOQO 2739"
+    password = "7i[0P650"
     
-    password = input("Enter your hotspot password: ").strip()
+    print(f"📡 Using SSID: {ssid}")
+    generate_wifi_qr(ssid, password)
     
-    if ssid:
-        generate_wifi_qr(ssid, password)
-    else:
-        print("⚠️  Skipping WiFi QR code")
-    
-    # Frontend URL
+    # Frontend URL (auto-detected IP)
     print("\n" + "=" * 50)
     print("STEP 2: Frontend Access QR Code")
     print("=" * 50)

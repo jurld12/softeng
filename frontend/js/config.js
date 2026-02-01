@@ -6,8 +6,7 @@
 
 const CONFIG = {
     // Backend API Configuration (EDIT HERE TO CHANGE PORT)
-    // Change this to your laptop's IP address (find it with: ipconfig in PowerShell)
-    API_BASE_URL: 'http://YOUR_LAPTOP_IP:5000',  // Example: 'http://192.168.1.100:5000'
+    API_BASE_URL: 'http://127.0.0.1:5000'
     
     // API Endpoints
     ENDPOINTS: {
@@ -81,3 +80,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Export shorthand for direct access
 const API_BASE_URL = CONFIG.API_BASE_URL;
+
+// ES6 module exports
+export { CONFIG, getApiUrl, getAuthHeaders, API_BASE_URL };
