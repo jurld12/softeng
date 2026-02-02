@@ -140,6 +140,51 @@ class DashboardSummary(BaseModel):
     total_achievements: int
 
 
+# Medication Schemas
+class MedicationCreate(BaseModel):
+    """Medication creation request"""
+    name: str = Field(..., min_length=1, max_length=200)
+    dosage: str = Field(..., min_length=1, max_length=100)
+    frequency: str = Field(..., min_length=1, max_length=100)  # e.g., "Once daily", "Twice daily"
+    time_of_day: Optional[str] = None  # e.g., "Morning", "Evening", "Morning, Evening"
+    instructions: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    active: bool = True
+
+
+class MedicationUpdate(BaseModel):
+    """Medication update request"""
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    dosage: Optional[str] = Field(None, min_length=1, max_length=100)
+    frequency: Optional[str] = Field(None, min_length=1, max_length=100)
+    time_of_day: Optional[str] = None
+    instructions: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    active: Optional[bool] = None
+
+
+class MedicationResponse(BaseModel):
+    """Medication response"""
+    id: str = Field(alias="_id")
+    user_id: str
+    name: str
+    dosage: str
+    frequency: str
+    time_of_day: Optional[str] = None
+    instructions: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    active: bool
+    created_at: datetime
+    
+    class Config:
+        populate_by_name = True
+        from_attributes = True
+        json_encoders = {ObjectId: str}
+
+
 # Achievement Schemas
 class AchievementResponse(BaseModel):
     """Achievement response"""

@@ -11,7 +11,8 @@ const CONFIG = {
     ENDPOINTS: {
         LOGOUT: '/auth/logout',
         PATIENT_DASHBOARD: '/patients/me/dashboard',
-        PATIENT_BIOMETRICS: '/patients/me/biometrics'
+        PATIENT_BIOMETRICS: '/patients/me/biometrics',
+        PATIENT_MEDICATIONS: '/patients/me/medications'
     }
 };
 
@@ -528,6 +529,94 @@ window.openVitalModal = function(element) {
     modal.show();
 };
 
+// ==================== Load Medications ====================
+async function loadMedications() {
+    const medicationsList = document.getElementById('medicationsList');
+    if (!medicationsList) {
+        console.error('Medications list element not found');
+        return;
+    }
+    
+    try {
+        console.log('Fetching medications from:', getApiUrl(CONFIG.ENDPOINTS.PATIENT_MEDICATIONS));
+        const response = await fetch(getApiUrl(CONFIG.ENDPOINTS.PATIENT_MEDICATIONS), {
+            headers: getAuthHeaders()
+        });
+        
+        console.log('Medications response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Medications API error:', errorText);
+            throw new Error('Failed to load medications');
+        }
+        
+        const medications = await response.json();
+        console.log('Medications loaded:', medications);
+        
+        displayMedications(medications);
+    } catch (error) {
+        console.error('Error loading medications:', error);
+        if (medicationsList) {
+            medicationsList.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <p>Unable to load medications</p>
+                    <a href="medications.html" class="btn btn-sm btn-primary">Go to Medications Page</a>
+                </div>
+            `;
+        }
+    }
+}
+
+// ==================== Display Medications ====================
+function displayMedications(medications) {
+    const medicationsList = document.getElementById('medicationsList');
+    if (!medicationsList) return;
+    
+    // Filter only active medications
+    const activeMeds = medications.filter(med => med.active);
+    
+    if (activeMeds.length === 0) {
+        medicationsList.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <p>No active medications</p>
+                <a href="medications.html" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>Add Medication
+                </a>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show up to 3 medications on dashboard
+    const displayMeds = activeMeds.slice(0, 3);
+    
+    medicationsList.innerHTML = displayMeds.map(med => {
+        const instructions = med.instructions || 
+            (med.time_of_day ? `Take ${med.time_of_day}` : med.frequency);
+        
+        return `
+            <div class="medication-item d-flex align-items-center gap-3">
+                <div class="medication-icon">💊</div>
+                <div class="flex-grow-1">
+                    <h3 class="h6 mb-1 fw-semibold">${escapeHtml(med.name)} (${escapeHtml(med.dosage)})</h3>
+                    <p class="text-muted small mb-0">${escapeHtml(instructions)}</p>
+                </div>
+                <a href="medications.html" class="btn btn-sm btn-light" title="View details">
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== Utility: Escape HTML ====================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // ==================== Initialize Dashboard ====================
 async function initializeDashboard() {
     // Check authentication first
@@ -544,6 +633,13 @@ async function initializeDashboard() {
         
         // Load dashboard data
         await loadDashboardData();
+        
+        // Load medications (don't let it fail the whole dashboard)
+        try {
+            await loadMedications();
+        } catch (medError) {
+            console.error('Medications load failed, but continuing:', medError);
+        }
         
         console.log('Dashboard initialized successfully');
     } catch (error) {
