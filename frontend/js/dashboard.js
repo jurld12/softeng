@@ -631,6 +631,9 @@ async function initializeDashboard() {
         // Load user data
         await loadCurrentUser();
         
+        // Apply vital preferences first (hide unselected vitals)
+        applyVitalPreferences();
+        
         // Load dashboard data
         await loadDashboardData();
         
@@ -645,6 +648,68 @@ async function initializeDashboard() {
     } catch (error) {
         console.error('Failed to initialize dashboard:', error);
         showError('Failed to load dashboard. Please refresh the page.');
+    }
+}
+
+// ==================== Apply Vital Preferences ====================
+function applyVitalPreferences() {
+    try {
+        const stored = localStorage.getItem('healio_vital_preferences');
+        if (!stored) {
+            // If no preferences set, show all vitals by default
+            return;
+        }
+        
+        const preferences = JSON.parse(stored);
+        console.log('Applying vital preferences:', preferences);
+        
+        // Hide vitals that are not enabled
+        Object.keys(preferences).forEach(vitalId => {
+            const isEnabled = preferences[vitalId];
+            const vitalCard = document.querySelector(`[data-vital-id="${vitalId}"]`);
+            
+            if (vitalCard) {
+                const parentCol = vitalCard.closest('.col-md-6, .col-xl-4');
+                if (parentCol) {
+                    if (isEnabled) {
+                        parentCol.style.display = '';
+                    } else {
+                        parentCol.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        // Check if any vitals are visible
+        const visibleVitals = document.querySelectorAll('[data-vital-id]');
+        let anyVisible = false;
+        visibleVitals.forEach(vital => {
+            const parentCol = vital.closest('.col-md-6, .col-xl-4');
+            if (parentCol && parentCol.style.display !== 'none') {
+                anyVisible = true;
+            }
+        });
+        
+        // If no vitals are visible, show a message
+        if (!anyVisible) {
+            const vitalsContainer = document.querySelector('.section-card .row.g-3');
+            if (vitalsContainer) {
+                vitalsContainer.innerHTML = `
+                    <div class="col-12">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-heart-pulse fs-1 mb-3 d-block"></i>
+                            <p class="mb-3">No vitals selected for tracking</p>
+                            <a href="vitals.html" class="btn btn-primary">
+                                <i class="bi bi-gear me-2"></i>Configure Vitals
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error applying vital preferences:', error);
+        // If there's an error, just show all vitals
     }
 }
 
