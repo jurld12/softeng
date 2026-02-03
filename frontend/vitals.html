@@ -90,7 +90,7 @@
                         <h1 class="greeting-title mb-1">
                             <i class="bi bi-heart-pulse me-2"></i>Vitals Management
                         </h1>
-                        <p class="greeting-subtitle mb-0">Select which vitals you want to track and monitor</p>
+                        <p class="greeting-subtitle mb-0">Track and monitor all your health metrics</p>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-primary" id="savePreferences">
@@ -103,24 +103,10 @@
 
         <div class="dashboard-content">
             <div class="container-fluid">
-                <!-- Instructions Card -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">
-                            <i class="bi bi-info-circle me-2"></i>How to Use
-                        </h5>
-                        <p class="mb-2">Toggle the vitals you want to track on your dashboard. Selected vitals will appear on your main dashboard and can be updated regularly.</p>
-                        <p class="mb-0 text-muted small">
-                            <i class="bi bi-lightbulb me-1"></i>Tip: Focus on the vitals most relevant to your health goals for better tracking.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- All Vitals Grid -->
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Available Vitals</h5>
-                        <div id="vitalsGrid" class="row g-3">
+                <!-- Vitals List -->
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div id="vitalsContainer">
                             <!-- Vitals will be loaded here -->
                             <div class="col-12 text-center text-muted py-5">
                                 <div class="spinner-border text-primary" role="status">
@@ -137,6 +123,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <!-- Vitals JS -->
     <script src="js/vitals.js"></script>

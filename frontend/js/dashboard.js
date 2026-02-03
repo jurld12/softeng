@@ -663,48 +663,88 @@ function applyVitalPreferences() {
         const preferences = JSON.parse(stored);
         console.log('Applying vital preferences:', preferences);
         
-        // Hide vitals that are not enabled
-        Object.keys(preferences).forEach(vitalId => {
-            const isEnabled = preferences[vitalId];
-            const vitalCard = document.querySelector(`[data-vital-id="${vitalId}"]`);
+        // Get all vital cards
+        const allVitalCards = document.querySelectorAll('[data-vital-id]');
+        const vitalElements = [];
+        
+        // Collect all enabled vital elements
+        allVitalCards.forEach(vitalCard => {
+            const vitalId = vitalCard.getAttribute('data-vital-id');
+            const isEnabled = preferences[vitalId] !== undefined ? preferences[vitalId] : true;
+            const parentCol = vitalCard.closest('.col-md-6, .col-xl-4');
             
-            if (vitalCard) {
-                const parentCol = vitalCard.closest('.col-md-6, .col-xl-4');
-                if (parentCol) {
-                    if (isEnabled) {
-                        parentCol.style.display = '';
-                    } else {
-                        parentCol.style.display = 'none';
-                    }
+            if (isEnabled && parentCol) {
+                // Clone the parent column element
+                vitalElements.push(parentCol.cloneNode(true));
+            }
+        });
+        
+        // Find the vitals container
+        const vitalsContainer = document.querySelector('.section-card .row.g-3');
+        if (!vitalsContainer) return;
+        
+        // Clear the container
+        vitalsContainer.innerHTML = '';
+        
+        // If no vitals are enabled, show a message
+        if (vitalElements.length === 0) {
+            vitalsContainer.innerHTML = `
+                <div class="col-12">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-heart-pulse fs-1 mb-3 d-block"></i>
+                        <p class="mb-3">No vitals selected for tracking</p>
+                        <a href="vitals.html" class="btn btn-primary">
+                            <i class="bi bi-gear me-2"></i>Configure Vitals
+                        </a>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // Add enabled vitals to the container
+        vitalElements.forEach(element => {
+            vitalsContainer.appendChild(element);
+        });
+        
+        // Show the "Show More" button if there are more than 6 vitals
+        if (vitalElements.length > 6) {
+            // Find or create the additional vitals container
+            let additionalVitalsDiv = document.getElementById('additionalVitals');
+            if (!additionalVitalsDiv) {
+                additionalVitalsDiv = document.createElement('div');
+                additionalVitalsDiv.id = 'additionalVitals';
+                additionalVitalsDiv.className = 'col-12';
+                additionalVitalsDiv.style.display = 'none';
+                
+                const innerRow = document.createElement('div');
+                innerRow.className = 'row g-3';
+                additionalVitalsDiv.appendChild(innerRow);
+                
+                vitalsContainer.appendChild(additionalVitalsDiv);
+            }
+            
+            // Move vitals 7+ into the additional container
+            const innerRow = additionalVitalsDiv.querySelector('.row');
+            if (innerRow) {
+                innerRow.innerHTML = '';
+                for (let i = 6; i < vitalElements.length; i++) {
+                    innerRow.appendChild(vitalElements[i]);
+                    vitalsContainer.removeChild(vitalElements[i]);
                 }
             }
-        });
-        
-        // Check if any vitals are visible
-        const visibleVitals = document.querySelectorAll('[data-vital-id]');
-        let anyVisible = false;
-        visibleVitals.forEach(vital => {
-            const parentCol = vital.closest('.col-md-6, .col-xl-4');
-            if (parentCol && parentCol.style.display !== 'none') {
-                anyVisible = true;
-            }
-        });
-        
-        // If no vitals are visible, show a message
-        if (!anyVisible) {
-            const vitalsContainer = document.querySelector('.section-card .row.g-3');
-            if (vitalsContainer) {
-                vitalsContainer.innerHTML = `
-                    <div class="col-12">
-                        <div class="text-center text-muted py-5">
-                            <i class="bi bi-heart-pulse fs-1 mb-3 d-block"></i>
-                            <p class="mb-3">No vitals selected for tracking</p>
-                            <a href="vitals.html" class="btn btn-primary">
-                                <i class="bi bi-gear me-2"></i>Configure Vitals
-                            </a>
-                        </div>
-                    </div>
+            
+            // Add show more button if not exists
+            let showMoreBtn = document.getElementById('showMoreVitalsBtn');
+            if (!showMoreBtn) {
+                const btnCol = document.createElement('div');
+                btnCol.className = 'col-12 text-center';
+                btnCol.innerHTML = `
+                    <button class="btn btn-outline-primary" id="showMoreVitalsBtn" onclick="toggleAdditionalVitals()">
+                        Show More <i class="bi bi-chevron-down ms-1"></i>
+                    </button>
                 `;
+                vitalsContainer.appendChild(btnCol);
             }
         }
     } catch (error) {

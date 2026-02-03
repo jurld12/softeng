@@ -434,3 +434,75 @@
         font-size: 0.65rem;
     }
 }
+
+/* Expandable Vital Cards */
+.vital-expandable-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 1rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.vital-expandable-card:hover {
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+}
+
+.vital-card-header {
+    padding: 1.25rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.vital-value-inline {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 0.25rem;
+}
+
+.vital-expand-btn {
+    color: #6b7280;
+    padding: 0.5rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.vital-expand-btn:hover {
+    color: #7c3aed;
+}
+
+.vital-expand-btn i {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.vital-card-body {
+    padding: 0 1.25rem 1.25rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.vital-card-body.show {
+    max-height: 1000px;
+    padding: 0 1.25rem 1.25rem;
+}
+
+.recent-readings-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.reading-item {
+    font-size: 0.875rem;
+}
+
+.reading-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Chart container */
+canvas {
+    max-width: 100%;
+}
