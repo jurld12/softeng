@@ -77,7 +77,7 @@ const ALL_VITALS = [
         id: 'steps',
         name: 'Steps',
         unit: 'steps',
-        icon: 'bi-shoe-prints',
+        icon: 'bi-bar-chart-steps',
         description: 'Daily step count',
         apiMetric: 'steps',
         optimalRange: null,
@@ -268,14 +268,27 @@ function displayVitals() {
                 <div class="row">
                     <div class="col-lg-8">
                         <h6 class="mb-3">7-Day Trend</h6>
-                        <canvas id="chart-${vital.id}" height="200"></canvas>
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="chart-${vital.id}"></canvas>
+                        </div>
                     </div>
                     <div class="col-lg-4">
                         <h6 class="mb-3">Add New Reading</h6>
+                        ${vital.id === 'bp' ? `
+                        <div class="mb-3">
+                            <label class="form-label small">Systolic (Upper)</label>
+                            <input type="number" class="form-control" id="input-systolic-${vital.id}" placeholder="e.g., 120">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Diastolic (Lower)</label>
+                            <input type="number" class="form-control" id="input-diastolic-${vital.id}" placeholder="e.g., 80">
+                        </div>
+                        ` : `
                         <div class="mb-3">
                             <label class="form-label small">Value${vital.unit ? ` (${vital.unit})` : ''}</label>
                             <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value">
                         </div>
+                        `}
                         <div class="mb-3">
                             <label class="form-label small">Time (optional)</label>
                             <input type="datetime-local" class="form-control" id="time-${vital.id}">
@@ -323,17 +336,49 @@ async function loadLatestVitalValue(vitalId) {
         const vital = ALL_VITALS.find(v => v.id === vitalId);
         if (!vital) return;
         
-        const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${vital.apiMetric}&limit=1`, {
-            headers: getAuthHeaders()
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data && data.length > 0) {
-                const value = data[0].value;
-                const valueElement = document.getElementById(`${vitalId}Value`);
-                if (valueElement) {
-                    valueElement.textContent = value;
+        // Special handling for blood pressure
+        if (vitalId === 'bp') {
+            console.log('Loading BP latest values...');
+            const [systolicRes, diastolicRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/patients/me/biometrics?metric=blood_pressure_systolic&limit=1`, {
+                    headers: getAuthHeaders()
+                }),
+                fetch(`${API_BASE_URL}/patients/me/biometrics?metric=blood_pressure_diastolic&limit=1`, {
+                    headers: getAuthHeaders()
+                })
+            ]);
+            
+            console.log('BP responses:', systolicRes.status, diastolicRes.status);
+            
+            if (systolicRes.ok && diastolicRes.ok) {
+                const systolicData = await systolicRes.json();
+                const diastolicData = await diastolicRes.json();
+                
+                console.log('BP data:', systolicData, diastolicData);
+                
+                if (systolicData && systolicData.length > 0 && diastolicData && diastolicData.length > 0) {
+                    const systolic = systolicData[0].value;
+                    const diastolic = diastolicData[0].value;
+                    const valueElement = document.getElementById(`${vitalId}Value`);
+                    if (valueElement) {
+                        valueElement.textContent = `${systolic}/${diastolic}`;
+                        console.log('BP value updated:', `${systolic}/${diastolic}`);
+                    }
+                }
+            }
+        } else {
+            const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${vital.apiMetric}&limit=1`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const value = data[0].value;
+                    const valueElement = document.getElementById(`${vitalId}Value`);
+                    if (valueElement) {
+                        valueElement.textContent = value;
+                    }
                 }
             }
         }
@@ -359,6 +404,14 @@ window.toggleVitalExpansion = function(vitalId) {
         expandBtn.classList.remove('bi-chevron-down');
         expandBtn.classList.add('bi-chevron-up');
         
+        // Set default time to current date and time
+        const timeInput = document.getElementById(`time-${vitalId}`);
+        if (timeInput) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            timeInput.value = now.toISOString().slice(0, 16);
+        }
+        
         // Load vital history and create chart
         loadVitalHistory(vitalId);
     }
@@ -370,19 +423,56 @@ async function loadVitalHistory(vitalId) {
         const vital = ALL_VITALS.find(v => v.id === vitalId);
         if (!vital) return;
         
-        const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${vital.apiMetric}&limit=7`, {
-            headers: getAuthHeaders()
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            vitalHistoryData[vitalId] = data;
+        // Special handling for blood pressure
+        if (vitalId === 'bp') {
+            const [systolicRes, diastolicRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/patients/me/biometrics?metric=blood_pressure_systolic&limit=7`, {
+                    headers: getAuthHeaders()
+                }),
+                fetch(`${API_BASE_URL}/patients/me/biometrics?metric=blood_pressure_diastolic&limit=7`, {
+                    headers: getAuthHeaders()
+                })
+            ]);
             
-            // Update recent readings
-            displayRecentReadings(vitalId, data, vital.unit);
+            if (systolicRes.ok && diastolicRes.ok) {
+                const systolicData = await systolicRes.json();
+                const diastolicData = await diastolicRes.json();
+                
+                // Combine systolic and diastolic readings by timestamp
+                const combinedData = [];
+                systolicData.forEach(sysReading => {
+                    const diaReading = diastolicData.find(d => d.timestamp === sysReading.timestamp);
+                    if (diaReading) {
+                        combinedData.push({
+                            timestamp: sysReading.timestamp,
+                            value: `${sysReading.value}/${diaReading.value}`
+                        });
+                    }
+                });
+                
+                vitalHistoryData[vitalId] = combinedData;
+                
+                // Update recent readings
+                displayRecentReadings(vitalId, combinedData, vital.unit);
+                
+                // Create/update chart - pass raw systolic/diastolic data
+                createVitalChart(vitalId, combinedData, vital);
+            }
+        } else {
+            const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${vital.apiMetric}&limit=7`, {
+                headers: getAuthHeaders()
+            });
             
-            // Create/update chart
-            createVitalChart(vitalId, data, vital);
+            if (response.ok) {
+                const data = await response.json();
+                vitalHistoryData[vitalId] = data;
+                
+                // Update recent readings
+                displayRecentReadings(vitalId, data, vital.unit);
+                
+                // Create/update chart
+                createVitalChart(vitalId, data, vital);
+            }
         }
     } catch (error) {
         console.error(`Error loading ${vitalId} history:`, error);
@@ -431,23 +521,218 @@ function createVitalChart(vitalId, readings, vital) {
         const date = new Date(r.timestamp);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
-    const values = sortedReadings.map(r => r.value);
+    
+    let datasets = [];
+    
+    // Special handling for blood pressure
+    if (vitalId === 'bp') {
+        const systolicValues = [];
+        const diastolicValues = [];
+        
+        sortedReadings.forEach(r => {
+            const bpValue = r.value.toString();
+            if (bpValue.includes('/')) {
+                const [systolic, diastolic] = bpValue.split('/').map(v => parseFloat(v));
+                systolicValues.push(systolic);
+                diastolicValues.push(diastolic);
+            } else {
+                systolicValues.push(null);
+                diastolicValues.push(null);
+            }
+        });
+        
+        datasets = [
+            {
+                label: 'Systolic (Upper)',
+                data: systolicValues,
+                borderColor: '#ef4444',
+                backgroundColor: '#ef444420',
+                tension: 0.4,
+                fill: false,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointStyle: 'circle'
+            },
+            {
+                label: 'Diastolic (Lower)',
+                data: diastolicValues,
+                borderColor: '#3b82f6',
+                backgroundColor: '#3b82f620',
+                tension: 0.4,
+                fill: false,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointStyle: 'circle'
+            }
+        ];
+    } else {
+        const values = sortedReadings.map(r => r.value);
+        datasets = [{
+            label: vital.name,
+            data: values,
+            borderColor: vital.color,
+            backgroundColor: `${vital.color}20`,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+        }];
+    }
+    
+    // Configure y-axis based on vital type
+    let yAxisConfig = {
+        beginAtZero: false,
+        grid: {
+            color: '#e5e7eb'
+        }
+    };
+    
+    // Special configuration for heart rate, blood sugar, and blood pressure
+    if (vitalId === 'heartRate' || vitalId === 'bloodSugar' || vitalId === 'bp') {
+        yAxisConfig = {
+            min: 0,
+            max: 240,
+            ticks: {
+                stepSize: 40
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for blood oxygen
+    if (vitalId === 'oxygen') {
+        yAxisConfig = {
+            min: 70,
+            max: 100,
+            ticks: {
+                stepSize: 5
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for body temperature
+    if (vitalId === 'temp') {
+        yAxisConfig = {
+            min: 95,
+            max: 105,
+            ticks: {
+                stepSize: 2
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for weight
+    if (vitalId === 'weight') {
+        yAxisConfig = {
+            min: 0,
+            max: 200,
+            ticks: {
+                stepSize: 20
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for BMI
+    if (vitalId === 'bmi') {
+        yAxisConfig = {
+            min: 10,
+            max: 40,
+            ticks: {
+                stepSize: 5
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for steps
+    if (vitalId === 'steps') {
+        yAxisConfig = {
+            min: 0,
+            max: 20000,
+            ticks: {
+                stepSize: 5000
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for calories
+    if (vitalId === 'calories') {
+        yAxisConfig = {
+            min: 0,
+            max: 4500,
+            ticks: {
+                stepSize: 750
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for sleep
+    if (vitalId === 'sleep') {
+        yAxisConfig = {
+            min: 0,
+            max: 24,
+            ticks: {
+                stepSize: 4
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for respiratory rate
+    if (vitalId === 'respRate') {
+        yAxisConfig = {
+            min: 0,
+            max: 90,
+            ticks: {
+                stepSize: 15
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
+    
+    // Special configuration for hydration
+    if (vitalId === 'hydration') {
+        yAxisConfig = {
+            min: 0,
+            max: 6,
+            ticks: {
+                stepSize: 1
+            },
+            grid: {
+                color: '#e5e7eb'
+            }
+        };
+    }
     
     // Create chart
     vitalCharts[vitalId] = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [{
-                label: vital.name,
-                data: values,
-                borderColor: vital.color,
-                backgroundColor: `${vital.color}20`,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -459,21 +744,19 @@ function createVitalChart(vitalId, readings, vital) {
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     padding: 12,
-                    displayColors: false,
+                    displayColors: true,
                     callbacks: {
                         label: function(context) {
+                            if (vitalId === 'bp') {
+                                return `${context.dataset.label}: ${context.parsed.y} mmHg`;
+                            }
                             return `${context.parsed.y} ${vital.unit}`;
                         }
                     }
                 }
             },
             scales: {
-                y: {
-                    beginAtZero: false,
-                    grid: {
-                        color: '#e5e7eb'
-                    }
-                },
+                y: yAxisConfig,
                 x: {
                     grid: {
                         display: false
@@ -511,13 +794,31 @@ window.addVitalReading = async function(vitalId) {
     const vital = ALL_VITALS.find(v => v.id === vitalId);
     if (!vital) return;
     
-    const valueInput = document.getElementById(`input-${vitalId}`);
     const timeInput = document.getElementById(`time-${vitalId}`);
+    let value;
     
-    const value = parseFloat(valueInput.value);
-    if (isNaN(value)) {
-        alert('Please enter a valid value');
-        return;
+    // Handle blood pressure separately
+    if (vitalId === 'bp') {
+        const systolicInput = document.getElementById(`input-systolic-${vitalId}`);
+        const diastolicInput = document.getElementById(`input-diastolic-${vitalId}`);
+        
+        const systolic = parseFloat(systolicInput.value);
+        const diastolic = parseFloat(diastolicInput.value);
+        
+        if (isNaN(systolic) || isNaN(diastolic)) {
+            alert('Please enter valid systolic and diastolic values');
+            return;
+        }
+        
+        value = `${systolic}/${diastolic}`;
+    } else {
+        const valueInput = document.getElementById(`input-${vitalId}`);
+        value = parseFloat(valueInput.value);
+        
+        if (isNaN(value)) {
+            alert('Please enter a valid value');
+            return;
+        }
     }
     
     const timestamp = timeInput.value ? new Date(timeInput.value).toISOString() : new Date().toISOString();
@@ -536,8 +837,18 @@ window.addVitalReading = async function(vitalId) {
         
         if (response.ok) {
             // Clear inputs
-            valueInput.value = '';
-            timeInput.value = '';
+            if (vitalId === 'bp') {
+                document.getElementById(`input-systolic-${vitalId}`).value = '';
+                document.getElementById(`input-diastolic-${vitalId}`).value = '';
+            } else {
+                const valueInput = document.getElementById(`input-${vitalId}`);
+                valueInput.value = '';
+            }
+            
+            // Reset time to current time
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            timeInput.value = now.toISOString().slice(0, 16);
             
             // Reload history
             await loadVitalHistory(vitalId);
