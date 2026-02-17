@@ -6,7 +6,7 @@
 
 const CONFIG = {
     // Backend API Configuration (EDIT HERE TO CHANGE PORT)
-    API_BASE_URL: 'http://127.0.0.1:5000'
+    API_BASE_URL: 'http://127.0.0.1:5000',
     
     // API Endpoints
     ENDPOINTS: {
@@ -78,8 +78,5 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CONFIG, getApiUrl, getAuthHeaders };
 }
 
-// Export shorthand for direct access
+// Export shorthand for direct access (for browser script tags)
 const API_BASE_URL = CONFIG.API_BASE_URL;
-
-// ES6 module exports
-export { CONFIG, getApiUrl, getAuthHeaders, API_BASE_URL };

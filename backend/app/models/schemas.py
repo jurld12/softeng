@@ -2,7 +2,7 @@
 Pydantic models for request/response validation
 """
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from datetime import datetime
 from bson import ObjectId
 
@@ -199,6 +199,44 @@ class AchievementResponse(BaseModel):
     class Config:
         populate_by_name = True
         json_encoders = {ObjectId: str}
+
+
+# Appointment Schemas
+class AppointmentCreate(BaseModel):
+    """Create appointment request"""
+    title: str = Field(..., min_length=1, max_length=200)
+    type: Literal["checkup", "consultation", "followup", "lab", "vaccination", "dental", "other"]
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    time: str = Field(..., description="Time in HH:MM format")
+    doctor: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    reminder: bool = True
+
+
+class AppointmentUpdate(BaseModel):
+    """Update appointment request"""
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    type: Optional[Literal["checkup", "consultation", "followup", "lab", "vaccination", "dental", "other"]] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
+    doctor: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    reminder: Optional[bool] = None
+    status: Optional[Literal["upcoming", "completed", "cancelled"]] = None
+
+
+class AppointmentResponse(BaseModel):
+    """Appointment response"""
+    message: str
+    appointment: dict
+
+
+class AppointmentListResponse(BaseModel):
+    """List of appointments response"""
+    appointments: List[dict]
+    total: int
 
 
 # Admin Schemas

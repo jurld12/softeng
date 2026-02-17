@@ -1,9 +1,10 @@
 // Appointments & Calendar Management
 
 // Global state
-let currentDate = new Date(2026, 1, 11); // February 11, 2026 (matching the screenshot date)
-let selectedDate = new Date(2026, 1, 11);
+let currentDate = new Date(); // Current date
+let selectedDate = new Date(); // Start with today selected
 let appointments = [];
+let editingAppointmentId = null; // Track if we're editing
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -56,9 +57,8 @@ function updateUserDisplay(user) {
     document.getElementById('sidebarUserEmail').textContent = email;
     
     const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`;
-    document.getElementById('topbarUserAvatar').src = avatarUrl;
     
-    // Update sidebar avatar too
+    // Update sidebar avatar
     const sidebarAvatar = document.querySelector('.sidebar-user img');
     if (sidebarAvatar) {
         sidebarAvatar.src = avatarUrl;
@@ -67,70 +67,42 @@ function updateUserDisplay(user) {
 
 // Load appointments from API
 async function loadAppointments() {
+    console.log('Loading appointments from:', `${API_BASE_URL}/appointments`);
+    
     try {
         const token = localStorage.getItem('healio_access_token');
+        console.log('Token exists:', !!token);
+        
         const response = await fetch(`${API_BASE_URL}/appointments`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
+        
+        console.log('Load appointments response status:', response.status);
 
         if (response.ok) {
             const data = await response.json();
             appointments = data.appointments || [];
+            console.log('Loaded appointments:', appointments.length);
+        } else if (response.status === 401) {
+            // Unauthorized - redirect to login
+            window.location.href = '/frontend/login-v2.html';
+            return;
         } else {
-            // If endpoint doesn't exist yet, use sample data
-            appointments = getSampleAppointments();
+            throw new Error(`Failed to load appointments: ${response.status}`);
         }
     } catch (error) {
         console.error('Error loading appointments:', error);
-        // Use sample data for now
-        appointments = getSampleAppointments();
+        showNotification('Failed to load appointments', 'danger');
+        appointments = [];
     }
     
     // Update the UI after loading appointments
     displayAppointmentsForDate(selectedDate);
     updateAppointmentsTable();
-}
-
-// Sample appointments for testing
-function getSampleAppointments() {
-    return [
-        {
-            id: '1',
-            title: 'Annual Physical Checkup',
-            type: 'checkup',
-            date: '2026-02-15',
-            time: '10:00',
-            doctor: 'Dr. Sarah Williams',
-            location: 'City Medical Center',
-            status: 'upcoming',
-            notes: 'Bring previous test results'
-        },
-        {
-            id: '2',
-            title: 'Dental Cleaning',
-            type: 'dental',
-            date: '2026-02-20',
-            time: '14:30',
-            doctor: 'Dr. Michael Chen',
-            location: 'Smile Dental Clinic',
-            status: 'upcoming',
-            notes: ''
-        },
-        {
-            id: '3',
-            title: 'Blood Test',
-            type: 'lab',
-            date: '2026-02-10',
-            time: '08:00',
-            doctor: 'Lab Technician',
-            location: 'HealthCare Labs',
-            status: 'completed',
-            notes: 'Fasting required'
-        }
-    ];
+    updateStats();
 }
 
 // Render calendar
@@ -270,7 +242,7 @@ function createAppointmentCard(appointment) {
             <div class="appointment-time">
                 <i class="bi bi-clock me-1"></i>${appointment.time}
             </div>
-            <span class="appointment-type-badge ${appointment.type}">${appointment.type}</span>
+            <span class="appointment-type-badge ${appointment.type}">${appointment.type.charAt(0).toUpperCase() + appointment.type.slice(1)}</span>
         </div>
         <div class="appointment-title">${appointment.title}</div>
         ${appointment.doctor ? `
@@ -335,12 +307,12 @@ function updateAppointmentsTable() {
                     <div class="small text-muted">${apt.time}</div>
                 </td>
                 <td>${apt.title}</td>
-                <td><span class="appointment-type-badge ${apt.type}">${apt.type}</span></td>
+                <td><span class="appointment-type-badge ${apt.type}">${apt.type.charAt(0).toUpperCase() + apt.type.slice(1)}</span></td>
                 <td>
                     <div>${apt.doctor || '-'}</div>
                     <div class="small text-muted">${apt.location || '-'}</div>
                 </td>
-                <td><span class="status-badge ${apt.status}">${apt.status}</span></td>
+                <td><span class="status-badge ${apt.status}">${apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}</span></td>
                 <td>
                     <button class="action-btn" onclick="editAppointment('${apt.id}')">
                         <i class="bi bi-pencil"></i>
@@ -388,79 +360,155 @@ function setupEventListeners() {
         renderCalendar();
     });
     
-    // Save appointment
-    document.getElementById('saveAppointment').addEventListener('click', saveAppointment);
+    // Save appointment button
+    document.getElementById('saveAppointment').addEventListener('click', handleSaveAppointment);
     
     // View all button
     document.getElementById('viewAllBtn').addEventListener('click', () => {
         document.getElementById('appointmentsTable').scrollIntoView({ behavior: 'smooth' });
     });
+    
+    // Reset form when modal is closed
+    const appointmentModal = document.getElementById('addAppointmentModal');
+    appointmentModal.addEventListener('hidden.bs.modal', () => {
+        document.getElementById('appointmentForm').reset();
+        editingAppointmentId = null;
+        document.getElementById('saveAppointment').textContent = 'Save Appointment';
+    });
+}
+
+// Handle save/update based on mode
+async function handleSaveAppointment() {
+    if (editingAppointmentId) {
+        await updateAppointment(editingAppointmentId);
+    } else {
+        await saveAppointment();
+    }
 }
 
 // Save appointment
 async function saveAppointment() {
+    console.log('=== SAVE APPOINTMENT STARTED ===');
     const form = document.getElementById('appointmentForm');
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
     
-    const appointment = {
-        id: Date.now().toString(),
+    const appointmentData = {
         title: document.getElementById('appointmentTitle').value,
         type: document.getElementById('appointmentType').value,
         date: document.getElementById('appointmentDate').value,
         time: document.getElementById('appointmentTime').value,
-        doctor: document.getElementById('appointmentDoctor').value,
-        location: document.getElementById('appointmentLocation').value,
-        notes: document.getElementById('appointmentNotes').value,
-        reminder: document.getElementById('appointmentReminder').checked,
-        status: 'upcoming'
+        doctor: document.getElementById('appointmentDoctor').value || null,
+        location: document.getElementById('appointmentLocation').value || null,
+        notes: document.getElementById('appointmentNotes').value || null,
+        reminder: document.getElementById('appointmentReminder').checked
     };
+    
+    console.log('Appointment data:', appointmentData);
     
     try {
         const token = localStorage.getItem('healio_access_token');
+        console.log('Token exists:', !!token);
+        
+        console.log('Sending POST request to:', `${API_BASE_URL}/appointments`);
         const response = await fetch(`${API_BASE_URL}/appointments`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(appointment)
+            body: JSON.stringify(appointmentData)
         });
         
+        console.log('Response received. Status:', response.status);
+        
         if (response.ok) {
+            console.log('Response is OK, parsing JSON...');
             const data = await response.json();
+            console.log('Parsed response data:', data);
+            
+            if (!data.appointment) {
+                console.error('ERROR: No appointment in response');
+                showNotification('Server error: Invalid response format', 'danger');
+                return;
+            }
+            
+            console.log('Adding appointment to local array...');
             appointments.push(data.appointment);
+            console.log('Total appointments now:', appointments.length);
+            
+            console.log('Rendering calendar...');
+            renderCalendar();
+            console.log('Calendar rendered');
+            
+            console.log('Displaying appointments for selected date...');
+            displayAppointmentsForDate(selectedDate);
+            console.log('Appointments displayed');
+            
+            console.log('Updating appointments table...');
+            updateAppointmentsTable();
+            console.log('Table updated');
+            
+            console.log('Updating stats...');
+            updateStats();
+            console.log('Stats updated');
+            
+            console.log('Showing success notification...');
+            showNotification('Appointment added successfully!', 'success');
+            console.log('Notification shown');
+            
+            console.log('Closing modal...');
+            const modalElement = document.getElementById('addAppointmentModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                console.log('Modal instance found, hiding...');
+                modal.hide();
+            } else {
+                console.log('No modal instance, creating new one...');
+                const newModal = new bootstrap.Modal(modalElement);
+                newModal.hide();
+            }
+            console.log('Modal closed');
+            
+            console.log('Resetting form...');
+            form.reset();
+            console.log('Form reset');
+            
+            console.log('=== SAVE APPOINTMENT COMPLETED SUCCESSFULLY ===');
+            return;
+            
+        } else if (response.status === 401) {
+            console.log('Unauthorized, redirecting to login...');
+            window.location.href = '/frontend/login-v2.html';
+            return;
         } else {
-            // If endpoint doesn't exist, just add locally
-            appointments.push(appointment);
+            console.log('Response not OK, parsing error...');
+            const errorData = await response.json();
+            console.error('Server error data:', errorData);
+            const errorMsg = errorData.detail || errorData.message || 'Failed to create appointment';
+            showNotification(errorMsg, 'danger');
+            return;
         }
     } catch (error) {
-        console.error('Error saving appointment:', error);
-        // Add locally anyway
-        appointments.push(appointment);
+        console.error('=== CAUGHT ERROR ===');
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Full error object:', error);
+        
+        showNotification('Failed to create appointment: ' + error.message, 'danger');
     }
-    
-    // Update UI
-    renderCalendar();
-    displayAppointmentsForDate(selectedDate);
-    updateAppointmentsTable();
-    updateStats();
-    
-    // Close modal and reset form
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal'));
-    modal.hide();
-    form.reset();
-    
-    // Show success message
-    showNotification('Appointment added successfully!', 'success');
 }
 
 // Edit appointment
 function editAppointment(id) {
     const appointment = appointments.find(apt => apt.id === id);
     if (!appointment) return;
+    
+    // Set editing mode
+    editingAppointmentId = id;
     
     // Populate form
     document.getElementById('appointmentTitle').value = appointment.title;
@@ -472,56 +520,117 @@ function editAppointment(id) {
     document.getElementById('appointmentNotes').value = appointment.notes || '';
     document.getElementById('appointmentReminder').checked = appointment.reminder !== false;
     
+    // Change button text
+    document.getElementById('saveAppointment').textContent = 'Update Appointment';
+    
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('addAppointmentModal'));
     modal.show();
-    
-    // Change save button to update
-    const saveBtn = document.getElementById('saveAppointment');
-    saveBtn.textContent = 'Update Appointment';
-    saveBtn.onclick = () => updateAppointment(id);
 }
 
 // Update appointment
 async function updateAppointment(id) {
+    console.log('=== UPDATE APPOINTMENT STARTED ===');
+    console.log('Updating appointment ID:', id);
+    
     const form = document.getElementById('appointmentForm');
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
     
-    const index = appointments.findIndex(apt => apt.id === id);
-    if (index === -1) return;
-    
-    appointments[index] = {
-        ...appointments[index],
+    const updateData = {
         title: document.getElementById('appointmentTitle').value,
         type: document.getElementById('appointmentType').value,
         date: document.getElementById('appointmentDate').value,
         time: document.getElementById('appointmentTime').value,
-        doctor: document.getElementById('appointmentDoctor').value,
-        location: document.getElementById('appointmentLocation').value,
-        notes: document.getElementById('appointmentNotes').value,
+        doctor: document.getElementById('appointmentDoctor').value || null,
+        location: document.getElementById('appointmentLocation').value || null,
+        notes: document.getElementById('appointmentNotes').value || null,
         reminder: document.getElementById('appointmentReminder').checked
     };
     
-    // Update UI
-    renderCalendar();
-    displayAppointmentsForDate(selectedDate);
-    updateAppointmentsTable();
-    updateStats();
+    console.log('Update data:', updateData);
     
-    // Close modal and reset
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal'));
-    modal.hide();
-    form.reset();
-    
-    // Reset save button
-    const saveBtn = document.getElementById('saveAppointment');
-    saveBtn.textContent = 'Save Appointment';
-    saveBtn.onclick = saveAppointment;
-    
-    showNotification('Appointment updated successfully!', 'success');
+    try {
+        const token = localStorage.getItem('healio_access_token');
+        console.log('Sending PUT request to:', `${API_BASE_URL}/appointments/${id}`);
+        
+        const response = await fetch(`${API_BASE_URL}/appointments/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        console.log('Response received. Status:', response.status);
+        
+        if (response.ok) {
+            console.log('Response is OK, parsing JSON...');
+            const data = await response.json();
+            console.log('Parsed response data:', data);
+            
+            console.log('Updating local appointment array...');
+            const index = appointments.findIndex(apt => apt.id === id);
+            console.log('Found appointment at index:', index);
+            if (index !== -1) {
+                appointments[index] = data.appointment;
+            }
+            
+            console.log('Rendering calendar...');
+            renderCalendar();
+            
+            console.log('Displaying appointments for selected date...');
+            displayAppointmentsForDate(selectedDate);
+            
+            console.log('Updating appointments table...');
+            updateAppointmentsTable();
+            
+            console.log('Updating stats...');
+            updateStats();
+            
+            console.log('Showing success notification...');
+            showNotification('Appointment updated successfully!', 'success');
+            
+            console.log('Closing modal...');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            console.log('Resetting form...');
+            form.reset();
+            
+            console.log('Resetting editing mode...');
+            editingAppointmentId = null;
+            document.getElementById('saveAppointment').textContent = 'Save Appointment';
+            
+            console.log('=== UPDATE APPOINTMENT COMPLETED SUCCESSFULLY ===');
+            return;
+            
+        } else if (response.status === 401) {
+            console.log('Unauthorized, redirecting to login...');
+            window.location.href = '/frontend/login-v2.html';
+            return;
+        } else {
+            console.log('Response not OK, parsing error...');
+            const errorData = await response.json();
+            console.error('Server error data:', errorData);
+            const errorMsg = errorData.detail || errorData.message || 'Failed to update appointment';
+            showNotification(errorMsg, 'danger');
+            return;
+        }
+    } catch (error) {
+        console.error('=== CAUGHT ERROR ===');
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Full error object:', error);
+        
+        showNotification('Failed to update appointment: ' + error.message, 'danger');
+    }
 }
 
 // Delete appointment
@@ -530,17 +639,41 @@ async function deleteAppointment(id) {
         return;
     }
     
-    const index = appointments.findIndex(apt => apt.id === id);
-    if (index !== -1) {
-        appointments.splice(index, 1);
+    try {
+        const token = localStorage.getItem('healio_access_token');
+        const response = await fetch(`${API_BASE_URL}/appointments/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
         
-        // Update UI
-        renderCalendar();
-        displayAppointmentsForDate(selectedDate);
-        updateAppointmentsTable();
-        updateStats();
-        
-        showNotification('Appointment deleted successfully!', 'success');
+        if (response.ok) {
+            const index = appointments.findIndex(apt => apt.id === id);
+            if (index !== -1) {
+                appointments.splice(index, 1);
+            }
+            
+            // Update UI
+            renderCalendar();
+            displayAppointmentsForDate(selectedDate);
+            updateAppointmentsTable();
+            updateStats();
+            
+            showNotification('Appointment deleted successfully!', 'success');
+        } else if (response.status === 401) {
+            window.location.href = '/frontend/login-v2.html';
+            return;
+        } else {
+            const errorData = await response.json();
+            const errorMsg = errorData.detail || errorData.message || 'Failed to delete appointment';
+            console.error('Server error:', errorData);
+            throw new Error(errorMsg);
+        }
+    } catch (error) {
+        console.error('Error deleting appointment:', error);
+        showNotification(error.message || 'Failed to delete appointment', 'danger');
     }
 }
 

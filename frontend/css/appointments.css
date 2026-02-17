@@ -152,7 +152,6 @@
     border-radius: var(--healio-radius-full);
     font-size: var(--healio-font-size-xs);
     font-weight: var(--healio-font-semibold);
-    text-transform: capitalize;
     letter-spacing: 0.5px;
 }
 
@@ -256,7 +255,6 @@
     border-radius: var(--healio-radius-full);
     font-size: var(--healio-font-size-xs);
     font-weight: var(--healio-font-semibold);
-    text-transform: capitalize;
 }
 
 .status-badge.upcoming {
