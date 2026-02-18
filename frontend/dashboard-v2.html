@@ -528,34 +528,14 @@
 
                     <!-- Appointments Section -->
                     <div class="section-card">
-                        <h2 class="section-title mb-4">Upcoming Appointments</h2>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="section-title mb-0">Upcoming Appointments</h2>
+                            <a href="appointments.html" class="text-healio-primary text-decoration-none fw-semibold">See All 📅</a>
+                        </div>
                         
-                        <div class="d-flex flex-column gap-3">
-                            <div class="appointment-item d-flex align-items-center gap-3">
-                                <div class="doctor-avatar">DB</div>
-                                <div class="flex-grow-1">
-                                    <h3 class="h6 mb-1 fw-semibold">Dr. Benjamin III</h3>
-                                    <p class="text-muted small mb-0">7 Oct 2021 🕐 08:00 - 10:00 AM</p>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary">Reschedule</button>
-                            </div>
-
-                            <div class="appointment-item d-flex align-items-center gap-3">
-                                <div class="doctor-avatar">SW</div>
-                                <div class="flex-grow-1">
-                                    <h3 class="h6 mb-1 fw-semibold">Dr. Sarah Williams</h3>
-                                    <p class="text-muted small mb-0">8 Oct 2021 🕐 2:00 - 4:00 PM</p>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary">Reschedule</button>
-                            </div>
-
-                            <div class="appointment-item d-flex align-items-center gap-3">
-                                <div class="doctor-avatar">MC</div>
-                                <div class="flex-grow-1">
-                                    <h3 class="h6 mb-1 fw-semibold">Dr. Michael Chen</h3>
-                                    <p class="text-muted small mb-0">9 Oct 2021 🕐 10:00 AM - 12:00 PM</p>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary">Reschedule</button>
+                        <div id="dashboardAppointmentsList" class="d-flex flex-column gap-3">
+                            <div class="text-center text-muted py-3">
+                                <p>Loading appointments...</p>
                             </div>
                         </div>
                     </div>

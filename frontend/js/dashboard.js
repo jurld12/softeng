@@ -644,6 +644,22 @@ async function initializeDashboard() {
             console.error('Medications load failed, but continuing:', medError);
         }
         
+        // Load appointments (don't let it fail the whole dashboard)
+        try {
+            await loadAppointments();
+        } catch (apptError) {
+            console.error('Appointments load failed, but continuing:', apptError);
+            const container = document.getElementById('dashboardAppointmentsList');
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center text-danger py-4">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                        <p class="mb-0 mt-2">Failed to load appointments</p>
+                    </div>
+                `;
+            }
+        }
+        
         console.log('Dashboard initialized successfully');
     } catch (error) {
         console.error('Failed to initialize dashboard:', error);
@@ -751,6 +767,113 @@ function applyVitalPreferences() {
         console.error('Error applying vital preferences:', error);
         // If there's an error, just show all vitals
     }
+}
+
+// ==================== Load Appointments ====================
+async function loadAppointments() {
+    const appointmentsList = document.getElementById('dashboardAppointmentsList');
+    if (!appointmentsList) {
+        console.error('Appointments list element not found');
+        return;
+    }
+    
+    try {
+        console.log('Fetching appointments from:', `${API_BASE_URL}/appointments`);
+        const response = await fetch(`${API_BASE_URL}/appointments`, {
+            headers: getAuthHeaders()
+        });
+        
+        console.log('Appointments response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Appointments API error:', errorText);
+            throw new Error('Failed to load appointments');
+        }
+        
+        const data = await response.json();
+        console.log('Appointments loaded:', data);
+        
+        displayAppointments(data.appointments || []);
+    } catch (error) {
+        console.error('Error loading appointments:', error);
+        if (appointmentsList) {
+            appointmentsList.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <p>Unable to load appointments</p>
+                    <a href="appointments.html" class="btn btn-sm btn-primary">Go to Appointments Page</a>
+                </div>
+            `;
+        }
+    }
+}
+
+// ==================== Display Appointments ====================
+function displayAppointments(appointments) {
+    const appointmentsList = document.getElementById('dashboardAppointmentsList');
+    if (!appointmentsList) return;
+    
+    // Filter for upcoming appointments only
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const upcomingAppointments = appointments
+        .filter(apt => {
+            const aptDate = new Date(apt.date);
+            return aptDate >= today && apt.status === 'upcoming';
+        })
+        .sort((a, b) => {
+            const dateA = new Date(`${a.date}T${a.time}`);
+            const dateB = new Date(`${b.date}T${b.time}`);
+            return dateA - dateB;
+        })
+        .slice(0, 3); // Show only next 3 appointments
+    
+    // Display appointments
+    if (upcomingAppointments.length === 0) {
+        appointmentsList.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <p>No upcoming appointments</p>
+                <a href="appointments.html" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>Schedule Appointment
+                </a>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show up to 3 appointments on dashboard
+    appointmentsList.innerHTML = upcomingAppointments.map(apt => {
+        const date = new Date(apt.date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+        
+        // Get initials for avatar
+        const initials = apt.doctor 
+            ? apt.doctor.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            : apt.type[0].toUpperCase();
+        
+        const typeCapitalized = apt.type.charAt(0).toUpperCase() + apt.type.slice(1);
+        
+        return `
+            <div class="appointment-item d-flex align-items-center gap-3">
+                <div class="doctor-avatar">${initials}</div>
+                <div class="flex-grow-1">
+                    <h3 class="h6 mb-1 fw-semibold">${escapeHtml(apt.title)}</h3>
+                    <p class="text-muted small mb-0">
+                        ${formattedDate} 🕐 ${apt.time}
+                        ${apt.doctor ? `• ${escapeHtml(apt.doctor)}` : `• ${typeCapitalized}`}
+                    </p>
+                </div>
+                <a href="appointments.html" class="btn btn-sm btn-light" title="View details">
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        `;
+    }).join('');
 }
 
 // ==================== Start Application ====================
