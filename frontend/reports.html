@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Reports - Healio</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/dashboard-bootstrap.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-icon bg-gradient-primary">
+                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Healio</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard-v2.html" class="nav-item-custom">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="vitals.html" class="nav-item-custom">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Vitals</span>
+            </a>
+            <a href="appointments.html" class="nav-item-custom">
+                <i class="bi bi-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="reports.html" class="nav-item-custom active">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Reports</span>
+            </a>
+            <a href="medications.html" class="nav-item-custom">
+                <i class="bi bi-capsule"></i>
+                <span>Medications</span>
+            </a>
+            <a href="settings.html" class="nav-item-custom">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="d-flex align-items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff" alt="Profile" class="rounded-circle" width="40" height="40" id="sidebarUserAvatar">
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark small" id="sidebarUserName">User</div>
+                    <div class="text-muted" style="font-size: 12px;" id="sidebarUserEmail">user@example.com</div>
+                </div>
+                <button class="btn btn-sm btn-light" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="greeting-title mb-1">Health Reports 📊</h1>
+                        <p class="greeting-subtitle mb-0">Comprehensive health summary and analytics</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn-icon">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge">2</span>
+                        </button>
+                        <a href="settings.html" class="btn-icon">
+                            <i class="bi bi-gear"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="container-fluid px-4 pb-4">
+            <!-- Patient Summary Card -->
+            <div class="section-card mb-4">
+                <div class="row align-items-start">
+                    <div class="col-auto">
+                        <div class="patient-avatar-large">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h2 class="h3 mb-2" id="patientName">Loading...</h2>
+                                <div class="text-muted" id="patientInfo">
+                                    <span id="patientAge">-- years old</span>
+                                    <span class="mx-2">•</span>
+                                    <span id="patientGender">--</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Blood Type: <span id="patientBloodType">--</span></span>
+                                </div>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success">Active Patient</span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row g-4">
+                            <!-- Physical Measurements -->
+                            <div class="col-md-4">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-rulers me-2"></i>Physical Measurements
+                                </h6>
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Height:</span>
+                                        <span class="fw-medium" id="patientHeight">-- cm</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Weight:</span>
+                                        <span class="fw-medium" id="patientWeight">-- kg</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">BMI:</span>
+                                        <span class="fw-medium" id="patientBMI">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Medical Information -->
+                            <div class="col-md-4">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-heart-pulse me-2"></i>Medical Information
+                                </h6>
+                                <div class="mb-3">
+                                    <span class="text-muted d-block mb-2 small">Allergies:</span>
+                                    <div id="patientAllergies" class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-danger-subtle text-danger border border-danger">None</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-muted d-block mb-2 small">Conditions:</span>
+                                    <div id="patientConditions" class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-secondary-subtle text-secondary">None</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current Medications -->
+                            <div class="col-md-4">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-capsule me-2"></i>Current Medications
+                                </h6>
+                                <div id="patientMedications" class="d-flex flex-column gap-2">
+                                    <p class="text-muted small mb-0">Loading medications...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Vital Signs -->
+            <div class="section-card mb-4">
+                <h3 class="section-title mb-4">Current Vital Signs</h3>
+                <div class="row g-3" id="currentVitals">
+                    <!-- Vitals will be loaded dynamically -->
+                    <div class="col text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7-Day Activity Summary -->
+            <div class="section-card mb-4">
+                <h3 class="section-title mb-4">7-Day Activity Summary</h3>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="stat-card text-center">
+                            <i class="bi bi-activity stat-icon text-primary"></i>
+                            <h4 class="stat-value" id="avgSteps">--</h4>
+                            <p class="stat-label">Average Steps</p>
+                            <span class="stat-sublabel">steps/day</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card text-center">
+                            <i class="bi bi-moon-stars stat-icon text-info"></i>
+                            <h4 class="stat-value" id="avgSleep">--</h4>
+                            <p class="stat-label">Average Sleep</p>
+                            <span class="stat-sublabel">hours/night</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card text-center">
+                            <i class="bi bi-fire stat-icon text-warning"></i>
+                            <h4 class="stat-value" id="avgCalories">--</h4>
+                            <p class="stat-label">Average Calories</p>
+                            <span class="stat-sublabel">kcal/day</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card text-center">
+                            <i class="bi bi-droplet stat-icon text-primary"></i>
+                            <h4 class="stat-value" id="avgWater">--</h4>
+                            <p class="stat-label">Average Water</p>
+                            <span class="stat-sublabel">liters/day</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vitals Trend Chart -->
+            <div class="section-card mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">Vitals Trend (7 Days)</h3>
+                    <button class="btn btn-sm btn-primary" onclick="downloadReport()">
+                        <i class="bi bi-download me-2"></i>Download Report
+                    </button>
+                </div>
+                <div style="position: relative; height: 400px;">
+                    <canvas id="vitalsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Health Insights -->
+            <div class="section-card">
+                <h3 class="section-title mb-4">Health Insights</h3>
+                <div id="healthInsights" class="d-flex flex-column gap-3">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Loading health insights...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+</html>
