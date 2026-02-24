@@ -239,6 +239,52 @@ class AppointmentListResponse(BaseModel):
     total: int
 
 
+# Reminder Schemas
+class ReminderHistoryEntry(BaseModel):
+    """Single reminder completion history entry"""
+    date: str  # YYYY-MM-DD format
+    completed: bool
+
+
+class ReminderCreate(BaseModel):
+    """Create reminder request"""
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = None
+    time: str = Field(..., description="Time in HH:MM format")
+    frequency: Literal["daily", "weekly", "monthly", "as-needed"]
+    category: Literal["medication", "exercise", "measurement", "appointment", "other"]
+    active: bool = True
+
+
+class ReminderUpdate(BaseModel):
+    """Update reminder request"""
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = None
+    time: Optional[str] = None
+    frequency: Optional[Literal["daily", "weekly", "monthly", "as-needed"]] = None
+    category: Optional[Literal["medication", "exercise", "measurement", "appointment", "other"]] = None
+    active: Optional[bool] = None
+
+
+class ReminderResponse(BaseModel):
+    """Reminder response"""
+    id: str = Field(alias="_id")
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    time: str
+    frequency: str
+    category: str
+    active: bool
+    history: List[ReminderHistoryEntry] = []
+    created_at: datetime
+    
+    class Config:
+        populate_by_name = True
+        from_attributes = True
+        json_encoders = {ObjectId: str}
+
+
 # Admin Schemas
 class UserUpdateRequest(BaseModel):
     """Admin user update request"""

@@ -226,3 +226,24 @@ body {
     outline: 2px solid var(--healio-primary);
     outline-offset: 2px;
 }
+
+/* Reminder Card Styles */
+.section-card.border-success {
+    border-left: 4px solid var(--healio-success) !important;
+    background-color: rgba(16, 185, 129, 0.02);
+}
+
+.form-check-input:checked {
+    background-color: var(--healio-success);
+    border-color: var(--healio-success);
+}
+
+.form-check-input:focus {
+    border-color: var(--healio-primary);
+    box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.25);
+}
+
+.section-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+}

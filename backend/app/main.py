@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from config import settings
 from app.database import Database
-from app.api.routes import auth, patients, doctors, admin, medications, appointments
+from app.api.routes import auth, patients, doctors, admin, medications, appointments, reminders
 
 
 @asynccontextmanager
@@ -89,6 +89,7 @@ app.include_router(doctors.router, prefix="/doctor", tags=["Doctors"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(medications.router, prefix="/patients", tags=["Medications"])
 app.include_router(appointments.router, prefix="/appointments", tags=["Appointments"])
+app.include_router(reminders.router, prefix="/patients", tags=["Reminders"])
 
 
 if __name__ == "__main__":
