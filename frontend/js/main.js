@@ -2,9 +2,59 @@
  * Healio Frontend - Main JavaScript
  */
 
+/**
+ * Update notification badge with active reminder count
+ */
+window.updateNotificationBadge = async function() {
+    const badge = document.querySelector('.notification-badge');
+    if (!badge) return; // No badge on this page
+    
+    const token = localStorage.getItem('healio_access_token');
+    if (!token) {
+        badge.style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/patients/me/reminders`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            badge.style.display = 'none';
+            return;
+        }
+        
+        const reminders = await response.json();
+        
+        // Count active reminders that are not completed today
+        const today = new Date().toISOString().split('T')[0];
+        const activeReminders = reminders.filter(r => {
+            if (!r.active) return false;
+            
+            // Check if not completed today
+            const todayHistory = r.history?.find(h => h.date === today);
+            return !todayHistory?.completed;
+        });
+        
+        const count = activeReminders.length;
+        
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error updating notification badge:', error);
+        badge.style.display = 'none';
+    }
+};
+
 // Check backend connection on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await checkBackendStatus();
+    await window.updateNotificationBadge();
 });
 
 /**

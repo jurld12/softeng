@@ -250,6 +250,11 @@ async function toggleReminder(id) {
         
         // Reload reminders
         await loadReminders();
+        
+        // Update notification badge
+        if (typeof window.updateNotificationBadge === 'function') {
+            window.updateNotificationBadge();
+        }
     } catch (error) {
         console.error('Error toggling reminder:', error);
         showError('Failed to toggle reminder');
@@ -302,6 +307,11 @@ async function saveReminder() {
         
         // Reload reminders
         await loadReminders();
+        
+        // Update notification badge
+        if (typeof window.updateNotificationBadge === 'function') {
+            window.updateNotificationBadge();
+        }
         
         const modal = bootstrap.Modal.getInstance(document.getElementById('addReminderModal'));
         modal.hide();
@@ -365,6 +375,11 @@ async function toggleTodayCompletion(reminderId, isCompleted) {
             // Re-render without full reload
             displayActiveReminders();
             displayInactiveReminders();
+            
+            // Update notification badge
+            if (typeof window.updateNotificationBadge === 'function') {
+                window.updateNotificationBadge();
+            }
         }
     } catch (error) {
         console.error('Error updating completion:', error);

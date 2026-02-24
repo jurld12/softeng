@@ -1,33 +1,3 @@
-// API Configuration
-const API_BASE_URL = 'http://127.0.0.1:5000';
-
-const CONFIG = {
-    STORAGE_KEYS: {
-        ACCESS_TOKEN: 'healio_access_token',
-        USER_ROLE: 'healio_user_role',
-        USER_ID: 'healio_user_id',
-        USER_NAME: 'healio_user_name'
-    },
-    ENDPOINTS: {
-        LOGOUT: '/auth/logout',
-        PATIENT_DASHBOARD: '/patients/me/dashboard',
-        PATIENT_BIOMETRICS: '/patients/me/biometrics',
-        PATIENT_MEDICATIONS: '/patients/me/medications'
-    }
-};
-
-function getApiUrl(endpoint) {
-    return API_BASE_URL + endpoint;
-}
-
-function getAuthHeaders() {
-    const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-    };
-}
-
 // ==================== Authentication Check ====================
 function checkAuthentication() {
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);

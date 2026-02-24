@@ -21,6 +21,7 @@ const CONFIG = {
         PATIENT_BIOMETRICS: '/patients/me/biometrics',
         PATIENT_ALERTS: '/patients/me/alerts',
         PATIENT_ACHIEVEMENTS: '/patients/me/achievements',
+        PATIENT_MEDICATIONS: '/patients/me/medications',
         
         // Doctor
         DOCTOR_PATIENTS: '/doctor/patients',
@@ -55,7 +56,8 @@ const CONFIG = {
         ACCESS_TOKEN: 'healio_access_token',
         USER_ROLE: 'healio_user_role',
         USER_ID: 'healio_user_id',
-        USER_NAME: 'healio_user_name'
+        USER_NAME: 'healio_user_name',
+        NOTIFICATION_PREFS: 'healio_notification_prefs'
     }
 };
 
