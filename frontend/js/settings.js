@@ -251,6 +251,66 @@ async function deleteAccount() {
     }
 }
 
+// Show export modal
+function showExportModal() {
+    const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+    document.getElementById('exportStatus').className = 'd-none';
+    document.getElementById('exportBtn').disabled = false;
+    document.getElementById('exportBtn').innerHTML = '<i class="bi bi-download me-2"></i>Export';
+    modal.show();
+}
+
+// Trigger export from modal
+async function triggerExport() {
+    const format = document.querySelector('input[name="exportFormat"]:checked').value;
+    const fromDate = document.getElementById('exportFromDate').value;
+    const toDate = document.getElementById('exportToDate').value;
+
+    const btn = document.getElementById('exportBtn');
+    const status = document.getElementById('exportStatus');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Exporting...';
+    status.className = 'd-none';
+
+    try {
+        let url = `${API_BASE_URL}/patients/me/export?format=${format}`;
+        if (fromDate) url += `&from_date=${fromDate}T00:00:00`;
+        if (toDate) url += `&to_date=${toDate}T23:59:59`;
+
+        const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: 'Export failed' }));
+            throw new Error(err.detail || 'Export failed');
+        }
+
+        const blob = await response.blob();
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const filenameMatch = disposition.match(/filename=([^;]+)/);
+        const filename = filenameMatch ? filenameMatch[1] : `healio_export.${format}`;
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+        showSuccess(`Health data exported as ${format.toUpperCase()} successfully!`);
+    } catch (error) {
+        console.error('Export error:', error);
+        status.className = 'alert alert-danger small';
+        status.textContent = error.message || 'Export failed. Please try again.';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-download me-2"></i>Export';
+    }
+}
+
 // Logout function
 function logout() {
     localStorage.clear();
