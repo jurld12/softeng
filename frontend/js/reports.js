@@ -21,7 +21,7 @@ async function loadUserData() {
             return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/patients/me`, {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -55,7 +55,7 @@ function updateUserDisplay(user) {
 async function loadPatientSummary() {
     try {
         const token = localStorage.getItem('healio_access_token');
-        const response = await fetch(`${API_BASE_URL}/patients/me`, {
+        const response = await fetch(`${API_BASE_URL}${CONFIG.ENDPOINTS.PATIENT_PROFILE}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -73,24 +73,25 @@ async function loadPatientSummary() {
 
 // Display patient summary
 function displayPatientSummary(patient) {
+    const profile = patient.profile || {};
     const name = patient.full_name || patient.name || `${patient.first_name || ''} ${patient.last_name || ''}`.trim();
-    const age = patient.age || patient.date_of_birth ? calculateAge(patient.date_of_birth) : '--';
-    const gender = patient.gender || '--';
-    const bloodType = patient.blood_type || '--';
+    const age = profile.date_of_birth ? calculateAge(profile.date_of_birth) : '-- years old';
+    const gender = profile.gender ? `${profile.gender.charAt(0).toUpperCase()}${profile.gender.slice(1)}` : '--';
+    const bloodType = profile.blood_type || '--';
     
     document.getElementById('patientName').textContent = name;
     document.getElementById('patientAge').textContent = age;
-    document.getElementById('patientGender').textContent = gender.charAt(0).toUpperCase() + gender.slice(1);
+    document.getElementById('patientGender').textContent = gender;
     document.getElementById('patientBloodType').textContent = bloodType;
     
     // Physical measurements
-    document.getElementById('patientHeight').textContent = patient.height ? `${patient.height} cm` : '-- cm';
-    document.getElementById('patientWeight').textContent = patient.weight ? `${patient.weight} kg` : '-- kg';
+    document.getElementById('patientHeight').textContent = profile.height ? `${profile.height} cm` : '-- cm';
+    document.getElementById('patientWeight').textContent = profile.weight ? `${profile.weight} kg` : '-- kg';
     
     // Calculate BMI if both height and weight are available
-    if (patient.height && patient.weight) {
-        const heightInMeters = patient.height / 100;
-        const bmi = (patient.weight / (heightInMeters * heightInMeters)).toFixed(1);
+    if (profile.height && profile.weight) {
+        const heightInMeters = profile.height / 100;
+        const bmi = (profile.weight / (heightInMeters * heightInMeters)).toFixed(1);
         document.getElementById('patientBMI').textContent = bmi;
     } else {
         document.getElementById('patientBMI').textContent = '--';
@@ -98,8 +99,8 @@ function displayPatientSummary(patient) {
     
     // Allergies
     const allergiesContainer = document.getElementById('patientAllergies');
-    if (patient.allergies && patient.allergies.length > 0) {
-        allergiesContainer.innerHTML = patient.allergies.map(allergy => 
+    if (profile.allergies && profile.allergies.length > 0) {
+        allergiesContainer.innerHTML = profile.allergies.map(allergy => 
             `<span class="badge bg-danger-subtle text-danger border border-danger">${escapeHtml(allergy)}</span>`
         ).join('');
     } else {
@@ -134,32 +135,32 @@ function calculateAge(dateOfBirth) {
 async function loadCurrentVitals() {
     try {
         const token = localStorage.getItem('healio_access_token');
-        const response = await fetch(`${API_BASE_URL}/patients/me/dashboard`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const [
+            bloodGlucose,
+            heartRate,
+            bloodPressureSystolic,
+            bloodPressureDiastolic,
+            bloodOxygen,
+            bodyTemperature
+        ] = await Promise.all([
+            fetchLatestMetricValue('blood_glucose', token),
+            fetchLatestMetricValue('heart_rate', token),
+            fetchLatestMetricValue('blood_pressure_systolic', token),
+            fetchLatestMetricValue('blood_pressure_diastolic', token),
+            fetchLatestMetricValue('blood_oxygen', token),
+            fetchLatestMetricValue('body_temperature', token)
+        ]);
 
-        if (response.ok) {
-            const data = await response.json();
-            // Transform latest_metrics to vitals format
-            const vitals = {
-                blood_glucose: data.latest_metrics.blood_glucose?.value,
-                heart_rate: data.latest_metrics.heart_rate?.value,
-                blood_pressure_systolic: data.latest_metrics.blood_pressure_systolic?.value,
-                blood_pressure_diastolic: data.latest_metrics.blood_pressure_diastolic?.value,
-                blood_oxygen: data.latest_metrics.blood_oxygen?.value,
-                body_temperature: data.latest_metrics.body_temperature?.value
-            };
-            displayCurrentVitals(vitals);
-        } else {
-            document.getElementById('currentVitals').innerHTML = `
-                <div class="col-12 text-center text-muted py-4">
-                    <p>No vital signs recorded yet</p>
-                </div>
-            `;
-        }
+        const vitals = {
+            blood_glucose: bloodGlucose,
+            heart_rate: heartRate,
+            blood_pressure_systolic: bloodPressureSystolic,
+            blood_pressure_diastolic: bloodPressureDiastolic,
+            blood_oxygen: bloodOxygen,
+            body_temperature: bodyTemperature
+        };
+
+        displayCurrentVitals(vitals);
     } catch (error) {
         console.error('Error loading current vitals:', error);
         document.getElementById('currentVitals').innerHTML = `
@@ -170,6 +171,26 @@ async function loadCurrentVitals() {
     }
 }
 
+async function fetchLatestMetricValue(metric, token) {
+    const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${metric}&limit=1`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    const entries = await response.json();
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return null;
+    }
+
+    return entries[0].value;
+}
+
 // Display current vitals
 function displayCurrentVitals(vitals) {
     const vitalCards = [
@@ -177,41 +198,75 @@ function displayCurrentVitals(vitals) {
         { key: 'heart_rate', label: 'Heart Rate', unit: 'bpm', icon: 'heart-pulse', color: 'danger' },
         { key: 'blood_pressure', label: 'Blood Pressure', unit: 'mmHg', icon: 'activity', color: 'success' },
         { key: 'blood_oxygen', label: 'Blood Oxygen', unit: '%', icon: 'lungs', color: 'info' },
-        { key: 'body_temperature', label: 'Temperature', unit: '°C', icon: 'thermometer-half', color: 'warning' }
+        { key: 'body_temperature', label: 'Temperature', unit: '°F', icon: 'thermometer-half', color: 'warning' }
     ];
 
     const container = document.getElementById('currentVitals');
     container.innerHTML = vitalCards.map(vital => {
         let value = '--';
-        let status = 'Normal';
-        let statusClass = 'success';
+        let status = 'No Data';
+        let statusClass = 'secondary';
 
-        if (vital.key === 'blood_pressure' && vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic) {
+        if (
+            vital.key === 'blood_pressure'
+            && vitals.blood_pressure_systolic !== null
+            && vitals.blood_pressure_systolic !== undefined
+            && vitals.blood_pressure_diastolic !== null
+            && vitals.blood_pressure_diastolic !== undefined
+        ) {
             value = `${vitals.blood_pressure_systolic}/${vitals.blood_pressure_diastolic}`;
             if (vitals.blood_pressure_systolic < 120 && vitals.blood_pressure_diastolic < 80) {
                 status = 'Optimal';
+                statusClass = 'success';
             } else if (vitals.blood_pressure_systolic >= 140 || vitals.blood_pressure_diastolic >= 90) {
                 status = 'High';
                 statusClass = 'danger';
+            } else {
+                status = 'Elevated';
+                statusClass = 'warning';
             }
-        } else if (vitals[vital.key]) {
+        } else if (vitals[vital.key] !== null && vitals[vital.key] !== undefined) {
             value = vitals[vital.key];
             
             // Determine status based on value
             if (vital.key === 'blood_glucose') {
-                if (value >= 70 && value <= 100) status = 'Normal';
-                else if (value > 100 && value <= 125) { status = 'Elevated'; statusClass = 'warning'; }
-                else { status = 'High'; statusClass = 'danger'; }
+                if (value >= 80 && value <= 130) {
+                    status = 'Normal';
+                    statusClass = 'success';
+                } else if (value < 80) {
+                    status = 'Low';
+                    statusClass = 'warning';
+                } else {
+                    status = 'High';
+                    statusClass = 'danger';
+                }
             } else if (vital.key === 'heart_rate') {
-                if (value >= 60 && value <= 100) status = 'Normal';
-                else { status = 'Abnormal'; statusClass = 'warning'; }
+                if (value >= 60 && value <= 100) {
+                    status = 'Normal';
+                    statusClass = 'success';
+                } else {
+                    status = 'Abnormal';
+                    statusClass = 'warning';
+                }
             } else if (vital.key === 'blood_oxygen') {
-                if (value >= 95) status = 'Excellent';
-                else if (value >= 90) { status = 'Normal'; statusClass = 'warning'; }
-                else { status = 'Low'; statusClass = 'danger'; }
+                if (value >= 95) {
+                    status = 'Excellent';
+                    statusClass = 'success';
+                } else if (value >= 90) {
+                    status = 'Low';
+                    statusClass = 'warning';
+                } else {
+                    status = 'Critical';
+                    statusClass = 'danger';
+                }
             } else if (vital.key === 'body_temperature') {
-                if (value >= 36.1 && value <= 37.2) status = 'Normal';
-                else { status = 'Abnormal'; statusClass = 'warning'; }
+                if (value >= 97 && value <= 99) {
+                    status = 'Normal';
+                    statusClass = 'success';
+                } else {
+                    status = 'Abnormal';
+                    statusClass = 'warning';
+                }
             }
         }
 
@@ -436,9 +491,97 @@ function generateHealthInsights() {
 }
 
 // Download report
-function downloadReport() {
-    alert('Report download feature coming soon!');
-    // TODO: Implement PDF generation
+async function downloadReport() {
+    const button = document.getElementById('downloadVitalsBtn');
+    const originalButtonHtml = button ? button.innerHTML : '';
+
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Preparing...';
+    }
+
+    try {
+        const token = localStorage.getItem('healio_access_token');
+        if (!token) {
+            window.location.href = 'login-v2.html';
+            return;
+        }
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 6);
+
+        const fromDate = formatDateTimeForApi(startDate, false);
+        const toDate = formatDateTimeForApi(endDate, true);
+
+        const exportUrl = `${API_BASE_URL}/patients/me/export?format=csv&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}`;
+        const response = await fetch(exportUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorPayload = await response.json().catch(() => ({ detail: 'Failed to download report' }));
+            throw new Error(errorPayload.detail || 'Failed to download report');
+        }
+
+        const blob = await response.blob();
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const filename = extractFilenameFromDisposition(disposition)
+            || `healio_vitals_last_7_days_${formatDateForFilename(new Date())}.csv`;
+
+        const objectUrl = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = objectUrl;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+        console.error('Error downloading 7-day vitals report:', error);
+        alert(error.message || 'Failed to download 7-day vitals report');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalButtonHtml;
+        }
+    }
+}
+
+function formatDateTimeForApi(date, endOfDay = false) {
+    const localDate = new Date(date);
+    if (endOfDay) {
+        localDate.setHours(23, 59, 59, 0);
+    } else {
+        localDate.setHours(0, 0, 0, 0);
+    }
+
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const hours = String(localDate.getHours()).padStart(2, '0');
+    const minutes = String(localDate.getMinutes()).padStart(2, '0');
+    const seconds = String(localDate.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
+function formatDateForFilename(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+}
+
+function extractFilenameFromDisposition(disposition) {
+    const filenameMatch = disposition.match(/filename=([^;]+)/i);
+    if (!filenameMatch || !filenameMatch[1]) {
+        return '';
+    }
+
+    return filenameMatch[1].trim().replace(/^"|"$/g, '');
 }
 
 // Logout function
