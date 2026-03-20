@@ -1,0 +1,294 @@
+.admin-dashboard-body {
+    background: var(--healio-bg-secondary);
+}
+
+.admin-status-banner {
+    border-radius: var(--healio-radius-lg);
+    padding: 12px 16px;
+    border: 1px solid var(--healio-border-light);
+    background: var(--healio-bg-primary);
+    box-shadow: var(--healio-shadow-xs);
+}
+
+.admin-status-banner--success {
+    background: #ecfdf5;
+    border-color: rgba(16, 185, 129, 0.22);
+    color: #047857;
+}
+
+.admin-status-banner--danger {
+    background: #fef2f2;
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+}
+
+.admin-status-banner--info {
+    background: #eff6ff;
+    border-color: rgba(59, 130, 246, 0.2);
+    color: #1d4ed8;
+}
+
+.admin-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 18px;
+    align-items: center;
+}
+
+.admin-section-eyebrow {
+    display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: var(--healio-font-bold);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--healio-primary);
+    margin-bottom: 10px;
+}
+
+.admin-hero__title {
+    font-size: clamp(1.55rem, 2vw, 2.1rem);
+    font-weight: var(--healio-font-bold);
+    margin-bottom: 10px;
+    color: var(--healio-text-primary);
+}
+
+.admin-hero__copy {
+    color: var(--healio-text-secondary);
+    max-width: 720px;
+}
+
+.admin-hero__callout {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px;
+    border-radius: var(--healio-radius-md);
+    background: var(--healio-bg-tertiary);
+    border: 1px solid var(--healio-border-light);
+}
+
+.admin-hero__callout-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--healio-primary);
+    font-weight: var(--healio-font-bold);
+}
+
+.admin-kpi-card {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border-radius: var(--healio-radius-md);
+    background: var(--healio-bg-primary);
+    border: 1px solid var(--healio-border-light);
+    box-shadow: var(--healio-shadow-xs);
+}
+
+.admin-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--healio-shadow-md);
+    border-color: rgba(124, 58, 237, 0.26);
+}
+
+.admin-kpi-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--healio-radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(124, 58, 237, 0.12);
+    color: var(--healio-primary);
+    font-size: 1.25rem;
+}
+
+.admin-kpi-card__icon--doctor {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.admin-kpi-card__icon--patient {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.admin-kpi-card__icon--active {
+    background: rgba(245, 158, 11, 0.14);
+    color: #d97706;
+}
+
+.admin-kpi-card__value {
+    font-size: 1.75rem;
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+    line-height: 1;
+}
+
+.admin-kpi-card__label {
+    color: var(--healio-text-muted);
+    font-size: var(--healio-font-size-sm);
+    margin-top: 6px;
+}
+
+.admin-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.admin-panel__header {
+    display: flex;
+    align-items: flex-start;
+}
+
+.admin-panel__header--spread {
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.admin-count-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--healio-bg-tertiary);
+    color: var(--healio-primary);
+    font-weight: var(--healio-font-semibold);
+    font-size: var(--healio-font-size-sm);
+    border: 1px solid var(--healio-border-light);
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-form-grid__full {
+    grid-column: 1 / -1;
+}
+
+.admin-roster {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.admin-roster-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: var(--healio-radius-md);
+    background: var(--healio-bg-tertiary);
+    border: 1px solid rgba(124, 58, 237, 0.08);
+    transition: transform var(--healio-transition-base), box-shadow var(--healio-transition-base), border-color var(--healio-transition-base);
+}
+
+.admin-roster-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--healio-shadow-sm);
+    border-color: rgba(124, 58, 237, 0.2);
+}
+
+.admin-roster-item__identity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.admin-roster-item__avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--healio-radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    color: white;
+    font-weight: var(--healio-font-bold);
+}
+
+.admin-roster-item__name {
+    font-weight: var(--healio-font-semibold);
+    color: var(--healio-text-primary);
+    margin-bottom: 2px;
+}
+
+.admin-roster-item__meta {
+    color: var(--healio-text-muted);
+    font-size: var(--healio-font-size-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-roster-item__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: var(--healio-font-size-xs);
+    font-weight: var(--healio-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.admin-badge--active {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+.admin-badge--inactive {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+
+.admin-empty-state {
+    padding: 24px 16px;
+    border-radius: var(--healio-radius-md);
+    border: 1px dashed rgba(124, 58, 237, 0.18);
+    background: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    color: var(--healio-text-muted);
+}
+
+.admin-empty-state i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 10px;
+    color: var(--healio-primary);
+}
+
+@media (max-width: 1200px) {
+    .admin-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-roster-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-roster-item__actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

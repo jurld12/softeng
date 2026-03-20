@@ -3,6 +3,7 @@ Patient-specific routes: dashboard, biometrics, alerts, achievements
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
+from bson import ObjectId
 from datetime import datetime, timedelta
 from typing import Optional, List
 import sys
@@ -10,15 +11,88 @@ from pathlib import Path
 import io
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from app.models.schemas import BiometricEntry, BiometricResponse, DashboardSummary, AlertResponse, AchievementResponse
+from app.models.schemas import BiometricEntry, BiometricResponse, DashboardSummary, AlertResponse, AchievementResponse, PatientProfileUpdate, UserProfileResponse
 from app.database import get_database
 from app.middleware.auth import get_current_patient
 from app.services.alerts import check_and_create_alert
 from app.services.export import generate_csv_report, generate_pdf_report
 from app.services import gamification
+from app.utils.user_profiles import normalize_emergency_contact, parse_object_id, serialize_doctor_reference, serialize_user_profile, resolve_doctor_assignment
 
 
 router = APIRouter()
+
+
+@router.get("/me/profile", response_model=UserProfileResponse)
+async def get_patient_profile(
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """Get the authenticated patient's full profile including doctor assignment."""
+    assigned_doctor = None
+    assigned_doctor_id = str(current_user.get("assigned_doctor_id")) if current_user.get("assigned_doctor_id") else None
+
+    if assigned_doctor_id and ObjectId.is_valid(assigned_doctor_id):
+        doctor = await db.users.find_one(
+            {"_id": ObjectId(assigned_doctor_id), "role": "doctor", "active": True},
+            {"name": 1, "email": 1, "specialty": 1}
+        )
+        assigned_doctor = serialize_doctor_reference(doctor)
+
+    return serialize_user_profile(current_user, assigned_doctor)
+
+
+@router.put("/me/profile", response_model=UserProfileResponse)
+async def update_patient_profile(
+    profile_data: PatientProfileUpdate,
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """Update the authenticated patient's profile and doctor assignment."""
+    user_object_id = parse_object_id(str(current_user["_id"]), "user")
+
+    if profile_data.email != current_user.get("email"):
+        existing_user = await db.users.find_one({
+            "email": profile_data.email,
+            "_id": {"$ne": user_object_id}
+        })
+
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+
+    assigned_doctor_id, assigned_doctor = await resolve_doctor_assignment(db, profile_data.assigned_doctor_id)
+
+    profile_doc = {
+        "date_of_birth": profile_data.date_of_birth or None,
+        "gender": profile_data.gender or None,
+        "address": profile_data.address.strip() if profile_data.address else None,
+        "blood_type": profile_data.blood_type or None,
+        "height": profile_data.height,
+        "weight": profile_data.weight,
+        "allergies": [entry.strip() for entry in profile_data.allergies if entry and entry.strip()],
+        "emergency_contact": normalize_emergency_contact(
+            profile_data.emergency_contact.model_dump(exclude_none=True) if profile_data.emergency_contact else None
+        )
+    }
+
+    await db.users.update_one(
+        {"_id": user_object_id},
+        {
+            "$set": {
+                "name": profile_data.name.strip(),
+                "email": profile_data.email,
+                "phone": profile_data.phone.strip() if profile_data.phone else None,
+                "assigned_doctor_id": assigned_doctor_id,
+                "profile": profile_doc
+            }
+        }
+    )
+
+    updated_user = await db.users.find_one({"_id": user_object_id})
+    return serialize_user_profile(updated_user, assigned_doctor)
 
 
 @router.get("/me/dashboard", response_model=DashboardSummary)

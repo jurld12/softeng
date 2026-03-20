@@ -1,15 +1,34 @@
 // Store allergies array
 let allergies = [];
+let pendingAssignedDoctorId = '';
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
     loadCurrentUser();
+    loadAvailableDoctors();
     loadUserProfile();
     loadNotificationPreferences();
     setupAllergyHandlers();
     setupHeightWeightHandlers();
     setupToggleButton();
+    setupAssignedDoctorHandlers();
+});
+
+window.addEventListener('healio:doctor-assignment-updated', event => {
+    const updatedProfile = event.detail?.profile;
+    if (!updatedProfile) {
+        return;
+    }
+
+    pendingAssignedDoctorId = updatedProfile.assigned_doctor_id || '';
+
+    if (Array.isArray(event.detail?.doctors) && event.detail.doctors.length) {
+        populateAssignedDoctorSelect(event.detail.doctors);
+        return;
+    }
+
+    applyAssignedDoctorSelection();
 });
 
 // Check if user is authenticated
@@ -59,7 +78,7 @@ async function loadCurrentUser() {
 // Load user profile data
 async function loadUserProfile() {
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        const response = await fetch(`${API_BASE_URL}${CONFIG.ENDPOINTS.PATIENT_PROFILE}`, {
             headers: getAuthHeaders()
         });
 
@@ -87,6 +106,8 @@ async function loadUserProfile() {
             if (profile.address) document.getElementById('profileAddress').value = profile.address;
             if (profile.height) document.getElementById('profileHeight').value = profile.height;
             if (profile.weight) document.getElementById('profileWeight').value = profile.weight;
+            pendingAssignedDoctorId = data.assigned_doctor_id || '';
+            applyAssignedDoctorSelection();
             
             // Calculate and display BMI if height and weight exist
             if (profile.height && profile.weight) {
@@ -100,10 +121,11 @@ async function loadUserProfile() {
             }
             
             // Emergency contact
-            if (profile.emergency_contact) {
-                document.getElementById('emergencyName').value = profile.emergency_contact.name || '';
-                document.getElementById('emergencyRelation').value = profile.emergency_contact.relationship || '';
-                document.getElementById('emergencyPhone').value = profile.emergency_contact.phone || '';
+            const emergencyContact = normalizeEmergencyContact(profile.emergency_contact);
+            if (emergencyContact) {
+                document.getElementById('emergencyName').value = emergencyContact.name || '';
+                document.getElementById('emergencyRelation').value = emergencyContact.relationship || '';
+                document.getElementById('emergencyPhone').value = emergencyContact.phone || '';
             }
             
             // Check if we should auto-expand extended fields
@@ -113,6 +135,115 @@ async function loadUserProfile() {
         console.error('Error loading profile:', error);
         showError('Failed to load profile data');
     }
+}
+
+async function loadAvailableDoctors() {
+    try {
+        const response = await fetch(`${API_BASE_URL}${CONFIG.ENDPOINTS.DOCTOR_DIRECTORY}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to load doctors');
+        }
+
+        const doctors = await response.json();
+        populateAssignedDoctorSelect(doctors);
+    } catch (error) {
+        console.error('Error loading doctors:', error);
+        const select = document.getElementById('profileAssignedDoctor');
+        const status = document.getElementById('profileAssignedDoctorStatus');
+        select.innerHTML = '<option value="">No doctors available right now</option>';
+        select.disabled = true;
+        status.textContent = 'No active doctors are available right now.';
+    }
+}
+
+function formatDoctorOptionLabel(doctor) {
+    const specialty = doctor.specialty ? ` - ${doctor.specialty}` : '';
+    const email = doctor.email ? ` - ${doctor.email}` : '';
+    return `${doctor.name}${specialty}${email}`;
+}
+
+function populateAssignedDoctorSelect(doctors) {
+    const select = document.getElementById('profileAssignedDoctor');
+    const status = document.getElementById('profileAssignedDoctorStatus');
+    const currentValue = pendingAssignedDoctorId || select.value;
+
+    select.innerHTML = [
+        '<option value="">No doctor selected</option>',
+        ...doctors.map(doctor => {
+            const doctorId = doctor.id || doctor._id;
+            return `<option value="${doctorId}">${formatDoctorOptionLabel(doctor)}</option>`;
+        })
+    ].join('');
+
+    select.disabled = doctors.length === 0;
+    if (currentValue) {
+        select.value = currentValue;
+    }
+
+    status.textContent = doctors.length
+        ? 'Choose the doctor who should monitor and review your records.'
+        : 'No active doctors are available right now.';
+    updateAssignedDoctorStatus();
+}
+
+function applyAssignedDoctorSelection() {
+    const select = document.getElementById('profileAssignedDoctor');
+    if (!select || !pendingAssignedDoctorId) {
+        updateAssignedDoctorStatus();
+        return;
+    }
+
+    const matchingOption = Array.from(select.options).find(option => option.value === pendingAssignedDoctorId);
+    if (matchingOption) {
+        select.value = pendingAssignedDoctorId;
+    }
+
+    updateAssignedDoctorStatus();
+}
+
+function setupAssignedDoctorHandlers() {
+    const select = document.getElementById('profileAssignedDoctor');
+    select.addEventListener('change', updateAssignedDoctorStatus);
+}
+
+function updateAssignedDoctorStatus() {
+    const select = document.getElementById('profileAssignedDoctor');
+    const status = document.getElementById('profileAssignedDoctorStatus');
+
+    if (!select || !status) {
+        return;
+    }
+
+    if (!select.value) {
+        status.textContent = select.disabled
+            ? 'No active doctors are available right now.'
+            : 'Choose the doctor who should monitor and review your records.';
+        return;
+    }
+
+    const selectedOption = select.options[select.selectedIndex];
+    status.textContent = `Selected doctor: ${selectedOption.text}`;
+}
+
+function normalizeEmergencyContact(contact) {
+    if (!contact) {
+        return null;
+    }
+
+    if (typeof contact === 'string') {
+        return {
+            name: contact,
+            relationship: '',
+            phone: ''
+        };
+    }
+
+    return {
+        name: contact.name || '',
+        relationship: contact.relationship || '',
+        phone: contact.phone || ''
+    };
 }
 
 // Load notification preferences from localStorage
@@ -179,6 +310,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
         height: parseFloat(document.getElementById('profileHeight').value) || null,
         weight: parseFloat(document.getElementById('profileWeight').value) || null,
         allergies: allergies,
+        assigned_doctor_id: document.getElementById('profileAssignedDoctor').value || null,
         emergency_contact: {
             name: document.getElementById('emergencyName').value,
             relationship: document.getElementById('emergencyRelation').value,
@@ -187,13 +319,21 @@ document.getElementById('profileForm').addEventListener('submit', async function
     };
     
     try {
-        const response = await fetch(`${API_BASE_URL}/patients/me/profile`, {
+        const response = await fetch(`${API_BASE_URL}${CONFIG.ENDPOINTS.PATIENT_PROFILE}`, {
             method: 'PUT',
             headers: getAuthHeaders(),
             body: JSON.stringify(formData)
         });
         
         if (response.ok) {
+            const updatedProfile = await response.json();
+            pendingAssignedDoctorId = updatedProfile.assigned_doctor_id || '';
+            applyAssignedDoctorSelection();
+            window.dispatchEvent(new CustomEvent('healio:doctor-assignment-updated', {
+                detail: {
+                    profile: updatedProfile
+                }
+            }));
             showSuccess('Profile updated successfully!');
             
             // Update sidebar with new name

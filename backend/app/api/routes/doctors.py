@@ -11,6 +11,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from app.models.schemas import UserResponse, BiometricResponse
 from app.database import get_database
 from app.middleware.auth import get_current_doctor
+from app.utils.user_profiles import parse_object_id
+
 
 
 router = APIRouter()
@@ -23,10 +25,10 @@ async def get_doctor_patients(
     db = Depends(get_database)
 ):
     """
-    Get list of patients assigned to doctor
-    For now, returns all patients (TODO: implement doctor-patient assignment)
+    Get list of patients assigned to the current doctor
     """
-    query = {"role": "patient"}
+    doctor_id = str(current_user["_id"])
+    query = {"role": "patient", "assigned_doctor_id": doctor_id}
     
     if search:
         query["$or"] = [
@@ -51,9 +53,15 @@ async def get_patient_details(
     db = Depends(get_database)
 ):
     """
-    Get detailed information about a specific patient
+    Get detailed information about an assigned patient
     """
-    patient = await db.users.find_one({"_id": patient_id, "role": "patient"})
+    doctor_id = str(current_user["_id"])
+    patient_object_id = parse_object_id(patient_id, "patient")
+    patient = await db.users.find_one({
+        "_id": patient_object_id,
+        "role": "patient",
+        "assigned_doctor_id": doctor_id
+    })
     
     if not patient:
         raise HTTPException(
@@ -76,10 +84,17 @@ async def get_patient_biometrics(
     db = Depends(get_database)
 ):
     """
-    Get biometric data for a specific patient
+    Get biometric data for an assigned patient
     """
-    # Verify patient exists
-    patient = await db.users.find_one({"_id": patient_id, "role": "patient"})
+    doctor_id = str(current_user["_id"])
+    patient_object_id = parse_object_id(patient_id, "patient")
+
+    # Verify patient exists and is assigned to the doctor
+    patient = await db.users.find_one({
+        "_id": patient_object_id,
+        "role": "patient",
+        "assigned_doctor_id": doctor_id
+    })
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -87,7 +102,7 @@ async def get_patient_biometrics(
         )
     
     # Build query
-    query = {"user_id": patient_id}
+    query = {"user_id": str(patient_object_id)}
     
     if metric:
         query["metric"] = metric
@@ -118,10 +133,18 @@ async def get_patient_summary(
     db = Depends(get_database)
 ):
     """
-    Get summary statistics for a patient over specified days
+    Get summary statistics for an assigned patient over specified days
     """
-    # Verify patient exists
-    patient = await db.users.find_one({"_id": patient_id, "role": "patient"})
+    doctor_id = str(current_user["_id"])
+    patient_object_id = parse_object_id(patient_id, "patient")
+    patient_id_str = str(patient_object_id)
+
+    # Verify patient exists and is assigned to the doctor
+    patient = await db.users.find_one({
+        "_id": patient_object_id,
+        "role": "patient",
+        "assigned_doctor_id": doctor_id
+    })
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -138,7 +161,7 @@ async def get_patient_summary(
         pipeline = [
             {
                 "$match": {
-                    "user_id": patient_id,
+                    "user_id": patient_id_str,
                     "metric": metric,
                     "timestamp": {"$gte": from_date}
                 }
@@ -166,12 +189,12 @@ async def get_patient_summary(
     
     # Count alerts
     alert_count = await db.alerts.count_documents({
-        "user_id": patient_id,
+        "user_id": patient_id_str,
         "created_at": {"$gte": from_date}
     })
     
     return {
-        "patient_id": patient_id,
+        "patient_id": patient_id_str,
         "patient_name": patient["name"],
         "period_days": days,
         "from_date": from_date,

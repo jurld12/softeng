@@ -9,6 +9,51 @@ Write-Host ""
 # Get the script directory (project root)
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+function Stop-LocalDevServers {
+    Write-Host "Cleaning old local server processes..." -ForegroundColor Yellow
+
+    $stoppedCount = 0
+    $commandPatterns = @(
+        "*uvicorn*app.main:app*--port 5000*",
+        "*python*http.server 3000*"
+    )
+
+    foreach ($pattern in $commandPatterns) {
+        $processes = Get-CimInstance Win32_Process | Where-Object {
+            $_.CommandLine -like $pattern
+        }
+
+        foreach ($process in $processes) {
+            try {
+                Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
+                $stoppedCount++
+            } catch {
+                # Ignore already exited processes
+            }
+        }
+    }
+
+    foreach ($port in @(5000, 3000)) {
+        $listeners = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+        foreach ($listener in $listeners) {
+            try {
+                Stop-Process -Id $listener.OwningProcess -Force -ErrorAction Stop
+                $stoppedCount++
+            } catch {
+                # Ignore protected or already exited processes
+            }
+        }
+    }
+
+    if ($stoppedCount -gt 0) {
+        Write-Host "✅ Stopped $stoppedCount stale local server process(es)" -ForegroundColor Green
+    } else {
+        Write-Host "✅ No stale local server processes found" -ForegroundColor Green
+    }
+}
+
+Stop-LocalDevServers
+
 # Check if Docker is running
 Write-Host "Checking Docker status..." -ForegroundColor Yellow
 try {
@@ -71,8 +116,9 @@ Start-Process powershell -ArgumentList @(
     ".\venv\Scripts\Activate.ps1; " +
     "Write-Host 'Starting FastAPI server on http://0.0.0.0:5000' -ForegroundColor Green; " +
     "Write-Host 'API Docs: http://127.0.0.1:5000/docs' -ForegroundColor Cyan; " +
+    "Write-Host 'Hot reload disabled for process stability' -ForegroundColor Yellow; " +
     "Write-Host ''; " +
-    "uvicorn app.main:app --reload --host 0.0.0.0 --port 5000"
+    "python -m uvicorn app.main:app --host 0.0.0.0 --port 5000"
 )
 Write-Host "✅ Backend terminal opened" -ForegroundColor Green
 Start-Sleep -Seconds 2
@@ -107,8 +153,7 @@ Write-Host "📚 API Docs:  http://127.0.0.1:5000/docs" -ForegroundColor Cyan
 Write-Host "🌐 Frontend:  http://localhost:3000" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "To stop all services:" -ForegroundColor Yellow
-Write-Host "  1. Press Ctrl+C in each terminal window" -ForegroundColor Yellow
-Write-Host "  2. Run: docker stop healio-mongodb" -ForegroundColor Yellow
+Write-Host "  Run: .\stop-dev.ps1" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Press any key to exit this window..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

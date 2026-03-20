@@ -16,6 +16,48 @@ const submitBtn = document.getElementById('submitBtn');
 const submitText = document.getElementById('submitText');
 const submitSpinner = document.getElementById('submitSpinner');
 const alertContainer = document.getElementById('alertContainer');
+const assignedDoctorSelect = document.getElementById('assignedDoctor');
+const assignedDoctorStatus = document.getElementById('assignedDoctorStatus');
+
+async function loadAvailableDoctors() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/doctors`);
+
+        if (!response.ok) {
+            throw new Error('Failed to load doctors');
+        }
+
+        const doctors = await response.json();
+        populateDoctorOptions(doctors);
+    } catch (error) {
+        console.error('Error loading doctors:', error);
+        assignedDoctorSelect.innerHTML = '<option value="">No doctors available right now</option>';
+        assignedDoctorSelect.disabled = true;
+        assignedDoctorStatus.textContent = 'No active doctors are available yet. You can still create your account and choose later.';
+    }
+}
+
+function formatDoctorLabel(doctor) {
+    const specialty = doctor.specialty ? ` - ${doctor.specialty}` : '';
+    const email = doctor.email ? ` - ${doctor.email}` : '';
+    return `${doctor.name}${specialty}${email}`;
+}
+
+function populateDoctorOptions(doctors) {
+    const options = ['<option value="">No doctor selected</option>'];
+
+    doctors.forEach(doctor => {
+        const doctorId = doctor.id || doctor._id;
+        const label = formatDoctorLabel(doctor);
+        options.push(`<option value="${doctorId}">${label}</option>`);
+    });
+
+    assignedDoctorSelect.innerHTML = options.join('');
+    assignedDoctorSelect.disabled = doctors.length === 0;
+    assignedDoctorStatus.textContent = doctors.length
+        ? 'Choose the doctor who should be linked to your account.'
+        : 'No active doctors are available yet. You can still create your account and choose later.';
+}
 
 // Password Strength Checker
 passwordInput.addEventListener('input', () => {
@@ -167,14 +209,14 @@ signupForm.addEventListener('submit', async (e) => {
     const emergencyRelation = document.getElementById('emergencyRelation').value;
     const emergencyPhone = document.getElementById('emergencyPhone').value.trim();
     
-    // Build emergency contact string only if at least one field is filled
+    // Build emergency contact object only if at least one field is filled
     let emergencyContact = null;
     if (emergencyName || emergencyRelation || emergencyPhone) {
-        const parts = [];
-        if (emergencyName) parts.push(emergencyName);
-        if (emergencyRelation) parts.push(`(${emergencyRelation})`);
-        if (emergencyPhone) parts.push(`- ${emergencyPhone}`);
-        emergencyContact = parts.join(' ');
+        emergencyContact = {
+            name: emergencyName || null,
+            relationship: emergencyRelation || null,
+            phone: emergencyPhone || null
+        };
     }
     
     const formData = {
@@ -191,6 +233,7 @@ signupForm.addEventListener('submit', async (e) => {
         weight: parseFloat(document.getElementById('weight').value) || null,
         allergies: allergies.length > 0 ? allergies : null,
         emergency_contact: emergencyContact,
+        assigned_doctor_id: assignedDoctorSelect.value || null,
         role: 'patient' // Default role for new signups
     };
     
@@ -243,6 +286,7 @@ signupForm.addEventListener('submit', async (e) => {
 
 // Initialize allergies list
 renderAllergies();
+loadAvailableDoctors();
 
 // Check if already logged in
 const token = localStorage.getItem('healio_access_token');

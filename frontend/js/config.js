@@ -14,21 +14,25 @@ const CONFIG = {
         REGISTER: '/auth/register',
         LOGIN: '/auth/login',
         LOGOUT: '/auth/logout',
+        CHANGE_PASSWORD: '/auth/change-password',
         REFRESH: '/auth/refresh',
         
         // Patient
         PATIENT_DASHBOARD: '/patients/me/dashboard',
+        PATIENT_PROFILE: '/patients/me/profile',
         PATIENT_BIOMETRICS: '/patients/me/biometrics',
         PATIENT_ALERTS: '/patients/me/alerts',
         PATIENT_ACHIEVEMENTS: '/patients/me/achievements',
         PATIENT_MEDICATIONS: '/patients/me/medications',
         
         // Doctor
+        DOCTOR_DIRECTORY: '/auth/doctors',
         DOCTOR_PATIENTS: '/doctor/patients',
         DOCTOR_PATIENT_DETAILS: '/doctor/patients',
         
         // Admin
         ADMIN_USERS: '/admin/users',
+        ADMIN_CREATE_DOCTOR: '/admin/doctors',
         ADMIN_STATS: '/admin/stats',
         
         // Health Check

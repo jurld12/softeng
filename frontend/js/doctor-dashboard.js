@@ -134,7 +134,8 @@ window.logout = async function() {
 function getStoredDoctorFallback() {
     return {
         name: localStorage.getItem(CONFIG.STORAGE_KEYS.USER_NAME) || 'Doctor',
-        email: 'doctor@healio.app'
+        email: 'doctor@healio.app',
+        specialty: ''
     };
 }
 
@@ -488,10 +489,29 @@ function renderDoctorProfile() {
     const doctor = doctorDashboardState.doctor || getStoredDoctorFallback();
     const doctorName = doctor.name || 'Doctor';
     const doctorEmail = doctor.email || 'doctor@healio.app';
+    const doctorSpecialty = doctor.specialty || '';
+    const doctorMeta = [doctorSpecialty, doctorEmail].filter(Boolean).join(' • ') || 'Doctor profile';
 
     document.getElementById('doctorName').textContent = doctorName;
-    document.getElementById('doctorEmail').textContent = doctorEmail;
-    document.getElementById('doctorAvatar').textContent = getInitials(doctorName);
+    document.getElementById('doctorEmail').textContent = doctorMeta;
+    const doctorInitials = getInitials(doctorName);
+    document.getElementById('doctorAvatar').textContent = doctorInitials;
+
+    const sidebarName = document.getElementById('sidebarDoctorName');
+    const sidebarEmail = document.getElementById('sidebarDoctorEmail');
+    const sidebarAvatar = document.getElementById('sidebarDoctorAvatar');
+
+    if (sidebarName) {
+        sidebarName.textContent = doctorName;
+    }
+
+    if (sidebarEmail) {
+        sidebarEmail.textContent = doctorEmail;
+    }
+
+    if (sidebarAvatar) {
+        sidebarAvatar.textContent = doctorInitials;
+    }
 }
 
 function renderOverview() {
@@ -576,31 +596,106 @@ function renderAttentionBanner() {
 }
 
 function renderPatients() {
+    const tableBody = document.getElementById('patientTableBody');
     const grid = document.getElementById('patientGrid');
 
+    if (!tableBody && !grid) {
+        return;
+    }
+
     if (!doctorDashboardState.patients.length) {
-        grid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <i class="bi bi-people"></i>
-                <h3>No patients available yet</h3>
-                <p>Once patient accounts are assigned to this doctor, their monitoring cards will appear here.</p>
-            </div>
-        `;
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr class="doctor-table-empty">
+                    <td colspan="7">No patients are assigned to this doctor yet.</td>
+                </tr>
+            `;
+        }
+
+        if (grid) {
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <i class="bi bi-people"></i>
+                    <h3>No patients available yet</h3>
+                    <p>Once patient accounts are assigned to this doctor, their monitoring cards will appear here.</p>
+                </div>
+            `;
+        }
+
         return;
     }
 
     if (!doctorDashboardState.filteredPatients.length) {
-        grid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <i class="bi bi-search"></i>
-                <h3>No patients match this view</h3>
-                <p>Try adjusting the search query or switching between stable and needs-review filters.</p>
-            </div>
-        `;
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr class="doctor-table-empty">
+                    <td colspan="7">No patients match this filter. Try another search or status view.</td>
+                </tr>
+            `;
+        }
+
+        if (grid) {
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <i class="bi bi-search"></i>
+                    <h3>No patients match this view</h3>
+                    <p>Try adjusting the search query or switching between stable and needs-review filters.</p>
+                </div>
+            `;
+        }
+
         return;
     }
 
-    grid.innerHTML = doctorDashboardState.filteredPatients.map(patient => renderPatientCard(patient)).join('');
+    if (tableBody) {
+        tableBody.innerHTML = doctorDashboardState.filteredPatients.map(patient => renderPatientRow(patient)).join('');
+    }
+
+    if (grid) {
+        grid.innerHTML = doctorDashboardState.filteredPatients.map(patient => renderPatientCard(patient)).join('');
+    }
+}
+
+function renderPatientRow(patient) {
+    const priorityClass = getStatusBadgeClass(patient.priority === 'low' ? 'normal' : patient.priority === 'medium' ? 'attention' : 'critical');
+    const alertLabel = patient.alertCount > 0
+        ? `${patient.alertCount} Alert${patient.alertCount === 1 ? '' : 's'}`
+        : 'On track';
+
+    let actionClass = 'doctor-row-button';
+    let actionLabel = 'Open card';
+
+    if (patient.priority === 'high') {
+        actionClass = 'doctor-row-button doctor-row-button--danger';
+        actionLabel = 'Escalate';
+    } else if (patient.priority === 'medium') {
+        actionClass = 'doctor-row-button doctor-row-button--warn';
+        actionLabel = 'Review';
+    }
+
+    return `
+        <tr>
+            <td>
+                <div class="doctor-table__patient">
+                    <span class="doctor-table__avatar">${escapeHtml(getInitials(patient.name))}</span>
+                    <div class="doctor-table__meta">
+                        <strong>${escapeHtml(patient.name)}</strong>
+                        <span>${escapeHtml(patient.code)}</span>
+                    </div>
+                </div>
+            </td>
+            <td>${escapeHtml(patient.email)}</td>
+            <td><span class="status-pill ${priorityClass}">${escapeHtml(alertLabel)}</span></td>
+            <td>${escapeHtml(patient.focus)}</td>
+            <td>${escapeHtml(patient.summaryText)}</td>
+            <td><span class="tag-pill">${escapeHtml(patient.monitoringLabel)}</span></td>
+            <td>
+                <div class="doctor-table__actions">
+                    <button type="button" class="${actionClass}">${escapeHtml(actionLabel)}</button>
+                </div>
+            </td>
+        </tr>
+    `;
 }
 
 function renderPatientCard(patient) {
@@ -741,15 +836,24 @@ function switchTab(tabName) {
 
     const patientsPanel = document.getElementById('patientsPanel');
     const queuePanel = document.getElementById('queuePanel');
-    patientsPanel.hidden = tabName !== 'patients';
-    queuePanel.hidden = tabName !== 'queue';
-    patientsPanel.classList.toggle('active', tabName === 'patients');
-    queuePanel.classList.toggle('active', tabName === 'queue');
+
+    if (patientsPanel) {
+        patientsPanel.hidden = tabName !== 'patients';
+        patientsPanel.classList.toggle('active', tabName === 'patients');
+    }
+
+    if (queuePanel) {
+        queuePanel.hidden = tabName !== 'queue';
+        queuePanel.classList.toggle('active', tabName === 'queue');
+    }
 }
 
 function setActiveRailButton(activeKey) {
     document.querySelectorAll('[data-rail-key]').forEach(button => {
-        button.classList.toggle('rail-button--active', button.dataset.railKey === activeKey);
+        const isActive = button.dataset.railKey === activeKey;
+        button.classList.toggle('rail-button--active', isActive);
+        button.classList.toggle('doctor-nav__button--active', isActive);
+        button.classList.toggle('active', isActive);
     });
 }
 
@@ -768,17 +872,33 @@ function renderDashboard() {
 }
 
 function showLoadingState() {
-    document.getElementById('patientGrid').innerHTML = `
-        <article class="patient-card patient-card--skeleton"></article>
-        <article class="patient-card patient-card--skeleton"></article>
-        <article class="patient-card patient-card--skeleton"></article>
-        <article class="patient-card patient-card--skeleton"></article>
-    `;
-    document.getElementById('queueList').innerHTML = `
-        <article class="queue-item queue-item--skeleton"></article>
-        <article class="queue-item queue-item--skeleton"></article>
-        <article class="queue-item queue-item--skeleton"></article>
-    `;
+    const tableBody = document.getElementById('patientTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr class="doctor-table-row--skeleton"><td colspan="7"></td></tr>
+            <tr class="doctor-table-row--skeleton"><td colspan="7"></td></tr>
+            <tr class="doctor-table-row--skeleton"><td colspan="7"></td></tr>
+        `;
+    }
+
+    const patientGrid = document.getElementById('patientGrid');
+    if (patientGrid) {
+        patientGrid.innerHTML = `
+            <article class="patient-card patient-card--skeleton"></article>
+            <article class="patient-card patient-card--skeleton"></article>
+            <article class="patient-card patient-card--skeleton"></article>
+            <article class="patient-card patient-card--skeleton"></article>
+        `;
+    }
+
+    const queueList = document.getElementById('queueList');
+    if (queueList) {
+        queueList.innerHTML = `
+            <article class="queue-item queue-item--skeleton"></article>
+            <article class="queue-item queue-item--skeleton"></article>
+            <article class="queue-item queue-item--skeleton"></article>
+        `;
+    }
 }
 
 async function initializeDoctorDashboard() {

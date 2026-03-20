@@ -51,6 +51,7 @@ class Database:
         # Users collection indexes
         await db.users.create_index([("email", ASCENDING)], unique=True)
         await db.users.create_index([("role", ASCENDING)])
+        await db.users.create_index([("assigned_doctor_id", ASCENDING)])
         
         # Biometrics collection indexes
         await db.biometrics.create_index([("user_id", ASCENDING), ("timestamp", DESCENDING)])

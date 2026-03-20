@@ -17,176 +17,222 @@
     <link rel="stylesheet" href="css/doctor-dashboard.css">
 </head>
 <body class="doctor-dashboard-body">
-    <div class="doctor-shell">
-        <aside class="doctor-rail" aria-label="Doctor dashboard navigation">
-            <div class="doctor-rail__brand" aria-label="Healio">
-                <div class="doctor-rail__brand-icon">
+    <aside class="sidebar doctor-sidebar" aria-label="Doctor dashboard navigation">
+        <div class="sidebar-logo">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-icon bg-gradient-primary">
                     <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                        <path d="M16 5L16 27M5 16L27 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round" />
                     </svg>
                 </div>
+                <span class="logo-text">Healio</span>
             </div>
+        </div>
 
-            <nav class="doctor-rail__nav">
-                <button class="rail-button rail-button--active" type="button" data-rail-target="top" data-rail-key="dashboard" title="Dashboard">
-                    <i class="bi bi-house-door-fill"></i>
-                </button>
-                <button class="rail-button" type="button" data-rail-target="overview" data-rail-key="pulse" title="Practice pulse">
-                    <i class="bi bi-activity"></i>
-                </button>
-                <button class="rail-button" type="button" data-rail-target="workspace" data-rail-tab="patients" data-rail-key="patients" title="Patients">
-                    <i class="bi bi-people-fill"></i>
-                </button>
-                <button class="rail-button" type="button" data-rail-target="workspace" data-rail-tab="queue" data-rail-key="queue" title="Care queue">
-                    <i class="bi bi-calendar3"></i>
-                </button>
-                <button class="rail-button" type="button" data-rail-target="attentionSection" data-rail-key="alerts" title="Priority alerts">
-                    <i class="bi bi-bell-fill"></i>
-                    <span class="rail-button__dot" id="railAlertDot" hidden></span>
-                </button>
-            </nav>
-
-            <button class="rail-button rail-button--logout" id="logoutButton" type="button" title="Logout">
-                <i class="bi bi-box-arrow-right"></i>
+        <nav class="nav-menu">
+            <button class="nav-item-custom doctor-nav-item active" type="button" data-rail-target="top" data-rail-key="dashboard">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Dashboard</span>
             </button>
-        </aside>
+            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="overview" data-rail-key="pulse">
+                <i class="bi bi-activity"></i>
+                <span>Practice Pulse</span>
+            </button>
+            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="workspace" data-rail-tab="patients" data-rail-key="patients">
+                <i class="bi bi-people-fill"></i>
+                <span>Patients</span>
+            </button>
+            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="workspace" data-rail-tab="queue" data-rail-key="queue">
+                <i class="bi bi-calendar3"></i>
+                <span>Care Queue</span>
+            </button>
+            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="attentionSection" data-rail-key="alerts">
+                <i class="bi bi-bell-fill"></i>
+                <span>Alerts</span>
+                <span class="doctor-nav__dot" id="railAlertDot" hidden></span>
+            </button>
+            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="workspace" data-rail-key="settings">
+                <i class="bi bi-gear-fill"></i>
+                <span>Settings</span>
+            </button>
+        </nav>
 
-        <main class="doctor-main">
-            <header class="doctor-topbar">
-                <div>
-                    <span class="doctor-topbar__kicker">Healio Practice View</span>
-                    <p class="doctor-topbar__copy">Live patient summaries, trend monitoring, and doctor-first triage.</p>
+        <div class="sidebar-user">
+            <div class="d-flex align-items-center gap-3">
+                <div class="doctor-sidebar-avatar" id="sidebarDoctorAvatar">DR</div>
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="fw-semibold text-dark small text-truncate" id="sidebarDoctorName">Loading doctor</div>
+                    <div class="text-muted text-truncate" style="font-size: 12px;" id="sidebarDoctorEmail">Loading profile</div>
                 </div>
+                <button class="btn btn-sm btn-light" id="logoutButton" type="button" aria-label="Logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
 
-                <div class="doctor-topbar__actions">
-                    <button class="btn btn-light doctor-refresh-button" id="refreshDashboardButton" type="button">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        <span>Refresh</span>
-                    </button>
+    <main class="main-content doctor-main-content">
+        <header class="dashboard-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                    <div>
+                        <h1 class="greeting-title mb-1">Doctor Dashboard</h1>
+                        <p class="greeting-subtitle mb-0">Review patient trends and prioritize the next care actions.</p>
+                    </div>
 
-                    <button class="btn-icon doctor-bell-button" type="button" aria-label="Patients requiring review">
-                        <i class="bi bi-bell"></i>
-                        <span class="notification-badge" id="doctorNotificationBadge" style="display: none;"></span>
-                    </button>
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <button class="doctor-refresh-button" id="refreshDashboardButton" type="button">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            <span>Refresh</span>
+                        </button>
 
-                    <div class="doctor-profile-chip">
-                        <div class="doctor-profile-chip__avatar" id="doctorAvatar">DR</div>
-                        <div>
-                            <p id="doctorName">Loading doctor</p>
-                            <span id="doctorEmail">Loading profile</span>
+                        <button class="btn-icon" type="button" aria-label="Doctor notifications">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge" id="doctorNotificationBadge" style="display: none;"></span>
+                        </button>
+
+                        <div class="doctor-profile-chip">
+                            <div class="doctor-profile-chip__avatar" id="doctorAvatar">DR</div>
+                            <div>
+                                <p id="doctorName">Loading doctor</p>
+                                <span id="doctorEmail">Loading profile</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </header>
+            </div>
+        </header>
 
-            <section class="doctor-status-banner" id="dashboardStatus" aria-live="polite" hidden></section>
+        <div class="container-fluid px-4 pb-4">
+            <section class="doctor-status-banner mb-4" id="dashboardStatus" aria-live="polite" hidden></section>
 
-            <section class="doctor-hero" id="top">
-                <div class="doctor-hero__copy">
-                    <span class="doctor-section-eyebrow">Doctor command center</span>
-                    <h1>Doctor Dashboard</h1>
-                    <p>Track patient signals, surface the highest-risk cases first, and keep the next round of care reviews organized.</p>
-
-                    <div class="doctor-hero__meta">
-                        <span class="hero-meta-pill">
-                            <i class="bi bi-heart-pulse"></i>
-                            30 day health trends
-                        </span>
-                        <span class="hero-meta-pill">
-                            <i class="bi bi-shield-check"></i>
-                            Doctor-only workspace
-                        </span>
+            <section class="section-card doctor-intro mb-4" id="top">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-8">
+                        <span class="doctor-kicker">Doctor workspace</span>
+                        <h2 class="section-title mt-2 mb-2">Care Command Center</h2>
+                        <p class="section-subtitle mb-0">Manage patient information, prioritize high-risk cases, and streamline care delivery with a dashboard tailored to doctor workflows.</p>
                     </div>
-                </div>
 
-                <div class="doctor-hero__panel">
-                    <span class="doctor-section-eyebrow">Next review window</span>
-                    <h2 id="nextReviewTitle">Syncing care priorities</h2>
-                    <p id="nextReviewSubtitle">Pulling live doctor data and recent patient summaries.</p>
+                    <div class="col-lg-4">
+                        <div class="doctor-next-review">
+                            <span class="doctor-kicker">Next review window</span>
+                            <h3 id="nextReviewTitle">Syncing care priorities</h3>
+                            <p id="nextReviewSubtitle">Pulling live doctor data and recent patient summaries.</p>
 
-                    <div class="doctor-hero__footer">
-                        <div>
-                            <span class="doctor-hero__label">Updated</span>
-                            <strong id="lastUpdatedText">Just now</strong>
-                        </div>
-                        <div>
-                            <span class="doctor-hero__label">Queue load</span>
-                            <strong id="queueLoadText">0 reviews</strong>
+                            <div class="doctor-next-review__meta">
+                                <div>
+                                    <span>Updated</span>
+                                    <strong id="lastUpdatedText">Just now</strong>
+                                </div>
+                                <div>
+                                    <span>Queue load</span>
+                                    <strong id="queueLoadText">0 reviews</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="doctor-stat-grid" id="overview">
-                <article class="doctor-stat-card">
-                    <div class="doctor-stat-card__icon">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div>
-                        <p class="doctor-stat-card__label">Monitored patients</p>
-                        <h2 id="totalPatientsStat">0</h2>
-                        <span id="totalPatientsTrend">Waiting for patient records</span>
-                    </div>
-                </article>
+            <section class="row g-3 mb-4" id="overview">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <article class="vital-card doctor-stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="vital-title">Total Patients</span>
+                            <span class="badge badge-normal vital-status">Monitored</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="vital-icon">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div class="text-end">
+                                <h3 id="totalPatientsStat">0</h3>
+                                <span id="totalPatientsTrend">Waiting for patient records</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
 
-                <article class="doctor-stat-card">
-                    <div class="doctor-stat-card__icon doctor-stat-card__icon--warn">
-                        <i class="bi bi-exclamation-diamond-fill"></i>
-                    </div>
-                    <div>
-                        <p class="doctor-stat-card__label">Need review</p>
-                        <h2 id="attentionPatientsStat">0</h2>
-                        <span id="attentionPatientsTrend">No flagged patients yet</span>
-                    </div>
-                </article>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <article class="vital-card doctor-stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="vital-title">Need Review</span>
+                            <span class="badge badge-attention vital-status">Attention</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="vital-icon">
+                                <i class="bi bi-exclamation-diamond-fill"></i>
+                            </div>
+                            <div class="text-end">
+                                <h3 id="attentionPatientsStat">0</h3>
+                                <span id="attentionPatientsTrend">No flagged patients yet</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
 
-                <article class="doctor-stat-card">
-                    <div class="doctor-stat-card__icon doctor-stat-card__icon--calm">
-                        <i class="bi bi-droplet-fill"></i>
-                    </div>
-                    <div>
-                        <p class="doctor-stat-card__label">Average glucose</p>
-                        <h2 id="averageGlucoseStat">--</h2>
-                        <span id="averageGlucoseTrend">30 day average across monitored patients</span>
-                    </div>
-                </article>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <article class="vital-card doctor-stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="vital-title">Average Glucose</span>
+                            <span class="badge badge-normal vital-status">Trend</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="vital-icon">
+                                <i class="bi bi-droplet-fill"></i>
+                            </div>
+                            <div class="text-end">
+                                <h3 id="averageGlucoseStat">--</h3>
+                                <span id="averageGlucoseTrend">30 day average across monitored patients</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
 
-                <article class="doctor-stat-card">
-                    <div class="doctor-stat-card__icon doctor-stat-card__icon--info">
-                        <i class="bi bi-bar-chart-line-fill"></i>
-                    </div>
-                    <div>
-                        <p class="doctor-stat-card__label">Tracked readings</p>
-                        <h2 id="trackedReadingsStat">0</h2>
-                        <span id="trackedReadingsTrend">Monthly summary coverage</span>
-                    </div>
-                </article>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <article class="vital-card doctor-stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="vital-title">Tracked Readings</span>
+                            <span class="badge badge-normal vital-status">Coverage</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="vital-icon">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                            </div>
+                            <div class="text-end">
+                                <h3 id="trackedReadingsStat">0</h3>
+                                <span id="trackedReadingsTrend">Monthly summary coverage</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
             </section>
 
-            <section class="doctor-alert-card" id="attentionSection">
-                <div class="doctor-alert-card__icon">
+            <section class="section-card doctor-alert mb-4" id="attentionSection">
+                <div class="doctor-alert__icon">
                     <i class="bi bi-exclamation-triangle-fill"></i>
                 </div>
 
-                <div class="doctor-alert-card__content">
+                <div class="doctor-alert__content">
                     <div>
                         <h2 id="attentionHeadline">No urgent patients right now</h2>
                         <p id="attentionSubtext">High-priority patients will surface here when alerts or biometrics drift beyond safe ranges.</p>
                     </div>
-                    <div class="doctor-alert-badges" id="attentionBadges"></div>
+                    <div class="doctor-alert__badges" id="attentionBadges"></div>
                 </div>
             </section>
 
-            <section class="doctor-workspace" id="workspace">
-                <div class="doctor-workspace__header">
+            <section class="section-card doctor-management" id="workspace">
+                <div class="doctor-management__header">
                     <div>
-                        <span class="doctor-section-eyebrow">Care workspace</span>
-                        <h2>Review patients and queue the next actions</h2>
-                        <p>Search by patient name, inspect recent 30 day averages, and move between live patient cards and the generated care queue.</p>
+                        <span class="doctor-kicker">Care workspace</span>
+                        <h2 class="section-title mt-2 mb-2">Patient Management</h2>
+                        <p class="section-subtitle mb-0">Manage assigned patients, triage who needs immediate attention, and switch to the generated care queue.</p>
                     </div>
 
                     <div class="doctor-tabs" role="tablist" aria-label="Doctor dashboard sections">
-                        <button class="doctor-tab active" type="button" role="tab" aria-selected="true" data-tab="patients">Patients</button>
+                        <button class="doctor-tab active" type="button" role="tab" aria-selected="true" data-tab="patients">Patient Table</button>
                         <button class="doctor-tab" type="button" role="tab" aria-selected="false" data-tab="queue">Care Queue</button>
                     </div>
                 </div>
@@ -205,11 +251,27 @@
                         </div>
                     </div>
 
-                    <div class="patient-grid" id="patientGrid">
-                        <article class="patient-card patient-card--skeleton"></article>
-                        <article class="patient-card patient-card--skeleton"></article>
-                        <article class="patient-card patient-card--skeleton"></article>
-                        <article class="patient-card patient-card--skeleton"></article>
+                    <div class="doctor-table-card">
+                        <div class="doctor-table-wrap">
+                            <table class="doctor-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Priority</th>
+                                        <th>Focus</th>
+                                        <th>Summary</th>
+                                        <th>Monitoring</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientTableBody">
+                                    <tr class="doctor-table-row--skeleton"><td colspan="7"></td></tr>
+                                    <tr class="doctor-table-row--skeleton"><td colspan="7"></td></tr>
+                                    <tr class="doctor-table-row--skeleton"><td colspan="7"></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -218,7 +280,7 @@
                         <div class="queue-stack">
                             <div class="queue-note">
                                 <i class="bi bi-info-circle"></i>
-                                <span>The care queue is ranked from alert counts and 30 day patient summaries while the backend has no doctor appointment endpoint.</span>
+                                <span>The care queue is ranked using alert counts and 30 day summaries because no doctor appointment endpoint is available yet.</span>
                             </div>
 
                             <div class="queue-list" id="queueList">
@@ -230,7 +292,7 @@
 
                         <aside class="queue-sidebar">
                             <section class="queue-sidebar__card">
-                                <span class="doctor-section-eyebrow">Queue breakdown</span>
+                                <span class="doctor-kicker">Queue breakdown</span>
                                 <div class="queue-sidebar__stats">
                                     <div class="queue-sidebar__stat-row">
                                         <span>High priority</span>
@@ -252,7 +314,7 @@
                             </section>
 
                             <section class="queue-sidebar__card">
-                                <span class="doctor-section-eyebrow">Recommended focus</span>
+                                <span class="doctor-kicker">Recommended focus</span>
                                 <h3 id="queueFocusTitle">Loading care priorities</h3>
                                 <p id="queueFocusCopy">The highest-risk patient and top care theme will appear here after the first sync.</p>
                             </section>
@@ -260,8 +322,8 @@
                     </div>
                 </div>
             </section>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/config.js"></script>

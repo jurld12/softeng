@@ -25,6 +25,37 @@ class PyObjectId(ObjectId):
 
 
 # User Schemas
+class EmergencyContact(BaseModel):
+    """Emergency contact details"""
+    name: Optional[str] = None
+    relationship: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class PatientProfile(BaseModel):
+    """Structured patient profile details"""
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    blood_type: Optional[str] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    allergies: List[str] = Field(default_factory=list)
+    emergency_contact: Optional[EmergencyContact] = None
+
+
+class DoctorOptionResponse(BaseModel):
+    """Lightweight doctor directory response"""
+    id: str = Field(alias="_id")
+    name: str
+    email: str
+    specialty: Optional[str] = None
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+
 class UserRegister(BaseModel):
     """User registration request"""
     full_name: str = Field(..., min_length=2, max_length=100, alias="name")
@@ -45,7 +76,13 @@ class UserRegister(BaseModel):
     allergies: Optional[list[str]] = None
     
     # Emergency contact
-    emergency_contact: Optional[str] = None
+    emergency_contact: Optional[EmergencyContact] = None
+
+    # Doctor details
+    specialty: Optional[str] = None
+
+    # Care team
+    assigned_doctor_id: Optional[str] = None
     
     class Config:
         populate_by_name = True
@@ -57,18 +94,69 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    """Change password request"""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+
+
 class UserResponse(BaseModel):
     """User response (without password)"""
     id: str = Field(alias="_id")
     name: str
     email: str
     role: str
+    specialty: Optional[str] = None
     active: bool
     created_at: datetime
     
     class Config:
         populate_by_name = True
         json_encoders = {ObjectId: str}
+
+
+class UserProfileResponse(BaseModel):
+    """Detailed user response including structured profile data"""
+    id: str = Field(alias="_id")
+    name: str
+    email: str
+    role: str
+    active: bool
+    created_at: datetime
+    phone: Optional[str] = None
+    specialty: Optional[str] = None
+    profile: PatientProfile = Field(default_factory=PatientProfile)
+    assigned_doctor_id: Optional[str] = None
+    assigned_doctor: Optional[DoctorOptionResponse] = None
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+
+class PatientProfileUpdate(BaseModel):
+    """Patient profile update request"""
+    name: str = Field(..., min_length=2, max_length=100)
+    email: EmailStr
+    phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    blood_type: Optional[str] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    allergies: List[str] = Field(default_factory=list)
+    emergency_contact: Optional[EmergencyContact] = None
+    assigned_doctor_id: Optional[str] = None
+
+
+class AdminDoctorCreateRequest(BaseModel):
+    """Admin request to provision a doctor account"""
+    name: str = Field(..., min_length=2, max_length=100)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    phone: Optional[str] = None
+    specialty: str = Field(..., min_length=2, max_length=120)
 
 
 class TokenResponse(BaseModel):
@@ -290,6 +378,7 @@ class UserUpdateRequest(BaseModel):
     """Admin user update request"""
     role: Optional[Literal["patient", "doctor", "admin"]] = None
     active: Optional[bool] = None
+    specialty: Optional[str] = None
 
 
 class SystemStats(BaseModel):

@@ -2,17 +2,66 @@
 Admin-specific routes: user management, system statistics
 """
 from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
 from typing import List
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from app.models.schemas import UserResponse, UserUpdateRequest, SystemStats
+from app.models.schemas import AdminDoctorCreateRequest, UserResponse, UserUpdateRequest, SystemStats
 from app.database import get_database
 from app.middleware.auth import get_current_admin
+from app.utils.auth import hash_password, validate_password_strength
+from app.utils.user_profiles import normalize_doctor_specialty, parse_object_id
 
 
 router = APIRouter()
+
+
+@router.post("/doctors", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_doctor_account(
+    doctor_data: AdminDoctorCreateRequest,
+    current_user: dict = Depends(get_current_admin),
+    db = Depends(get_database)
+):
+    """Create a doctor account from the admin workspace."""
+    is_valid, error_msg = validate_password_strength(doctor_data.password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg
+        )
+
+    existing_user = await db.users.find_one({"email": doctor_data.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+
+    normalized_specialty = normalize_doctor_specialty(doctor_data.specialty)
+    if not normalized_specialty:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Doctor specialty is required"
+        )
+
+    doctor_doc = {
+        "name": doctor_data.name.strip(),
+        "email": doctor_data.email,
+        "phone": doctor_data.phone.strip() if doctor_data.phone else None,
+        "password_hash": hash_password(doctor_data.password),
+        "role": "doctor",
+        "specialty": normalized_specialty,
+        "active": True,
+        "created_at": datetime.utcnow(),
+        "profile": {}
+    }
+
+    result = await db.users.insert_one(doctor_doc)
+    created_doctor = await db.users.find_one({"_id": result.inserted_id})
+    created_doctor["_id"] = str(created_doctor["_id"])
+    return created_doctor
 
 
 @router.get("/users", response_model=List[UserResponse])
@@ -42,7 +91,8 @@ async def get_user_by_id(
     """
     Get specific user details (admin only)
     """
-    user = await db.users.find_one({"_id": user_id})
+    user_object_id = parse_object_id(user_id, "user")
+    user = await db.users.find_one({"_id": user_object_id})
     
     if not user:
         raise HTTPException(
@@ -65,7 +115,8 @@ async def update_user(
     Update user role or active status (admin only)
     """
     # Check if user exists
-    user = await db.users.find_one({"_id": user_id})
+    user_object_id = parse_object_id(user_id, "user")
+    user = await db.users.find_one({"_id": user_object_id})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -76,8 +127,20 @@ async def update_user(
     update_doc = {}
     if updates.role is not None:
         update_doc["role"] = updates.role
+        if updates.role != "doctor":
+            update_doc["specialty"] = None
     if updates.active is not None:
         update_doc["active"] = updates.active
+
+    if updates.specialty is not None:
+        next_role = updates.role or user.get("role")
+        if next_role != "doctor":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only doctor accounts can have a specialty"
+            )
+
+        update_doc["specialty"] = normalize_doctor_specialty(updates.specialty)
     
     if not update_doc:
         raise HTTPException(
@@ -87,12 +150,12 @@ async def update_user(
     
     # Update user
     await db.users.update_one(
-        {"_id": user_id},
+        {"_id": user_object_id},
         {"$set": update_doc}
     )
     
     # Fetch updated user
-    updated_user = await db.users.find_one({"_id": user_id})
+    updated_user = await db.users.find_one({"_id": user_object_id})
     updated_user["_id"] = str(updated_user["_id"])
     
     return updated_user
@@ -109,7 +172,8 @@ async def delete_user(
     WARNING: This permanently deletes user and their data
     """
     # Check if user exists
-    user = await db.users.find_one({"_id": user_id})
+    user_object_id = parse_object_id(user_id, "user")
+    user = await db.users.find_one({"_id": user_object_id})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -117,19 +181,21 @@ async def delete_user(
         )
     
     # Prevent admin from deleting themselves
-    if str(current_user["_id"]) == user_id:
+    user_id_str = str(user_object_id)
+
+    if str(current_user["_id"]) == user_id_str:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete your own account"
         )
     
     # Delete user and related data
-    await db.users.delete_one({"_id": user_id})
-    await db.biometrics.delete_many({"user_id": user_id})
-    await db.alerts.delete_many({"user_id": user_id})
-    await db.achievements.delete_many({"user_id": user_id})
+    await db.users.delete_one({"_id": user_object_id})
+    await db.biometrics.delete_many({"user_id": user_id_str})
+    await db.alerts.delete_many({"user_id": user_id_str})
+    await db.achievements.delete_many({"user_id": user_id_str})
     
-    return {"message": f"User {user_id} deleted successfully"}
+    return {"message": f"User {user_id_str} deleted successfully"}
 
 
 @router.get("/stats", response_model=SystemStats)
