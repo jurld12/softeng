@@ -1,282 +1,156 @@
-# Healio - Complete Setup Guide (Windows)
+# Healio - Setup Guide (Windows + macOS)
+
+## Simplest Way To Run
+
+If you already cloned the repo and installed prerequisites, daily usage is just:
+
+- Windows: run `./start-dev.ps1`, then `./stop-dev.ps1` when done
+- macOS: run `./start-dev-mac.sh`, then `./stop-dev-mac.sh` when done
 
 ## Prerequisites
-- Python 3.10 or higher installed
-- Docker Desktop installed and running
-- Git installed (optional, for version control)
 
----
+- Python 3.10+
+- Docker Desktop
+- Git
 
-## Step 1: Create Project Structure
+Quick checks:
 
-Open PowerShell in `c:\Users\Hayden\Documents\Study\SoftwareEngineering\App` and run:
-
+Windows (PowerShell):
 ```powershell
-# Create directory structure
-New-Item -ItemType Directory -Force -Path backend\app\api\routes
-New-Item -ItemType Directory -Force -Path backend\app\models
-New-Item -ItemType Directory -Force -Path backend\app\services
-New-Item -ItemType Directory -Force -Path backend\app\middleware
-New-Item -ItemType Directory -Force -Path backend\app\utils
-New-Item -ItemType Directory -Force -Path backend\tests
-New-Item -ItemType Directory -Force -Path frontend\css
-New-Item -ItemType Directory -Force -Path frontend\js
-New-Item -ItemType Directory -Force -Path frontend\assets
-New-Item -ItemType Directory -Force -Path frontend\pages
+py -3 --version
+docker --version
+docker compose version
 ```
 
----
-
-## Step 2: Start MongoDB in Docker
-
-```powershell
-# Pull and run MongoDB container
-docker run -d `
-  --name healio-mongodb `
-  -p 27017:27017 `
-  -e MONGO_INITDB_ROOT_USERNAME=admin `
-  -e MONGO_INITDB_ROOT_PASSWORD=healio_dev_password `
-  -e MONGO_INITDB_DATABASE=healio `
-  -v healio-data:/data/db `
-  mongo:7.0
-
-# Verify MongoDB is running
-docker ps
-
-# View MongoDB logs (optional)
-docker logs healio-mongodb
+macOS (Terminal):
+```bash
+python3 --version
+docker --version
+docker compose version
 ```
 
-**To stop MongoDB later:**
-```powershell
-docker stop healio-mongodb
-```
+## One-Time Setup (Fresh Clone)
 
-**To start MongoDB again:**
-```powershell
-docker start healio-mongodb
-```
-
-**To completely remove and reset:**
-```powershell
-docker stop healio-mongodb
-docker rm healio-mongodb
-docker volume rm healio-data
-```
-
----
-
-## Step 3: Set Up Backend (Python + FastAPI)
+### Windows
 
 ```powershell
-# Navigate to backend directory
 cd backend
-
-# Create Python virtual environment
-python -m venv venv
-
-# Activate virtual environment
+py -3 -m venv venv
 .\venv\Scripts\Activate.ps1
-
-# If you get execution policy error, run this first:
-# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-# Upgrade pip
 python -m pip install --upgrade pip
-
-# Install required packages
-pip install fastapi uvicorn[standard] pymongo python-jose[cryptography] passlib[bcrypt] python-multipart pydantic-settings python-dotenv email-validator
-
-# Generate requirements.txt
-pip freeze > requirements.txt
-
-# Stay in backend directory for next steps
+pip install -r requirements.txt
+cd ..
 ```
 
----
+### macOS
 
-## Step 4: Run Backend Server
-
-```powershell
-# Make sure you're in backend directory with venv activated
-# Run the FastAPI development server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 5000
-
-# You should see:
-# INFO:     Uvicorn running on http://127.0.0.1:5000
-# INFO:     Application startup complete.
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+cd ..
+chmod +x start-dev-mac.sh stop-dev-mac.sh
 ```
 
-**Access backend:**
-- API: http://127.0.0.1:5000
-- Interactive docs: http://127.0.0.1:5000/docs
-- Alternative docs: http://127.0.0.1:5000/redoc
+## Optional Backend Environment File
 
----
+Create `backend/.env` if you want explicit local config:
 
-## Step 5: Set Up Frontend (Basic HTML/CSS/JS)
-
-Open a **NEW PowerShell window** (keep backend running in the first one):
-
-```powershell
-# Navigate to frontend directory
-cd c:\Users\Hayden\Documents\Study\SoftwareEngineering\App\frontend
-
-# Install a simple HTTP server (optional, or just open HTML files directly)
-# Option 1: Using Python's built-in server
-python -m http.server 3000
-
-# Option 2: Using Node.js http-server (if you have Node installed)
-# npx http-server -p 3000 -c-1
-
-# Option 3: Just open frontend\index.html in your browser (no server needed for now)
+```env
+MONGODB_URL=mongodb://admin:healio_dev_password@localhost:27017/healio?authSource=admin
+MONGODB_DATABASE=healio
+JWT_SECRET_KEY=replace-this-with-a-long-random-secret
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+BACKEND_PORT=5000
+FRONTEND_PORT=3000
+MONGODB_PORT=27017
+ENVIRONMENT=development
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000,http://127.0.0.1:8000
 ```
 
-**Access frontend:**
-- http://localhost:3000
+If this file is missing, defaults in `backend/config.py` are used.
 
----
+## Daily Run
 
-## Step 6: Easy Startup with Automated Script
-
-**Option 1: One-Click Startup (RECOMMENDED)**
-
-Just double-click `start-dev.ps1` in the project root, or run:
+### Windows
 
 ```powershell
 .\start-dev.ps1
 ```
 
-This automatically:
-- ✅ Checks Docker status
-- ✅ Starts MongoDB if needed
-- ✅ Opens Backend in a new terminal
-- ✅ Opens Frontend in a new terminal
+Stop:
 
-**To stop all services:**
 ```powershell
 .\stop-dev.ps1
 ```
 
-**Option 2: Manual Startup**
+### macOS
 
-If you prefer manual control:
-
-```powershell
-# Terminal 1: Backend
-cd backend
-.\venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload --host 127.0.0.1 --port 5000
-
-# Terminal 2: Frontend  
-cd frontend
-python -m http.server 3000
-
-# MongoDB runs automatically via Docker
+```bash
+./start-dev-mac.sh
 ```
 
----
+Stop:
 
-## Step 7: Verify Everything Works
-
-1. **Check MongoDB:**
-   ```powershell
-   docker exec -it healio-mongodb mongosh -u admin -p healio_dev_password
-   # Inside mongo shell:
-   # show dbs
-   # use healio
-   # exit
-   ```
-
-2. **Check Backend:**
-   - Visit http://127.0.0.1:5000/docs
-   - You should see FastAPI Swagger UI
-
-3. **Check Frontend:**
-   - Visit http://localhost:3000
-   - Basic page should load
-
----
-
-## Environment Variables Reference
-
-Backend `.env` file location: `backend/.env`
-
-Key variables:
-- `MONGODB_URL`: MongoDB connection string
-- `JWT_SECRET_KEY`: Secret for signing JWT tokens
-- `BACKEND_PORT`: Backend server port (default: 5000)
-- `FRONTEND_PORT`: Frontend server port (default: 3000)
-- `JWT_EXPIRATION_HOURS`: Token expiration time (default: 24)
-
-Frontend `config.js` file location: `frontend/js/config.js`
-
-Key variables:
-- `API_BASE_URL`: Backend API URL
-
----
-
-## Troubleshooting
-
-**Docker MongoDB won't start:**
-```powershell
-# Check if port 27017 is in use
-netstat -ano | findstr :27017
-
-# Remove existing container and try again
-docker rm -f healio-mongodb
-docker volume rm healio-data
-# Then run Step 2 again
+```bash
+./stop-dev-mac.sh
 ```
 
-**Virtual environment activation fails:**
+## Verify It Works
+
+1. Backend health:
+```bash
+curl http://127.0.0.1:5000/health
+```
+
+2. Backend docs:
+- http://127.0.0.1:5000/docs
+
+3. Frontend:
+- http://localhost:3000
+
+## Common Issues
+
+### Docker is not running
+
+Start Docker Desktop and rerun start script.
+
+### Script permission denied on macOS
+
+```bash
+chmod +x start-dev-mac.sh stop-dev-mac.sh
+```
+
+### PowerShell blocks scripts on Windows
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-**Backend import errors:**
-```powershell
-# Make sure venv is activated
+### Missing Python modules
+
+```bash
 cd backend
-.\venv\Scripts\Activate.ps1
-# Reinstall packages
+source venv/bin/activate  # macOS
 pip install -r requirements.txt
 ```
 
-**Port already in use:**
+Windows activation command:
 ```powershell
-# Find process using port 5000
-netstat -ano | findstr :5000
-# Kill process (replace PID with actual process ID)
-taskkill /PID <PID> /F
-```
-
----
-
-## Quick Reference Commands
-
-**Daily Startup:**
-```powershell
-# Terminal 1: Backend
-cd c:\Users\Hayden\Documents\Study\SoftwareEngineering\App\backend
 .\venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload --host 127.0.0.1 --port 5000
-
-# Terminal 2: Frontend  
-cd c:\Users\Hayden\Documents\Study\SoftwareEngineering\App\frontend
-python -m http.server 3000
-
-# MongoDB runs automatically via Docker
 ```
 
-**Shutdown:**
-```powershell
-# Stop servers: Ctrl+C in each terminal
-# Stop MongoDB (optional):
-docker stop healio-mongodb
-```
+### Endpoint exists in code but returns 404
 
-**Reset Database:**
-```powershell
-docker exec -it healio-mongodb mongosh -u admin -p healio_dev_password --eval "use healio; db.dropDatabase()"
+Usually caused by stale backend processes. Run the stop script, then start again.
+
+### Reset local database
+
+```bash
+docker compose down
+docker volume rm healio-data
+docker compose up -d mongodb
 ```
