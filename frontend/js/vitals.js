@@ -283,7 +283,7 @@ function displayVitals() {
                         ` : `
                         <div class="mb-3">
                             <label class="form-label small">Value${vital.unit ? ` (${vital.unit})` : ''}</label>
-                            <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value" min="0" ${vital.id === 'oxygen' ? 'max="100" step="0.1"' : ''}>
+                            <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value" min="0" ${vital.id === 'oxygen' ? 'max="100" step="0.1"' : ''} ${vital.id === 'steps' ? 'max="100000" step="1"' : ''}>
                         </div>
                         `}
                         <div class="mb-3">
@@ -882,6 +882,11 @@ window.addVitalReading = async function(vitalId) {
 
         if (value < 0) {
             alert(`${vital.name} must be 0 or greater.`);
+            return;
+        }
+
+        if (vitalId === 'steps' && value > 100000) {
+            alert('Daily Steps must be 100,000 or less.');
             return;
         }
 
