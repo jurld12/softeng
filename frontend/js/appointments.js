@@ -5,6 +5,10 @@ let currentDate = new Date(); // Current date
 let selectedDate = new Date(); // Start with today selected
 let appointments = [];
 let editingAppointmentId = null; // Track if we're editing
+let availableDoctors = [];
+
+const appointmentDoctorSelect = document.getElementById('appointmentDoctor');
+const appointmentDoctorStatus = document.getElementById('appointmentDoctorStatus');
 
 function getTodayDateString() {
     const now = new Date();
@@ -24,6 +28,7 @@ function applyAppointmentDateMin() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserData();
+    await loadAvailableDoctors();
     await loadAppointments();
     renderCalendar();
     updateStats();
@@ -78,6 +83,71 @@ function updateUserDisplay(user) {
     const sidebarAvatar = document.querySelector('.sidebar-user img');
     if (sidebarAvatar) {
         sidebarAvatar.src = avatarUrl;
+    }
+}
+
+function formatDoctorLabel(doctor) {
+    const specialty = doctor.specialty ? ` - ${doctor.specialty}` : '';
+    const email = doctor.email ? ` - ${doctor.email}` : '';
+    return `${doctor.name}${specialty}${email}`;
+}
+
+function renderDoctorOptions(selectedDoctorName = '') {
+    if (!appointmentDoctorSelect) {
+        return;
+    }
+
+    const options = ['<option value="">No doctor selected</option>'];
+
+    availableDoctors.forEach((doctor) => {
+        const doctorName = doctor.name || '';
+        if (!doctorName) {
+            return;
+        }
+
+        const label = formatDoctorLabel(doctor);
+        const selectedAttr = selectedDoctorName && selectedDoctorName === doctorName ? ' selected' : '';
+        options.push(`<option value="${doctorName}"${selectedAttr}>${label}</option>`);
+    });
+
+    const hasSelectedDoctor = selectedDoctorName && availableDoctors.some((doctor) => doctor.name === selectedDoctorName);
+    if (selectedDoctorName && !hasSelectedDoctor) {
+        options.push(`<option value="${selectedDoctorName}" selected>${selectedDoctorName} (Saved provider)</option>`);
+    }
+
+    appointmentDoctorSelect.innerHTML = options.join('');
+    appointmentDoctorSelect.disabled = false;
+}
+
+async function loadAvailableDoctors() {
+    if (!appointmentDoctorSelect) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/doctors`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load doctors: ${response.status}`);
+        }
+
+        availableDoctors = await response.json();
+        renderDoctorOptions();
+
+        if (appointmentDoctorStatus) {
+            appointmentDoctorStatus.textContent = availableDoctors.length
+                ? 'Choose a registered doctor or leave blank.'
+                : 'No doctors available right now. You can still create an appointment without selecting one.';
+        }
+    } catch (error) {
+        console.error('Error loading doctors:', error);
+        availableDoctors = [];
+        appointmentDoctorSelect.innerHTML = '<option value="">No doctors available right now</option>';
+        appointmentDoctorSelect.disabled = true;
+
+        if (appointmentDoctorStatus) {
+            appointmentDoctorStatus.textContent = 'Unable to load doctors right now. You can continue without selecting one.';
+        }
     }
 }
 
@@ -392,6 +462,7 @@ function setupEventListeners() {
         editingAppointmentId = null;
         document.getElementById('saveAppointment').textContent = 'Save Appointment';
         applyAppointmentDateMin();
+        renderDoctorOptions();
     });
 }
 
@@ -533,6 +604,7 @@ function editAppointment(id) {
     document.getElementById('appointmentType').value = appointment.type;
     document.getElementById('appointmentDate').value = appointment.date;
     document.getElementById('appointmentTime').value = appointment.time;
+    renderDoctorOptions(appointment.doctor || '');
     document.getElementById('appointmentDoctor').value = appointment.doctor || '';
     document.getElementById('appointmentLocation').value = appointment.location || '';
     document.getElementById('appointmentNotes').value = appointment.notes || '';

@@ -273,7 +273,10 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Doctor/Provider</label>
-                            <input type="text" class="form-control" id="appointmentDoctor">
+                            <select class="form-select" id="appointmentDoctor">
+                                <option value="">Loading available doctors...</option>
+                            </select>
+                            <div class="form-text" id="appointmentDoctorStatus">Choose a registered doctor or leave blank.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Location</label>
