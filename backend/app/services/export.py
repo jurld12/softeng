@@ -13,6 +13,38 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 
 
+METRIC_UNITS = {
+    "heart_rate": "bpm",
+    "blood_glucose": "mg/dL",
+    "blood_pressure": "mmHg",
+    "blood_pressure_systolic": "mmHg",
+    "blood_pressure_diastolic": "mmHg",
+    "blood_oxygen": "%",
+    "body_temperature": "F",
+    "weight": "kg",
+    "bmi": "",
+    "steps": "steps",
+    "calories": "kcal",
+    "sleep_hours": "hours",
+    "respiratory_rate": "breaths/min",
+    "hydration": "L",
+    "water_intake": "ml"
+}
+
+
+def resolve_unit(entry: Dict) -> str:
+    """Resolve a unit from stored data or a metric fallback map."""
+    stored_unit = entry.get("unit")
+    if stored_unit not in (None, ""):
+        return str(stored_unit)
+
+    metric = entry.get("metric")
+    if not metric:
+        return ""
+
+    return METRIC_UNITS.get(metric, "")
+
+
 def generate_csv_report(biometrics: List[Dict], user_name: str) -> str:
     """
     Generate CSV report from biometric data
@@ -44,7 +76,7 @@ def generate_csv_report(biometrics: List[Dict], user_name: str) -> str:
             if field == 'timestamp':
                 continue
             
-            value = entry.get(field)
+            value = resolve_unit(entry) if field == 'unit' else entry.get(field)
             
             # Handle blood pressure dict
             if field == 'blood_pressure' and isinstance(value, dict):
@@ -122,7 +154,7 @@ def generate_pdf_report(biometrics: List[Dict], user_name: str, from_date: str =
             # Handle new data structure with metric/value/unit
             metric = entry.get('metric', '')
             value = entry.get('value', '')
-            unit = entry.get('unit', '')
+            unit = resolve_unit(entry)
             
             if metric and value is not None:
                 metric_name = metric.replace('_', ' ').title()
