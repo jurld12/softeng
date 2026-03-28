@@ -71,9 +71,10 @@ async function loadCurrentUser() {
         else if (hour < 18) greeting = 'Good Afternoon';
         
         document.getElementById('greetingText').textContent = `${greeting}, ${userName.split(' ')[0]} 👋`;
-        
-        // Update profile section
-        updateProfileSection(userData);
+
+        // Update profile section from the same endpoint used by settings page.
+        const profilePayload = await loadDashboardProfile(userData);
+        updateProfileSection(profilePayload);
         
         return userData;
     } catch (error) {
@@ -83,6 +84,39 @@ async function loadCurrentUser() {
             window.logout();
         }
         throw error;
+    }
+}
+
+async function loadDashboardProfile(userData) {
+    try {
+        const endpoint = CONFIG?.ENDPOINTS?.PATIENT_PROFILE || '/patients/me/profile';
+        const response = await fetch(getApiUrl(endpoint), {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            return userData;
+        }
+
+        const data = await response.json();
+        const profile = data.profile || {};
+
+        return {
+            name: data.name || userData.name,
+            email: data.email || userData.email,
+            phone: data.phone || userData.phone,
+            date_of_birth: profile.date_of_birth || userData.date_of_birth,
+            gender: profile.gender || userData.gender,
+            blood_type: profile.blood_type || userData.blood_type,
+            height: profile.height || userData.height,
+            weight: profile.weight || userData.weight,
+            address: profile.address || userData.address,
+            allergies: Array.isArray(profile.allergies) ? profile.allergies : (userData.allergies || []),
+            emergency_contact: profile.emergency_contact || userData.emergency_contact
+        };
+    } catch (error) {
+        console.error('Error loading dashboard profile:', error);
+        return userData;
     }
 }
 
@@ -116,17 +150,19 @@ function updateProfileSection(userData) {
     
     // Update gender
     if (userData.gender) {
+        document.getElementById('profileGender').style.display = '';
         document.getElementById('profileGender').textContent = 
             userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1);
     } else {
-        document.getElementById('profileGender').style.display = 'none';
+        document.getElementById('profileGender').textContent = 'Not provided';
     }
     
     // Update blood type
     if (userData.blood_type) {
+        document.getElementById('profileBlood').style.display = '';
         document.getElementById('profileBlood').textContent = userData.blood_type;
     } else {
-        document.getElementById('profileBlood').style.display = 'none';
+        document.getElementById('profileBlood').textContent = 'Not provided';
     }
     
     // Update height and weight
@@ -155,8 +191,15 @@ function updateProfileSection(userData) {
     }
     
     // Update emergency contact
-    document.getElementById('profileEmergency').textContent = 
-        userData.emergency_contact || 'Not provided';
+    if (typeof userData.emergency_contact === 'object' && userData.emergency_contact !== null) {
+        const emergencyName = userData.emergency_contact.name || '';
+        const emergencyPhone = userData.emergency_contact.phone || '';
+        const emergencyRelationship = userData.emergency_contact.relationship || '';
+        const parts = [emergencyName, emergencyRelationship, emergencyPhone].filter(Boolean);
+        document.getElementById('profileEmergency').textContent = parts.join(' - ') || 'Not provided';
+    } else {
+        document.getElementById('profileEmergency').textContent = userData.emergency_contact || 'Not provided';
+    }
 }
 
 // ==================== Load Dashboard Data ====================
