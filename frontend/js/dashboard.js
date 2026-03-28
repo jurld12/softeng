@@ -173,14 +173,79 @@ async function loadDashboardData() {
         const dashboardData = await response.json();
         console.log('Dashboard data loaded:', dashboardData);
         
-        // Update vitals
+        // Update vitals from dashboard
         updateVitals(dashboardData.latest_metrics);
+        
+        // Load missing vitals from biometric endpoint
+        await loadCurrentVitals();
         
         return dashboardData;
     } catch (error) {
         console.error('Error loading dashboard:', error);
         showError('Failed to load dashboard data. Using demo data.');
         return null;
+    }
+}
+
+// ==================== Load Current Vitals ====================
+// Fetch vitals from biometric endpoint (matches vitals.js pattern)
+async function loadCurrentVitals() {
+    const vitalMetrics = [
+        { id: 'oxygen', metric: 'blood_oxygen', element: 'oxygenValue' },
+        { id: 'temp', metric: 'body_temperature', element: 'tempValue' },
+        { id: 'weight', metric: 'weight', element: 'weightValue' },
+        { id: 'bmi', metric: 'bmi', element: 'bmiValue' },
+        { id: 'respRate', metric: 'respiratory_rate', element: 'respRateValue' },
+        { id: 'hydration', metric: 'hydration', element: 'hydrationValue' }
+    ];
+    
+    try {
+        for (const vital of vitalMetrics) {
+            try {
+                const response = await fetch(`${getApiUrl('/patients/me/biometrics')}?metric=${vital.metric}&limit=1`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const value = data[0].value;
+                        const element = document.getElementById(vital.element);
+                        if (element) {
+                            // Format value based on vital type
+                            if (vital.id === 'weight') {
+                                element.textContent = parseFloat(value).toFixed(1);
+                            } else if (vital.id === 'bmi') {
+                                element.textContent = parseFloat(value).toFixed(1);
+                            } else if (vital.id === 'temp') {
+                                element.textContent = parseFloat(value).toFixed(1);
+                            } else if (vital.id === 'hydration') {
+                                element.textContent = parseFloat(value).toFixed(1);
+                            } else {
+                                element.textContent = Math.round(value);
+                            }
+                            
+                            // Update status badge if there's a threshold
+                            const thresholds = {
+                                'oxygen': { low: 90, normal: 95, high: 100 },
+                                'temp': { low: 97, normal: 98.6, high: 99.5 },
+                                'respRate': { low: 12, normal: 20, high: 25 },
+                                'hydration': { low: 1.5, normal: 2.5, high: 4 }
+                            };
+                            
+                            if (thresholds[vital.id]) {
+                                const t = thresholds[vital.id];
+                                updateVitalStatus(vital.id, value, t.low, t.normal, t.high);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`Error loading ${vital.metric}:`, error);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading current vitals:', error);
     }
 }
 
@@ -300,6 +365,52 @@ function updateVitalStatus(vitalId, value, lowThreshold, normalThreshold, highTh
     }
 }
 
+function parseApiErrorMessage(payload, fallback = 'Failed to save data') {
+    if (!payload) {
+        return fallback;
+    }
+
+    if (typeof payload === 'string') {
+        return payload;
+    }
+
+    if (typeof payload === 'object') {
+        if (typeof payload.detail === 'string') {
+            return payload.detail;
+        }
+
+        if (Array.isArray(payload.detail)) {
+            const detailMessages = payload.detail
+                .map((item) => {
+                    if (typeof item === 'string') {
+                        return item;
+                    }
+
+                    if (item && typeof item === 'object') {
+                        return item.msg || item.message || item.detail || '';
+                    }
+
+                    return '';
+                })
+                .filter((message) => message);
+
+            if (detailMessages.length > 0) {
+                return detailMessages.join('; ');
+            }
+        }
+
+        if (typeof payload.message === 'string') {
+            return payload.message;
+        }
+
+        if (typeof payload.error === 'string') {
+            return payload.error;
+        }
+    }
+
+    return fallback;
+}
+
 // ==================== Save Vital Data ====================
 window.saveVitalData = async function() {
     const timestamp = document.getElementById('vitalTimestamp').value;
@@ -308,7 +419,7 @@ window.saveVitalData = async function() {
     
     // Get the current vital data from modal
     if (!window.currentVitalData) {
-        alert('No vital data selected');
+        showError('No vital data selected');
         return;
     }
     
@@ -336,38 +447,72 @@ window.saveVitalData = async function() {
         const diastolic = document.getElementById('diastolicValue').value;
         
         if (!systolic || !diastolic) {
-            alert('Please enter both systolic and diastolic values');
+            showError('Please enter both systolic and diastolic values');
+            return;
+        }
+
+        const systolicValue = parseFloat(systolic);
+        const diastolicValue = parseFloat(diastolic);
+
+        if (Number.isNaN(systolicValue) || Number.isNaN(diastolicValue)) {
+            showError('Please enter valid blood pressure values.');
+            return;
+        }
+
+        if (systolicValue < 0 || diastolicValue < 0) {
+            showError('Blood Pressure values must be 0 or greater.');
             return;
         }
         
         // Save systolic
-        await saveBiometricEntry('blood_pressure_systolic', parseFloat(systolic), timestamp);
+        await saveBiometricEntry('blood_pressure_systolic', systolicValue, timestamp);
         // Save diastolic
-        await saveBiometricEntry('blood_pressure_diastolic', parseFloat(diastolic), timestamp);
+        await saveBiometricEntry('blood_pressure_diastolic', diastolicValue, timestamp);
         
         // Update display
         document.getElementById('bpValue').textContent = `${systolic}/${diastolic}`;
-        updateVitalStatus('bp', parseFloat(systolic), 90, 120, 140);
+        updateVitalStatus('bp', systolicValue, 90, 120, 140);
         
     } else {
         value = document.getElementById('vitalValue').value;
         
         if (!value) {
-            alert('Please enter a value');
+            showError('Please enter a value');
             return;
         }
         
         if (!metric) {
-            alert('Unknown vital type');
+            showError('Unknown vital type');
+            return;
+        }
+
+        const numericValue = parseFloat(value);
+        if (Number.isNaN(numericValue)) {
+            showError('Please enter a valid number.');
+            return;
+        }
+
+        if (numericValue < 0) {
+            showError(`${window.currentVitalData.name} must be 0 or greater.`);
+            return;
+        }
+
+        if (vitalId === 'oxygen' && numericValue > 100) {
+            showError('Blood Oxygen must be between 0 and 100%.');
+            return;
+        }
+
+        if (vitalId === 'steps' && numericValue > 100000) {
+            showError('Daily Steps must be 100,000 or less.');
             return;
         }
         
-        await saveBiometricEntry(metric, parseFloat(value), timestamp);
+        await saveBiometricEntry(metric, numericValue, timestamp);
         
         // Update display
         const displayValue = ['steps', 'calories'].includes(metric) 
-            ? Math.round(value).toLocaleString() 
-            : Math.round(value);
+            ? Math.round(numericValue).toLocaleString() 
+            : Math.round(numericValue);
         document.getElementById(`${vitalId}Value`).textContent = displayValue;
     }
     
@@ -394,16 +539,18 @@ async function saveBiometricEntry(metric, value, timestamp) {
                 timestamp: new Date(timestamp).toISOString()
             })
         });
+
+        const responseData = await response.json().catch(() => null);
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to save data');
+            throw new Error(parseApiErrorMessage(responseData, 'Failed to save data'));
         }
         
-        return await response.json();
+        return responseData;
     } catch (error) {
         console.error('Error saving biometric:', error);
-        alert(`Failed to save data: ${error.message}`);
+        const userMessage = parseApiErrorMessage(error, 'Failed to save data');
+        showError(`Failed to save data: ${userMessage}`);
         throw error;
     }
 }
@@ -459,6 +606,22 @@ window.openVitalModal = function(element) {
     document.getElementById('vitalInputModalLabel').textContent = `Update ${vitalName}`;
     document.getElementById('vitalNameLabel').textContent = vitalName;
     document.getElementById('vitalUnitLabel').textContent = vitalUnit;
+
+    const vitalValueInput = document.getElementById('vitalValue');
+    const systolicInput = document.getElementById('systolicValue');
+    const diastolicInput = document.getElementById('diastolicValue');
+
+    // Reset numeric constraints before applying vital-specific rules
+    vitalValueInput.removeAttribute('max');
+    vitalValueInput.min = '0';
+    systolicInput.min = '0';
+    diastolicInput.min = '0';
+
+    if (vitalId === 'oxygen') {
+        vitalValueInput.max = '100';
+    } else if (vitalId === 'steps') {
+        vitalValueInput.max = '100000';
+    }
     
     // Set default timestamp to current time
     const now = new Date();
