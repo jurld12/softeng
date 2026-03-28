@@ -6,6 +6,21 @@ let selectedDate = new Date(); // Start with today selected
 let appointments = [];
 let editingAppointmentId = null; // Track if we're editing
 
+function getTodayDateString() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 10);
+}
+
+function applyAppointmentDateMin() {
+    const dateInput = document.getElementById('appointmentDate');
+    if (!dateInput) {
+        return;
+    }
+
+    dateInput.min = getTodayDateString();
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserData();
@@ -13,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderCalendar();
     updateStats();
     setupEventListeners();
+    applyAppointmentDateMin();
     
     // Set default date in form to selected date
     const dateInput = document.getElementById('appointmentDate');
@@ -202,6 +218,7 @@ function selectDate(date) {
     // Update form date
     const dateInput = document.getElementById('appointmentDate');
     if (dateInput) {
+        applyAppointmentDateMin();
         dateInput.valueAsDate = date;
     }
 }
@@ -374,6 +391,7 @@ function setupEventListeners() {
         document.getElementById('appointmentForm').reset();
         editingAppointmentId = null;
         document.getElementById('saveAppointment').textContent = 'Save Appointment';
+        applyAppointmentDateMin();
     });
 }
 
