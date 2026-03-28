@@ -283,7 +283,7 @@ function displayVitals() {
                         ` : `
                         <div class="mb-3">
                             <label class="form-label small">Value${vital.unit ? ` (${vital.unit})` : ''}</label>
-                            <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value">
+                            <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value" ${vital.id === 'oxygen' ? 'min="0" max="100" step="0.1"' : ''}>
                         </div>
                         `}
                         <div class="mb-3">
@@ -814,6 +814,11 @@ window.addVitalReading = async function(vitalId) {
         
         if (isNaN(value)) {
             alert('Please enter a valid value');
+            return;
+        }
+
+        if (vitalId === 'oxygen' && (value < 0 || value > 100)) {
+            alert('Blood Oxygen must be between 0 and 100%.');
             return;
         }
     }
