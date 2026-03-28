@@ -3,6 +3,32 @@ let medicationModal;
 let deleteModal;
 let currentMedicationId = null;
 
+function parseDateInputValue(value) {
+    if (!value) {
+        return null;
+    }
+
+    const parsed = new Date(`${value}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getTodayAtMidnight() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+}
+
+function updateEndDateMinimum() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    if (!startDateInput || !endDateInput) {
+        return;
+    }
+
+    endDateInput.min = startDateInput.value || '';
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
@@ -24,6 +50,11 @@ function checkAuthentication() {
 function initializeModals() {
     medicationModal = new bootstrap.Modal(document.getElementById('medicationModal'));
     deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    const startDateInput = document.getElementById('startDate');
+    if (startDateInput) {
+        startDateInput.addEventListener('change', updateEndDateMinimum);
+    }
 }
 
 // Load current user info
@@ -197,6 +228,8 @@ function openAddModal() {
     // Set default start date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = '';
+    updateEndDateMinimum();
     document.getElementById('activeCheckbox').checked = true;
     
     medicationModal.show();
@@ -229,6 +262,7 @@ async function openEditModal(medicationId) {
             document.getElementById('instructions').value = medication.instructions || '';
             document.getElementById('startDate').value = medication.start_date.split('T')[0];
             document.getElementById('endDate').value = medication.end_date ? medication.end_date.split('T')[0] : '';
+            updateEndDateMinimum();
             document.getElementById('activeCheckbox').checked = medication.active;
             
             medicationModal.show();
@@ -260,6 +294,23 @@ async function saveMedication() {
         end_date: document.getElementById('endDate').value || null,
         active: document.getElementById('activeCheckbox').checked
     };
+
+    const startDate = parseDateInputValue(medicationData.start_date);
+    const endDate = parseDateInputValue(medicationData.end_date);
+
+    if (!startDate) {
+        showError('Please enter a valid start date.');
+        return;
+    }
+
+    if (endDate && endDate <= startDate) {
+        showError('End date must be after the start date.');
+        return;
+    }
+
+    if (startDate > getTodayAtMidnight()) {
+        showWarning('Start date is in the future. Please confirm this schedule is correct.');
+    }
 
     try {
         const token = localStorage.getItem('healio_access_token');
@@ -381,6 +432,24 @@ function showSuccess(message) {
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+}
+
+function showWarning(message) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show align-items-center text-dark bg-warning border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-exclamation-circle me-2"></i>${escapeHtml(message)}
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
 }
 
 function logout() {
