@@ -337,8 +337,22 @@ function escapeHtml(text) {
 
 // Show error message
 function showError(message) {
-    // Simple alert for now - could be improved with toast notifications
-    alert(message);
+    showToast(message, 'danger');
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>${escapeHtml(message)}
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 4000);
 }
 
 // Toggle today's completion status
@@ -519,15 +533,15 @@ async function autoGenerateReminders(event) {
         btn.innerHTML = originalHTML;
         
         if (createdCount > 0) {
-            alert(`Successfully created ${createdCount} reminder(s)!`);
+            showToast(`Successfully created ${createdCount} reminder(s)!`, 'success');
             await loadReminders();
         } else {
-            alert('No new reminders to create. All medications and appointments already have reminders.');
+            showToast('No new reminders to create. All medications and appointments already have reminders.', 'info');
         }
         
     } catch (error) {
         console.error('Error auto-generating reminders:', error);
-        alert(`Failed to generate reminders: ${error.message}`);
+        showToast(`Failed to generate reminders: ${error.message}`, 'danger');
         // Restore button
         if (event) {
             const btn = event.target?.closest('button') || event.currentTarget;
