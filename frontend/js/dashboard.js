@@ -194,7 +194,8 @@ async function loadCurrentVitals() {
         { id: 'oxygen', metric: 'blood_oxygen', element: 'oxygenValue' },
         { id: 'temp', metric: 'body_temperature', element: 'tempValue' },
         { id: 'weight', metric: 'weight', element: 'weightValue' },
-        { id: 'bmi', metric: 'bmi', element: 'bmiValue' },
+        { id: 'steps', metric: 'steps', element: 'stepsValue' },
+        { id: 'calories', metric: 'calories', element: 'caloriesValue' },
         { id: 'respRate', metric: 'respiratory_rate', element: 'respRateValue' },
         { id: 'hydration', metric: 'hydration', element: 'hydrationValue' }
     ];
@@ -215,12 +216,14 @@ async function loadCurrentVitals() {
                             // Format value based on vital type
                             if (vital.id === 'weight') {
                                 element.textContent = parseFloat(value).toFixed(1);
-                            } else if (vital.id === 'bmi') {
-                                element.textContent = parseFloat(value).toFixed(1);
                             } else if (vital.id === 'temp') {
                                 element.textContent = parseFloat(value).toFixed(1);
                             } else if (vital.id === 'hydration') {
                                 element.textContent = parseFloat(value).toFixed(1);
+                            } else if (vital.id === 'steps') {
+                                element.textContent = Math.round(value).toLocaleString();
+                            } else if (vital.id === 'calories') {
+                                element.textContent = Math.round(value).toLocaleString();
                             } else {
                                 element.textContent = Math.round(value);
                             }
@@ -229,6 +232,7 @@ async function loadCurrentVitals() {
                             const thresholds = {
                                 'oxygen': { low: 90, normal: 95, high: 100 },
                                 'temp': { low: 97, normal: 98.6, high: 99.5 },
+                                'steps': { low: 5000, normal: 10000, high: 15000 },
                                 'respRate': { low: 12, normal: 20, high: 25 },
                                 'hydration': { low: 1.5, normal: 2.5, high: 4 }
                             };
@@ -313,13 +317,6 @@ function updateVitals(latestMetrics) {
     if (latestMetrics.weight) {
         const value = latestMetrics.weight.value.toFixed(1);
         document.getElementById('weightValue').textContent = value;
-    }
-    
-    // Update BMI
-    if (latestMetrics.bmi) {
-        const value = latestMetrics.bmi.value.toFixed(1);
-        document.getElementById('bmiValue').textContent = value;
-        updateVitalStatus('bmi', value, 18.5, 24.9, 30);
     }
     
     // Update respiratory rate
@@ -435,7 +432,6 @@ window.saveVitalData = async function() {
         'oxygen': 'blood_oxygen',
         'temp': 'body_temperature',
         'weight': 'weight',
-        'bmi': 'bmi',
         'respRate': 'respiratory_rate',
         'hydration': 'hydration'
     };

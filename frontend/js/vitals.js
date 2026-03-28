@@ -61,16 +61,6 @@ const ALL_VITALS = [
         color: '#f59e0b'
     },
     {
-        id: 'bmi',
-        name: 'BMI',
-        unit: '',
-        icon: 'bi-person',
-        description: 'Body Mass Index',
-        apiMetric: 'bmi',
-        optimalRange: null,
-        color: '#8b5cf6'
-    },
-    {
         id: 'steps',
         name: 'Steps',
         unit: 'steps',
