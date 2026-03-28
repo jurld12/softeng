@@ -443,88 +443,142 @@ async function autoGenerateReminders(event) {
         const medications = await medicationsRes.json();
         const appointmentsData = await appointmentsRes.json();
         const appointments = appointmentsData.appointments || [];
+
+        const activeMedications = medications.filter(m => m.active);
+        const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
+
+        const hasInactiveMedicationMatches = activeMedications.some((med) =>
+            reminders.some((r) => r.category === 'medication' && !r.active && r.title.includes(med.name))
+        );
+        const hasInactiveAppointmentMatches = upcomingAppointments.some((apt) =>
+            reminders.some((r) => r.category === 'appointment' && !r.active && r.title.includes(apt.title))
+        );
+
+        let shouldReactivateInactive = false;
+        if (hasInactiveMedicationMatches || hasInactiveAppointmentMatches) {
+            shouldReactivateInactive = window.confirm(
+                'Inactive reminders were found for some medications or appointments. Click OK to reactivate them, or Cancel to generate new reminders.'
+            );
+        }
         
         let createdCount = 0;
+        let reactivatedCount = 0;
+
+        async function reactivateReminder(reminderId) {
+            const toggleResponse = await fetch(`${API_BASE_URL}/patients/me/reminders/${reminderId}/toggle`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            return toggleResponse.ok;
+        }
         
         // Generate medication reminders
-        for (const med of medications.filter(m => m.active)) {
-            // Check if reminder already exists
-            const exists = reminders.some(r => 
-                r.category === 'medication' && 
-                r.title.includes(med.name)
+        for (const med of activeMedications) {
+            const matchingReminders = reminders.filter(r =>
+                r.category === 'medication' && r.title.includes(med.name)
             );
-            
-            if (!exists) {
-                // Parse time from time_of_day or use default
-                let time = '09:00';
-                if (med.time_of_day) {
-                    const timeMap = {
-                        'morning': '08:00',
-                        'afternoon': '14:00',
-                        'evening': '18:00',
-                        'night': '21:00'
-                    };
-                    const timeStr = med.time_of_day.toLowerCase();
-                    for (const [key, value] of Object.entries(timeMap)) {
-                        if (timeStr.includes(key)) {
-                            time = value;
-                            break;
-                        }
+            const activeMatch = matchingReminders.find(r => r.active);
+            const inactiveMatch = matchingReminders.find(r => !r.active);
+
+            if (activeMatch) {
+                continue;
+            }
+
+            if (inactiveMatch && shouldReactivateInactive) {
+                const reactivated = await reactivateReminder(inactiveMatch._id);
+                if (reactivated) {
+                    reactivatedCount++;
+                }
+                continue;
+            }
+
+            // Parse time from time_of_day or use default
+            let time = '09:00';
+            if (med.time_of_day) {
+                const timeMap = {
+                    'morning': '08:00',
+                    'afternoon': '14:00',
+                    'evening': '18:00',
+                    'night': '21:00'
+                };
+                const timeStr = med.time_of_day.toLowerCase();
+                for (const [key, value] of Object.entries(timeMap)) {
+                    if (timeStr.includes(key)) {
+                        time = value;
+                        break;
                     }
                 }
-                
-                const response = await fetch(`${API_BASE_URL}/patients/me/reminders`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        title: `Take ${med.name}`,
-                        description: `${med.dosage} - ${med.instructions || med.frequency}`,
-                        time: time,
-                        frequency: med.frequency.toLowerCase().includes('daily') ? 'daily' : 
-                                 med.frequency.toLowerCase().includes('weekly') ? 'weekly' : 'daily',
-                        category: 'medication',
-                        active: true
-                    })
-                });
-                
-                if (response.ok) createdCount++;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/patients/me/reminders`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: `Take ${med.name}`,
+                    description: `${med.dosage} - ${med.instructions || med.frequency}`,
+                    time: time,
+                    frequency: med.frequency.toLowerCase().includes('daily') ? 'daily' :
+                        med.frequency.toLowerCase().includes('weekly') ? 'weekly' : 'daily',
+                    category: 'medication',
+                    active: true
+                })
+            });
+
+            if (response.ok) {
+                createdCount++;
             }
         }
         
         // Generate appointment reminders
-        for (const apt of appointments.filter(a => a.status === 'upcoming')) {
-            const exists = reminders.some(r => 
-                r.category === 'appointment' && 
-                r.title.includes(apt.title)
+        for (const apt of upcomingAppointments) {
+            const matchingReminders = reminders.filter(r =>
+                r.category === 'appointment' && r.title.includes(apt.title)
             );
-            
-            if (!exists) {
-                // Use appointment time or default to 1 hour before
-                const aptTime = apt.time || '09:00';
-                const [hours, minutes] = aptTime.split(':');
-                const reminderHour = Math.max(0, parseInt(hours) - 1);
-                const reminderTime = `${reminderHour.toString().padStart(2, '0')}:${minutes}`;
-                
-                const response = await fetch(`${API_BASE_URL}/patients/me/reminders`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        title: `Appointment: ${apt.title}`,
-                        description: `${apt.type} at ${apt.location || 'clinic'} - ${apt.date}`,
-                        time: reminderTime,
-                        frequency: 'as-needed',
-                        category: 'appointment',
-                        active: true
-                    })
-                });
-                
-                if (response.ok) createdCount++;
+            const activeMatch = matchingReminders.find(r => r.active);
+            const inactiveMatch = matchingReminders.find(r => !r.active);
+
+            if (activeMatch) {
+                continue;
+            }
+
+            if (inactiveMatch && shouldReactivateInactive) {
+                const reactivated = await reactivateReminder(inactiveMatch._id);
+                if (reactivated) {
+                    reactivatedCount++;
+                }
+                continue;
+            }
+
+            // Use appointment time or default to 1 hour before
+            const aptTime = apt.time || '09:00';
+            const [hours, minutes] = aptTime.split(':');
+            const reminderHour = Math.max(0, parseInt(hours) - 1);
+            const reminderTime = `${reminderHour.toString().padStart(2, '0')}:${minutes}`;
+
+            const response = await fetch(`${API_BASE_URL}/patients/me/reminders`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: `Appointment: ${apt.title}`,
+                    description: `${apt.type} at ${apt.location || 'clinic'} - ${apt.date}`,
+                    time: reminderTime,
+                    frequency: 'as-needed',
+                    category: 'appointment',
+                    active: true
+                })
+            });
+
+            if (response.ok) {
+                createdCount++;
             }
         }
         
@@ -532,11 +586,19 @@ async function autoGenerateReminders(event) {
         btn.disabled = false;
         btn.innerHTML = originalHTML;
         
-        if (createdCount > 0) {
-            showToast(`Successfully created ${createdCount} reminder(s)!`, 'success');
+        if (createdCount > 0 || reactivatedCount > 0) {
+            const parts = [];
+            if (createdCount > 0) {
+                parts.push(`created ${createdCount}`);
+            }
+            if (reactivatedCount > 0) {
+                parts.push(`reactivated ${reactivatedCount}`);
+            }
+
+            showToast(`Successfully ${parts.join(' and ')} reminder(s)!`, 'success');
             await loadReminders();
         } else {
-            showToast('No new reminders to create. All medications and appointments already have reminders.', 'info');
+            showToast('No changes made. Existing active reminders already cover your medications and appointments.', 'info');
         }
         
     } catch (error) {
