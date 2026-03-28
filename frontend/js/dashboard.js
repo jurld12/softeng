@@ -256,32 +256,41 @@ async function loadCurrentVitals() {
 // ==================== Update Vitals Display ====================
 function updateVitals(latestMetrics) {
     if (!latestMetrics) return;
+
+    const setVitalText = (elementId, value) => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return false;
+        }
+        element.textContent = value;
+        return true;
+    };
     
     // Update blood glucose / blood sugar
     if (latestMetrics.blood_glucose) {
         const value = Math.round(latestMetrics.blood_glucose.value);
-        document.getElementById('bloodSugarValue').textContent = value;
+        setVitalText('bloodSugarValue', value);
         updateVitalStatus('bloodSugar', value, 70, 100, 140);
     }
     
     // Update heart rate
     if (latestMetrics.heart_rate) {
         const value = Math.round(latestMetrics.heart_rate.value);
-        document.getElementById('heartRateValue').textContent = value;
+        setVitalText('heartRateValue', value);
         updateVitalStatus('heartRate', value, 60, 100, 110);
     }
     
     // Update steps
     if (latestMetrics.steps) {
         const value = Math.round(latestMetrics.steps.value);
-        document.getElementById('stepsValue').textContent = value.toLocaleString();
+        setVitalText('stepsValue', value.toLocaleString());
         updateVitalStatus('steps', value, 5000, 10000, 15000);
     }
     
     // Update sleep hours
     if (latestMetrics.sleep_hours) {
         const value = latestMetrics.sleep_hours.value.toFixed(1);
-        document.getElementById('sleepValue').textContent = value;
+        setVitalText('sleepValue', value);
         updateVitalStatus('sleep', value, 6, 7, 9);
     }
     
@@ -289,47 +298,47 @@ function updateVitals(latestMetrics) {
     if (latestMetrics.blood_pressure_systolic && latestMetrics.blood_pressure_diastolic) {
         const systolic = Math.round(latestMetrics.blood_pressure_systolic.value);
         const diastolic = Math.round(latestMetrics.blood_pressure_diastolic.value);
-        document.getElementById('bpValue').textContent = `${systolic}/${diastolic}`;
+        setVitalText('bpValue', `${systolic}/${diastolic}`);
         updateVitalStatus('bp', systolic, 90, 120, 140);
     }
     
     // Update calories
     if (latestMetrics.calories) {
         const value = Math.round(latestMetrics.calories.value);
-        document.getElementById('caloriesValue').textContent = value.toLocaleString();
+        setVitalText('caloriesValue', value.toLocaleString());
     }
     
     // Update blood oxygen
     if (latestMetrics.blood_oxygen) {
         const value = Math.round(latestMetrics.blood_oxygen.value);
-        document.getElementById('oxygenValue').textContent = value;
+        setVitalText('oxygenValue', value);
         updateVitalStatus('oxygen', value, 90, 95, 100);
     }
     
     // Update body temperature
     if (latestMetrics.body_temperature) {
         const value = latestMetrics.body_temperature.value.toFixed(1);
-        document.getElementById('tempValue').textContent = value;
+        setVitalText('tempValue', value);
         updateVitalStatus('temp', value, 97, 98.6, 99.5);
     }
     
     // Update weight
     if (latestMetrics.weight) {
         const value = latestMetrics.weight.value.toFixed(1);
-        document.getElementById('weightValue').textContent = value;
+        setVitalText('weightValue', value);
     }
     
     // Update respiratory rate
     if (latestMetrics.respiratory_rate) {
         const value = Math.round(latestMetrics.respiratory_rate.value);
-        document.getElementById('respRateValue').textContent = value;
+        setVitalText('respRateValue', value);
         updateVitalStatus('respRate', value, 12, 20, 25);
     }
     
     // Update hydration
     if (latestMetrics.hydration) {
         const value = latestMetrics.hydration.value.toFixed(1);
-        document.getElementById('hydrationValue').textContent = value;
+        setVitalText('hydrationValue', value);
         updateVitalStatus('hydration', value, 1.5, 2.5, 4);
     }
 }
@@ -815,7 +824,8 @@ function applyVitalPreferences() {
         // Collect all enabled vital elements
         allVitalCards.forEach(vitalCard => {
             const vitalId = vitalCard.getAttribute('data-vital-id');
-            const isEnabled = preferences[vitalId] !== undefined ? preferences[vitalId] : true;
+            // Check if vital is in preferences; if not in preferences, hide it (don't show by default)
+            const isEnabled = preferences.hasOwnProperty(vitalId) ? preferences[vitalId] : false;
             const parentCol = vitalCard.closest('.col-md-6, .col-xl-4');
             
             if (isEnabled && parentCol) {
@@ -824,8 +834,10 @@ function applyVitalPreferences() {
             }
         });
         
-        // Find the vitals container
-        const vitalsContainer = document.querySelector('.section-card .row.g-3');
+        // Find the vitals container based on any existing vital card
+        const sampleVitalCard = document.querySelector('[data-vital-id]');
+        const vitalsContainer = sampleVitalCard ? sampleVitalCard.closest('.row.g-3') : null;
+        const toggleVitalsBtn = document.getElementById('toggleVitalsBtn');
         if (!vitalsContainer) return;
         
         // Clear the container
@@ -844,6 +856,9 @@ function applyVitalPreferences() {
                     </div>
                 </div>
             `;
+            if (toggleVitalsBtn) {
+                toggleVitalsBtn.style.display = 'none';
+            }
             return;
         }
         
@@ -875,22 +890,15 @@ function applyVitalPreferences() {
                 innerRow.innerHTML = '';
                 for (let i = 6; i < vitalElements.length; i++) {
                     innerRow.appendChild(vitalElements[i]);
-                    vitalsContainer.removeChild(vitalElements[i]);
                 }
             }
-            
-            // Add show more button if not exists
-            let showMoreBtn = document.getElementById('showMoreVitalsBtn');
-            if (!showMoreBtn) {
-                const btnCol = document.createElement('div');
-                btnCol.className = 'col-12 text-center';
-                btnCol.innerHTML = `
-                    <button class="btn btn-outline-primary" id="showMoreVitalsBtn" onclick="toggleAdditionalVitals()">
-                        Show More <i class="bi bi-chevron-down ms-1"></i>
-                    </button>
-                `;
-                vitalsContainer.appendChild(btnCol);
+
+            if (toggleVitalsBtn) {
+                toggleVitalsBtn.style.display = 'inline-flex';
+                toggleVitalsBtn.innerHTML = 'Show More <i class="bi bi-chevron-down ms-1"></i>';
             }
+        } else if (toggleVitalsBtn) {
+            toggleVitalsBtn.style.display = 'none';
         }
     } catch (error) {
         console.error('Error applying vital preferences:', error);
