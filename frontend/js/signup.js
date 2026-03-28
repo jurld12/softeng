@@ -157,6 +157,52 @@ function showAlert(message, type = 'danger') {
     }, 5000);
 }
 
+function parseApiErrorMessage(payload, fallbackMessage = 'Registration failed.') {
+    if (!payload) {
+        return fallbackMessage;
+    }
+
+    if (typeof payload === 'string') {
+        return payload;
+    }
+
+    if (typeof payload === 'object') {
+        if (typeof payload.detail === 'string') {
+            return payload.detail;
+        }
+
+        if (Array.isArray(payload.detail)) {
+            const detailMessages = payload.detail
+                .map((item) => {
+                    if (typeof item === 'string') {
+                        return item;
+                    }
+
+                    if (item && typeof item === 'object') {
+                        return item.msg || item.message || item.detail || '';
+                    }
+
+                    return '';
+                })
+                .filter((message) => message);
+
+            if (detailMessages.length > 0) {
+                return detailMessages.join('; ');
+            }
+        }
+
+        if (typeof payload.message === 'string') {
+            return payload.message;
+        }
+
+        if (typeof payload.error === 'string') {
+            return payload.error;
+        }
+    }
+
+    return fallbackMessage;
+}
+
 // Form Validation
 function clearValidationErrors() {
     signupForm.querySelectorAll('.is-invalid').forEach((field) => {
@@ -358,11 +404,12 @@ signupForm.addEventListener('submit', async (e) => {
             },
             body: JSON.stringify(signupData)
         });
-        
-        const data = await response.json();
+
+        const data = await response.json().catch(() => null);
         
         if (!response.ok) {
-            throw new Error(data.detail || 'Registration failed');
+            const backendMessage = parseApiErrorMessage(data, 'Unable to create account right now.');
+            throw new Error(backendMessage);
         }
         
         // Success
@@ -375,7 +422,12 @@ signupForm.addEventListener('submit', async (e) => {
         
     } catch (error) {
         console.error('Registration error:', error);
-        showAlert(error.message || 'Failed to create account. Please try again.', 'danger');
+        const isNetworkError = error instanceof TypeError && /failed to fetch/i.test(error.message || '');
+        const message = isNetworkError
+            ? 'Unable to reach the server. Please check your connection and try again.'
+            : (error.message || 'Failed to create account. Please try again.');
+
+        showAlert(message, 'danger');
         
         // Reset button state
         submitBtn.disabled = false;
