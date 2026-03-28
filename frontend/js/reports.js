@@ -1,6 +1,7 @@
 // Reports Page - Health Summary and Analytics
 
 let vitalsChart = null;
+let latestVitalStatusSummary = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -9,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCurrentVitals();
     await loadMedications();
     await loadVitalsTrend();
-    generateHealthInsights();
 });
 
 // Load user data for sidebar
@@ -161,8 +161,11 @@ async function loadCurrentVitals() {
         };
 
         displayCurrentVitals(vitals);
+        generateHealthInsights();
     } catch (error) {
         console.error('Error loading current vitals:', error);
+        latestVitalStatusSummary = [];
+        generateHealthInsights();
         document.getElementById('currentVitals').innerHTML = `
             <div class="col-12 text-center text-muted py-4">
                 <p>Unable to load vital signs</p>
@@ -202,6 +205,7 @@ function displayCurrentVitals(vitals) {
     ];
 
     const container = document.getElementById('currentVitals');
+    const statusSummary = [];
     container.innerHTML = vitalCards.map(vital => {
         let value = '--';
         let status = 'No Data';
@@ -270,6 +274,14 @@ function displayCurrentVitals(vitals) {
             }
         }
 
+        statusSummary.push({
+            key: vital.key,
+            label: vital.label,
+            value,
+            status,
+            statusClass
+        });
+
         return `
             <div class="col-md-4 col-lg">
                 <div class="vital-card">
@@ -284,6 +296,8 @@ function displayCurrentVitals(vitals) {
             </div>
         `;
     }).join('');
+
+    latestVitalStatusSummary = statusSummary;
 }
 
 // Load medications
@@ -476,11 +490,55 @@ function calculateAverage(values) {
 
 // Generate health insights
 function generateHealthInsights() {
-    const insights = [
-        { type: 'success', icon: 'check-circle', message: 'Your vital signs are within normal ranges. Keep up the great work!' },
-        { type: 'info', icon: 'info-circle', message: 'Regular monitoring helps track your health trends over time.' },
-        { type: 'warning', icon: 'exclamation-triangle', message: 'Remember to take your medications as prescribed for optimal health.' }
-    ];
+    const insights = [];
+    const criticalOrHigh = latestVitalStatusSummary.filter((vital) => vital.statusClass === 'danger');
+    const warningVitals = latestVitalStatusSummary.filter((vital) => vital.statusClass === 'warning');
+    const healthyVitals = latestVitalStatusSummary.filter((vital) => vital.statusClass === 'success');
+
+    if (criticalOrHigh.length > 0) {
+        const labels = criticalOrHigh.map((vital) => `${vital.label} (${vital.status})`).join(', ');
+        insights.push({
+            type: 'danger',
+            icon: 'exclamation-octagon',
+            message: `Some vitals need urgent attention: ${labels}. Please consult your doctor.`
+        });
+    }
+
+    if (warningVitals.length > 0) {
+        const labels = warningVitals.map((vital) => `${vital.label} (${vital.status})`).join(', ');
+        insights.push({
+            type: 'warning',
+            icon: 'exclamation-triangle',
+            message: `The following vitals are outside normal range: ${labels}. Monitor closely and consider follow-up.`
+        });
+    }
+
+    if (criticalOrHigh.length === 0 && warningVitals.length === 0) {
+        if (healthyVitals.length > 0) {
+            insights.push({
+                type: 'success',
+                icon: 'check-circle',
+                message: 'Your current vital signs are within normal ranges. Keep up the great work!'
+            });
+        } else {
+            insights.push({
+                type: 'secondary',
+                icon: 'info-circle',
+                message: 'Not enough vital data is available yet. Add readings to generate personalized insights.'
+            });
+        }
+    }
+
+    insights.push({
+        type: 'info',
+        icon: 'info-circle',
+        message: 'Regular monitoring helps track your health trends over time.'
+    });
+    insights.push({
+        type: 'warning',
+        icon: 'exclamation-triangle',
+        message: 'Remember to take your medications as prescribed for optimal health.'
+    });
 
     const container = document.getElementById('healthInsights');
     container.innerHTML = insights.map(insight => `
