@@ -324,6 +324,10 @@ function displayVitals() {
         if (saveBtn) {
             saveBtn.addEventListener('click', saveVitalPreferences);
         }
+
+        document.querySelectorAll('.vital-card-body input[type="number"]').forEach((input) => {
+            input.addEventListener('input', () => clearVitalInputError(input));
+        });
     }, 100);
 }
 
@@ -844,6 +848,36 @@ function extractBackendErrorMessage(payload, fallbackMessage = 'Unable to save d
     return fallbackMessage;
 }
 
+function clearVitalInputError(inputElement) {
+    if (!inputElement) {
+        return;
+    }
+
+    inputElement.classList.remove('is-invalid');
+
+    const errorElement = inputElement.nextElementSibling;
+    if (errorElement && errorElement.classList.contains('vital-validation-error')) {
+        errorElement.remove();
+    }
+}
+
+function setVitalInputError(inputElement, message) {
+    if (!inputElement) {
+        return;
+    }
+
+    inputElement.classList.add('is-invalid');
+
+    let errorElement = inputElement.nextElementSibling;
+    if (!errorElement || !errorElement.classList.contains('vital-validation-error')) {
+        errorElement = document.createElement('div');
+        errorElement.className = 'invalid-feedback d-block vital-validation-error';
+        inputElement.insertAdjacentElement('afterend', errorElement);
+    }
+
+    errorElement.textContent = message;
+}
+
 // Add vital reading
 window.addVitalReading = async function(vitalId) {
     const vital = ALL_VITALS.find(v => v.id === vitalId);
@@ -856,42 +890,82 @@ window.addVitalReading = async function(vitalId) {
     if (vitalId === 'bp') {
         const systolicInput = document.getElementById(`input-systolic-${vitalId}`);
         const diastolicInput = document.getElementById(`input-diastolic-${vitalId}`);
+        clearVitalInputError(systolicInput);
+        clearVitalInputError(diastolicInput);
+
+        const systolicRaw = (systolicInput.value || '').trim();
+        const diastolicRaw = (diastolicInput.value || '').trim();
+
+        let hasValidationError = false;
+        if (!systolicRaw) {
+            setVitalInputError(systolicInput, 'Please enter systolic value.');
+            hasValidationError = true;
+        }
+
+        if (!diastolicRaw) {
+            setVitalInputError(diastolicInput, 'Please enter diastolic value.');
+            hasValidationError = true;
+        }
+
+        if (hasValidationError) {
+            return;
+        }
         
-        const systolic = parseFloat(systolicInput.value);
-        const diastolic = parseFloat(diastolicInput.value);
+        const systolic = parseFloat(systolicRaw);
+        const diastolic = parseFloat(diastolicRaw);
         
         if (isNaN(systolic) || isNaN(diastolic)) {
-            alert('Please enter valid systolic and diastolic values');
+            if (isNaN(systolic)) {
+                setVitalInputError(systolicInput, 'Please enter a valid number.');
+            }
+
+            if (isNaN(diastolic)) {
+                setVitalInputError(diastolicInput, 'Please enter a valid number.');
+            }
             return;
         }
 
         if (systolic < 0 || diastolic < 0) {
-            alert('Blood Pressure values must be 0 or greater.');
+            if (systolic < 0) {
+                setVitalInputError(systolicInput, 'Value must be 0 or greater.');
+            }
+
+            if (diastolic < 0) {
+                setVitalInputError(diastolicInput, 'Value must be 0 or greater.');
+            }
             return;
         }
         
         value = `${systolic}/${diastolic}`;
     } else {
         const valueInput = document.getElementById(`input-${vitalId}`);
-        value = parseFloat(valueInput.value);
+        clearVitalInputError(valueInput);
+
+        const rawValue = (valueInput.value || '').trim();
+        if (!rawValue) {
+            setVitalInputError(valueInput, 'Please enter a value.');
+            return;
+        }
+
+        value = parseFloat(rawValue);
         
         if (isNaN(value)) {
-            alert('Please enter a valid value');
+            setVitalInputError(valueInput, 'Please enter a valid number.');
             return;
         }
 
         if (value < 0) {
-            alert(`${vital.name} must be 0 or greater.`);
+            setVitalInputError(valueInput, `${vital.name} must be 0 or greater.`);
             return;
         }
 
         if (vitalId === 'steps' && value > 100000) {
-            alert('Daily Steps must be 100,000 or less.');
+            setVitalInputError(valueInput, 'Daily Steps must be 100,000 or less.');
             return;
         }
 
         if (vitalId === 'oxygen' && (value < 0 || value > 100)) {
-            alert('Blood Oxygen must be between 0 and 100%.');
+            setVitalInputError(valueInput, 'Blood Oxygen must be between 0 and 100%.');
             return;
         }
     }
