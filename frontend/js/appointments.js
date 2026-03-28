@@ -51,7 +51,7 @@ async function loadUserData() {
             return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/patients/me`, {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
