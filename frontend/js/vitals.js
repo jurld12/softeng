@@ -274,16 +274,16 @@ function displayVitals() {
                         ${vital.id === 'bp' ? `
                         <div class="mb-3">
                             <label class="form-label small">Systolic (Upper)</label>
-                            <input type="number" class="form-control" id="input-systolic-${vital.id}" placeholder="e.g., 120">
+                            <input type="number" class="form-control" id="input-systolic-${vital.id}" placeholder="e.g., 120" min="0">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small">Diastolic (Lower)</label>
-                            <input type="number" class="form-control" id="input-diastolic-${vital.id}" placeholder="e.g., 80">
+                            <input type="number" class="form-control" id="input-diastolic-${vital.id}" placeholder="e.g., 80" min="0">
                         </div>
                         ` : `
                         <div class="mb-3">
                             <label class="form-label small">Value${vital.unit ? ` (${vital.unit})` : ''}</label>
-                            <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value" ${vital.id === 'oxygen' ? 'min="0" max="100" step="0.1"' : ''}>
+                            <input type="number" class="form-control" id="input-${vital.id}" placeholder="Enter value" min="0" ${vital.id === 'oxygen' ? 'max="100" step="0.1"' : ''}>
                         </div>
                         `}
                         <div class="mb-3">
@@ -786,6 +786,64 @@ function createVitalChart(vitalId, readings, vital) {
     }
 }
 
+function extractBackendErrorMessage(payload, fallbackMessage = 'Unable to save data.') {
+    if (!payload) {
+        return fallbackMessage;
+    }
+
+    if (typeof payload === 'string') {
+        return payload;
+    }
+
+    if (payload instanceof Error) {
+        return payload.message || fallbackMessage;
+    }
+
+    if (Array.isArray(payload)) {
+        const messages = payload
+            .map((item) => extractBackendErrorMessage(item, ''))
+            .filter((message) => typeof message === 'string' && message.trim().length > 0);
+
+        return messages.length ? messages.join('; ') : fallbackMessage;
+    }
+
+    if (typeof payload === 'object') {
+        if (typeof payload.detail === 'string') {
+            return payload.detail;
+        }
+
+        if (Array.isArray(payload.detail)) {
+            const detailMessages = payload.detail
+                .map((item) => {
+                    if (typeof item === 'string') {
+                        return item;
+                    }
+
+                    if (item && typeof item === 'object') {
+                        return item.msg || item.message || item.detail || '';
+                    }
+
+                    return '';
+                })
+                .filter((message) => message);
+
+            if (detailMessages.length) {
+                return detailMessages.join('; ');
+            }
+        }
+
+        if (typeof payload.message === 'string') {
+            return payload.message;
+        }
+
+        if (typeof payload.error === 'string') {
+            return payload.error;
+        }
+    }
+
+    return fallbackMessage;
+}
+
 // Add vital reading
 window.addVitalReading = async function(vitalId) {
     const vital = ALL_VITALS.find(v => v.id === vitalId);
@@ -806,6 +864,11 @@ window.addVitalReading = async function(vitalId) {
             alert('Please enter valid systolic and diastolic values');
             return;
         }
+
+        if (systolic < 0 || diastolic < 0) {
+            alert('Blood Pressure values must be 0 or greater.');
+            return;
+        }
         
         value = `${systolic}/${diastolic}`;
     } else {
@@ -814,6 +877,11 @@ window.addVitalReading = async function(vitalId) {
         
         if (isNaN(value)) {
             alert('Please enter a valid value');
+            return;
+        }
+
+        if (value < 0) {
+            alert(`${vital.name} must be 0 or greater.`);
             return;
         }
 
@@ -836,6 +904,8 @@ window.addVitalReading = async function(vitalId) {
                 timestamp: timestamp
             })
         });
+
+        const responseData = await response.json().catch(() => null);
         
         if (response.ok) {
             // Clear inputs
@@ -861,11 +931,13 @@ window.addVitalReading = async function(vitalId) {
             // Show success message
             showSuccessMessage(`${vital.name} reading added successfully!`);
         } else {
-            alert('Failed to add reading');
+            const backendMessage = extractBackendErrorMessage(responseData, 'Failed to save data.');
+            alert(`Failed to save data: ${backendMessage}`);
         }
     } catch (error) {
         console.error('Error adding reading:', error);
-        alert('Error adding reading');
+        const errorMessage = extractBackendErrorMessage(error, 'Failed to save data. Please try again.');
+        alert(`Failed to save data: ${errorMessage}`);
     }
 };
 
