@@ -363,6 +363,47 @@
         </div>
     </main>
 
+    <div class="modal fade" id="patientDetailsModal" tabindex="-1" aria-labelledby="patientDetailsModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content doctor-patient-modal">
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title h5 mb-1" id="patientDetailsModalTitle">Patient Details</h2>
+                        <p class="mb-0 text-muted small" id="patientDetailsModalSubtitle">Vitals and care notes</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <section class="mb-4">
+                        <h3 class="h6 mb-3">Latest Vitals</h3>
+                        <div class="doctor-patient-vitals" id="patientDetailVitals">
+                            <p class="text-muted mb-0">Select a patient to load vitals.</p>
+                        </div>
+                    </section>
+
+                    <section>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h6 mb-0">Doctor Notes</h3>
+                            <span class="tag-pill" id="patientNotesCount">0</span>
+                        </div>
+
+                        <form id="patientNoteForm" class="mb-3">
+                            <label for="patientNoteInput" class="form-label small text-muted mb-1">Add note</label>
+                            <textarea id="patientNoteInput" class="form-control" rows="3" placeholder="Add a clinical observation or follow-up instruction"></textarea>
+                            <div class="d-flex justify-content-end mt-2">
+                                <button type="submit" class="doctor-row-button" id="savePatientNoteButton">Save note</button>
+                            </div>
+                        </form>
+
+                        <div class="doctor-patient-notes" id="patientNotesList">
+                            <p class="text-muted mb-0">No notes yet for this patient.</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/doctor-dashboard.js"></script>

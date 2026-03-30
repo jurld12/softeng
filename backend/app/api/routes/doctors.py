@@ -1,7 +1,7 @@
 """
 Doctor-specific routes: view patients, patient details, reports
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from typing import List, Optional
 from datetime import datetime, timedelta
 from bson import ObjectId
@@ -202,6 +202,151 @@ async def get_patient_summary(
         "from_date": from_date,
         "metrics": summary,
         "alert_count": alert_count
+    }
+
+
+@router.get("/patients/{patient_id}/notes")
+async def get_patient_notes(
+    patient_id: str,
+    current_user: dict = Depends(get_current_doctor),
+    db = Depends(get_database)
+):
+    """
+    Get doctor notes for an assigned patient.
+    """
+    doctor_id = str(current_user["_id"])
+    patient_object_id = parse_object_id(patient_id, "patient")
+    patient_id_str = str(patient_object_id)
+
+    patient = await db.users.find_one({
+        "_id": patient_object_id,
+        "role": "patient",
+        "assigned_doctor_id": doctor_id
+    })
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    notes = await db.doctor_notes.find({
+        "doctor_id": doctor_id,
+        "patient_id": patient_id_str
+    }).sort("created_at", -1).to_list(length=100)
+
+    formatted_notes = []
+    for note in notes:
+        formatted_notes.append({
+            "id": str(note.get("_id")),
+            "doctor_id": note.get("doctor_id"),
+            "patient_id": note.get("patient_id"),
+            "note": note.get("note", ""),
+            "created_at": note.get("created_at").isoformat() if note.get("created_at") else None
+        })
+
+    return {
+        "patient_id": patient_id_str,
+        "notes": formatted_notes,
+        "total": len(formatted_notes)
+    }
+
+
+@router.post("/patients/{patient_id}/notes")
+async def create_patient_note(
+    patient_id: str,
+    payload: dict = Body(...),
+    current_user: dict = Depends(get_current_doctor),
+    db = Depends(get_database)
+):
+    """
+    Create a doctor note for an assigned patient.
+    """
+    doctor_id = str(current_user["_id"])
+    patient_object_id = parse_object_id(patient_id, "patient")
+    patient_id_str = str(patient_object_id)
+
+    patient = await db.users.find_one({
+        "_id": patient_object_id,
+        "role": "patient",
+        "assigned_doctor_id": doctor_id
+    })
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    note_text = str(payload.get("note", "")).strip()
+    if not note_text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Note content is required"
+        )
+
+    note_doc = {
+        "doctor_id": doctor_id,
+        "patient_id": patient_id_str,
+        "note": note_text,
+        "created_at": datetime.utcnow()
+    }
+    result = await db.doctor_notes.insert_one(note_doc)
+
+    return {
+        "message": "Note saved successfully",
+        "note": {
+            "id": str(result.inserted_id),
+            "doctor_id": doctor_id,
+            "patient_id": patient_id_str,
+            "note": note_text,
+            "created_at": note_doc["created_at"].isoformat()
+        }
+    }
+
+
+@router.post("/patients/{patient_id}/escalate")
+async def escalate_patient_for_appointment(
+    patient_id: str,
+    current_user: dict = Depends(get_current_doctor),
+    db = Depends(get_database)
+):
+    """
+    Notify an assigned patient to book an appointment with their doctor.
+    """
+    doctor_id = str(current_user["_id"])
+    patient_object_id = parse_object_id(patient_id, "patient")
+    patient_id_str = str(patient_object_id)
+
+    patient = await db.users.find_one({
+        "_id": patient_object_id,
+        "role": "patient",
+        "assigned_doctor_id": doctor_id
+    })
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    doctor_name = (current_user.get("name") or "Your doctor").strip()
+    alert_doc = {
+        "user_id": patient_id_str,
+        "metric": "doctor_escalation",
+        "value": 1.0,
+        "threshold": 0.0,
+        "severity": "high",
+        "message": f"{doctor_name} has requested that you book an appointment as soon as possible.",
+        "acknowledged": False,
+        "created_at": datetime.utcnow(),
+        "source": "doctor_dashboard",
+        "doctor_id": doctor_id
+    }
+
+    result = await db.alerts.insert_one(alert_doc)
+
+    return {
+        "message": "Patient notified to book an appointment",
+        "alert_id": str(result.inserted_id),
+        "patient_id": patient_id_str
     }
 
 

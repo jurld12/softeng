@@ -215,6 +215,28 @@ function clearValidationErrors() {
     });
 }
 
+function findValidationMessageElement(field) {
+    if (!field) {
+        return null;
+    }
+
+    const inputGroup = field.closest('.input-group');
+    if (inputGroup && inputGroup.nextElementSibling && inputGroup.nextElementSibling.classList.contains('validation-error-message')) {
+        return inputGroup.nextElementSibling;
+    }
+
+    const formCheckContainer = field.closest('.form-check');
+    if (formCheckContainer && formCheckContainer.nextElementSibling && formCheckContainer.nextElementSibling.classList.contains('validation-error-message')) {
+        return formCheckContainer.nextElementSibling;
+    }
+
+    if (field.nextElementSibling && field.nextElementSibling.classList.contains('validation-error-message')) {
+        return field.nextElementSibling;
+    }
+
+    return null;
+}
+
 function setFieldError(fieldId, message) {
     const field = document.getElementById(fieldId);
     if (!field) {
@@ -223,6 +245,11 @@ function setFieldError(fieldId, message) {
 
     field.classList.add('is-invalid');
     field.setAttribute('aria-invalid', 'true');
+
+    const existingFeedback = findValidationMessageElement(field);
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
 
     const feedback = document.createElement('div');
     feedback.className = 'invalid-feedback d-block validation-error-message';
@@ -260,9 +287,7 @@ function isAtLeastAge(dateString, minimumAge) {
     return age >= minimumAge;
 }
 
-function validateForm(formData) {
-    clearValidationErrors();
-
+function collectValidationErrors(formData) {
     const errors = [];
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
@@ -319,6 +344,12 @@ function validateForm(formData) {
         errors.push({ fieldId: 'termsCheck', message: 'You must agree to the Terms of Service and Privacy Policy.' });
     }
 
+    return errors;
+}
+
+function renderValidationErrors(errors) {
+    clearValidationErrors();
+
     const fieldErrors = new Map();
     errors.forEach((error) => {
         if (!fieldErrors.has(error.fieldId)) {
@@ -328,8 +359,29 @@ function validateForm(formData) {
 
     fieldErrors.forEach((message, fieldId) => setFieldError(fieldId, message));
 
+    return fieldErrors;
+}
+
+function buildValidationSummary(errors) {
+    if (!errors.length) {
+        return 'Please fix the highlighted fields before submitting.';
+    }
+
+    const uniqueMessages = [...new Set(errors.map((error) => error.message))];
+    const summaryItems = uniqueMessages.map((message) => `<li>${message}</li>`).join('');
+
+    return `
+        <div>Please fix the following before submitting:</div>
+        <ul class="mb-0 mt-2 ps-3">${summaryItems}</ul>
+    `;
+}
+
+function validateForm(formData) {
+    const errors = collectValidationErrors(formData);
+    const fieldErrors = renderValidationErrors(errors);
+
     if (fieldErrors.size > 0) {
-        showAlert('Please fix the highlighted fields before submitting.', 'danger');
+        showAlert(buildValidationSummary(errors), 'danger');
 
         const firstInvalidField = signupForm.querySelector('.is-invalid');
         if (firstInvalidField) {
@@ -337,10 +389,10 @@ function validateForm(formData) {
             firstInvalidField.focus({ preventScroll: true });
         }
 
-        return false;
+        return { isValid: false, errors };
     }
 
-    return true;
+    return { isValid: true, errors: [] };
 }
 
 // Form Submission
@@ -384,7 +436,8 @@ signupForm.addEventListener('submit', async (e) => {
     };
     
     // Validate form
-    if (!validateForm(formData)) {
+    const validation = validateForm(formData);
+    if (!validation.isValid) {
         return;
     }
     
@@ -445,14 +498,7 @@ signupForm.querySelectorAll('input, select').forEach((field) => {
         field.classList.remove('is-invalid');
         field.removeAttribute('aria-invalid');
 
-        const inputGroup = field.closest('.input-group');
-        let errorElement = null;
-
-        if (inputGroup && inputGroup.nextElementSibling && inputGroup.nextElementSibling.classList.contains('validation-error-message')) {
-            errorElement = inputGroup.nextElementSibling;
-        } else if (field.nextElementSibling && field.nextElementSibling.classList.contains('validation-error-message')) {
-            errorElement = field.nextElementSibling;
-        }
+        const errorElement = findValidationMessageElement(field);
 
         if (errorElement) {
             errorElement.remove();

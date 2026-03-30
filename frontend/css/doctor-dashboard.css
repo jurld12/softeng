@@ -428,6 +428,21 @@
     font-weight: var(--healio-font-semibold);
 }
 
+.doctor-link-button {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--healio-primary-dark);
+    font-weight: var(--healio-font-semibold);
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.doctor-link-button:hover {
+    color: var(--healio-primary);
+}
+
 .doctor-table__meta span {
     color: var(--healio-text-muted);
     font-size: var(--healio-font-size-xs);
@@ -602,6 +617,15 @@
 
 .appointment-item .queue-item__content {
     flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.appointment-item__main {
+    flex: 1;
     min-width: 0;
 }
 
@@ -611,7 +635,7 @@
 }
 
 .appointment-item__actions {
-    width: 100%;
+    flex-shrink: 0;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 0.45rem;
@@ -711,6 +735,70 @@
     font-size: var(--healio-font-size-sm);
 }
 
+.doctor-patient-modal .modal-header {
+    border-bottom: 1px solid var(--healio-border-light);
+}
+
+.doctor-patient-modal .modal-body {
+    background: #fcfcff;
+}
+
+.doctor-patient-vitals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.6rem;
+}
+
+.doctor-patient-vital-card {
+    border: 1px solid var(--healio-border-light);
+    border-radius: var(--healio-radius-md);
+    background: #ffffff;
+    padding: 0.75rem;
+}
+
+.doctor-patient-vital-card h4 {
+    margin: 0 0 0.35rem;
+    font-size: var(--healio-font-size-sm);
+    color: var(--healio-text-secondary);
+}
+
+.doctor-patient-vital-card p {
+    margin: 0;
+    font-size: var(--healio-font-size-lg);
+    font-weight: var(--healio-font-semibold);
+    color: var(--healio-text-primary);
+}
+
+.doctor-patient-vital-card span {
+    display: block;
+    margin-top: 0.22rem;
+    font-size: var(--healio-font-size-xs);
+    color: var(--healio-text-muted);
+}
+
+.doctor-patient-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.doctor-note-item {
+    border: 1px solid var(--healio-border-light);
+    border-radius: var(--healio-radius-md);
+    background: #ffffff;
+    padding: 0.72rem;
+}
+
+.doctor-note-item p {
+    margin: 0 0 0.28rem;
+    color: var(--healio-text-primary);
+}
+
+.doctor-note-item span {
+    font-size: var(--healio-font-size-xs);
+    color: var(--healio-text-muted);
+}
+
 @keyframes doctor-shimmer {
     0% {
         background-position: 200% 0;
@@ -743,6 +831,15 @@
     .doctor-alert__badges {
         justify-content: flex-start;
         min-width: 0;
+    }
+
+    .appointment-item .queue-item__content {
+        flex-direction: column;
+    }
+
+    .appointment-item__actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 

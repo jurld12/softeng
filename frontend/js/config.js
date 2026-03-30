@@ -29,6 +29,7 @@ const CONFIG = {
         DOCTOR_DIRECTORY: '/auth/doctors',
         DOCTOR_PATIENTS: '/doctor/patients',
         DOCTOR_PATIENT_DETAILS: '/doctor/patients',
+        DOCTOR_APPOINTMENTS: '/doctor/appointments',
         
         // Admin
         ADMIN_USERS: '/admin/users',

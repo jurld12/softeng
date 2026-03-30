@@ -9,6 +9,7 @@ const doctorDashboardState = {
     activeTab: 'patients',
     activeFilter: 'all',
     searchTerm: '',
+    selectedPatientId: null,
     loading: false,
     fallbackMode: false,
     lastUpdated: null
@@ -212,6 +213,44 @@ async function updateDoctorAppointmentStatus(appointmentId, statusValue) {
 async function loadPatientSummary(patientId) {
     const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_PATIENT_DETAILS}/${patientId}/summary?days=30`), {
         headers: getAuthHeaders()
+    });
+
+    return readJsonResponse(response);
+}
+
+async function escalateDoctorPatient(patientId) {
+    const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_PATIENT_DETAILS}/${patientId}/escalate`), {
+        method: 'POST',
+        headers: getAuthHeaders()
+    });
+
+    return readJsonResponse(response);
+}
+
+async function loadDoctorPatientBiometrics(patientId, limit = 100) {
+    const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_PATIENT_DETAILS}/${patientId}/biometrics?limit=${encodeURIComponent(limit)}`), {
+        headers: getAuthHeaders()
+    });
+
+    return readJsonResponse(response);
+}
+
+async function loadDoctorPatientNotes(patientId) {
+    const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_PATIENT_DETAILS}/${patientId}/notes`), {
+        headers: getAuthHeaders()
+    });
+
+    return readJsonResponse(response);
+}
+
+async function createDoctorPatientNote(patientId, noteText) {
+    const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_PATIENT_DETAILS}/${patientId}/notes`), {
+        method: 'POST',
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ note: noteText })
     });
 
     return readJsonResponse(response);
@@ -493,14 +532,16 @@ function renderAppointmentItem(appointment) {
                 <span>${escapeHtml(dateLabel)}</span>
             </div>
             <div class="queue-item__content">
-                <h3>${escapeHtml(appointment.title || 'Appointment')}</h3>
-                <p class="appointment-item__patient">${escapeHtml(patientName)} • ${escapeHtml(location)}</p>
-                <div class="queue-item__meta">
-                    <span class="tag-pill">${escapeHtml(type)}</span>
-                    <span class="status-pill ${getStatusBadgeClass(statusClass)}">${escapeHtml(statusLabel)}</span>
+                <div class="appointment-item__main">
+                    <h3>${escapeHtml(appointment.title || 'Appointment')}</h3>
+                    <p class="appointment-item__patient">${escapeHtml(patientName)} • ${escapeHtml(location)}</p>
+                    <div class="queue-item__meta">
+                        <span class="tag-pill">${escapeHtml(type)}</span>
+                        <span class="status-pill ${getStatusBadgeClass(statusClass)}">${escapeHtml(statusLabel)}</span>
+                    </div>
                 </div>
-                <div class="doctor-table__actions appointment-item__actions mt-2">
-                    <button type="button" class="doctor-row-button" onclick="openAppointmentPatient('${encodedPatientId}')">
+                <div class="doctor-table__actions appointment-item__actions">
+                    <button type="button" class="doctor-row-button" onclick="openPatientDetailsFromDashboard('${encodedPatientId}')">
                         Open patient
                     </button>
                     ${showCompleteAction ? `
@@ -888,13 +929,18 @@ function renderPatientRow(patient) {
         actionLabel = 'Review';
     }
 
+    const encodedPatientId = encodeURIComponent(patient.id);
+    const actionHandler = patient.priority === 'high'
+        ? `escalatePatientFromDashboard('${encodedPatientId}')`
+        : `openPatientDetailsFromDashboard('${encodedPatientId}')`;
+
     return `
         <tr>
             <td>
                 <div class="doctor-table__patient">
                     <span class="doctor-table__avatar">${escapeHtml(getInitials(patient.name))}</span>
                     <div class="doctor-table__meta">
-                        <strong>${escapeHtml(patient.name)}</strong>
+                        <button type="button" class="doctor-link-button" onclick="openPatientDetailsFromDashboard('${encodedPatientId}')">${escapeHtml(patient.name)}</button>
                         <span>${escapeHtml(patient.code)}</span>
                     </div>
                 </div>
@@ -906,7 +952,7 @@ function renderPatientRow(patient) {
             <td><span class="tag-pill">${escapeHtml(patient.monitoringLabel)}</span></td>
             <td>
                 <div class="doctor-table__actions">
-                    <button type="button" class="${actionClass}">${escapeHtml(actionLabel)}</button>
+                    <button type="button" class="${actionClass}" onclick="${actionHandler}">${escapeHtml(actionLabel)}</button>
                 </div>
             </td>
         </tr>
@@ -919,6 +965,7 @@ function renderPatientCard(patient) {
     const alertLabel = patient.alertCount > 0
         ? `${patient.alertCount} Alert${patient.alertCount === 1 ? '' : 's'}`
         : 'On track';
+    const encodedPatientId = encodeURIComponent(patient.id);
 
     return `
         <article class="patient-card ${priorityClass}">
@@ -926,7 +973,7 @@ function renderPatientCard(patient) {
                 <div class="patient-card__identity">
                     <div class="patient-card__avatar">${escapeHtml(getInitials(patient.name))}</div>
                     <div>
-                        <h3>${escapeHtml(patient.name)}</h3>
+                        <h3><button type="button" class="doctor-link-button" onclick="openPatientDetailsFromDashboard('${encodedPatientId}')">${escapeHtml(patient.name)}</button></h3>
                         <p>${escapeHtml(patient.email)}</p>
                         <div class="patient-card__badges">
                             <span class="tag-pill">${escapeHtml(patient.code)}</span>
@@ -1184,6 +1231,249 @@ function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+function getPatientModalInstance() {
+    const modalElement = document.getElementById('patientDetailsModal');
+    if (!modalElement || !window.bootstrap || !window.bootstrap.Modal) {
+        return null;
+    }
+
+    return window.bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
+function formatVitalTimestamp(value) {
+    if (!value) {
+        return 'Not available';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return 'Not available';
+    }
+
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+}
+
+function extractLatestVitals(biometrics) {
+    const latest = {};
+
+    biometrics.forEach(entry => {
+        const key = entry?.metric;
+        if (!key || latest[key]) {
+            return;
+        }
+
+        latest[key] = {
+            value: entry.value,
+            timestamp: entry.timestamp || entry.created_at || null
+        };
+    });
+
+    return latest;
+}
+
+function formatVitalValue(metric, value) {
+    if (value === null || value === undefined || value === '') {
+        return 'No data';
+    }
+
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+        if (metric === 'sleep_hours') return `${numeric.toFixed(1)} hrs`;
+        if (metric === 'steps') return `${Math.round(numeric).toLocaleString()} steps`;
+        if (metric === 'calories') return `${Math.round(numeric).toLocaleString()} kcal`;
+        if (metric === 'blood_glucose') return `${Math.round(numeric)} mg/dL`;
+        if (metric === 'heart_rate') return `${Math.round(numeric)} bpm`;
+        if (metric === 'blood_oxygen') return `${Math.round(numeric)}%`;
+        return String(Math.round(numeric));
+    }
+
+    return String(value);
+}
+
+function renderPatientVitalsPanel(biometrics) {
+    const container = document.getElementById('patientDetailVitals');
+    if (!container) {
+        return;
+    }
+
+    if (!Array.isArray(biometrics) || !biometrics.length) {
+        container.innerHTML = '<p class="text-muted mb-0">No recent vitals available for this patient.</p>';
+        return;
+    }
+
+    const latestVitals = extractLatestVitals(biometrics);
+    const preferredMetrics = [
+        ['heart_rate', 'Heart rate'],
+        ['blood_glucose', 'Blood glucose'],
+        ['blood_oxygen', 'Blood oxygen'],
+        ['sleep_hours', 'Sleep'],
+        ['steps', 'Steps'],
+        ['calories', 'Calories']
+    ];
+
+    const metricCards = preferredMetrics
+        .filter(([metricKey]) => latestVitals[metricKey])
+        .map(([metricKey, label]) => {
+            const vital = latestVitals[metricKey];
+            return `
+                <article class="doctor-patient-vital-card">
+                    <h4>${escapeHtml(label)}</h4>
+                    <p>${escapeHtml(formatVitalValue(metricKey, vital.value))}</p>
+                    <span>${escapeHtml(formatVitalTimestamp(vital.timestamp))}</span>
+                </article>
+            `;
+        });
+
+    container.innerHTML = metricCards.length
+        ? metricCards.join('')
+        : '<p class="text-muted mb-0">No recent vitals available for this patient.</p>';
+}
+
+function renderPatientNotesPanel(notes) {
+    const list = document.getElementById('patientNotesList');
+    const count = document.getElementById('patientNotesCount');
+
+    if (!list || !count) {
+        return;
+    }
+
+    const normalizedNotes = Array.isArray(notes) ? notes : [];
+    count.textContent = String(normalizedNotes.length);
+
+    if (!normalizedNotes.length) {
+        list.innerHTML = '<p class="text-muted mb-0">No notes yet for this patient.</p>';
+        return;
+    }
+
+    list.innerHTML = normalizedNotes.map(note => `
+        <article class="doctor-note-item">
+            <p>${escapeHtml(note.note || '')}</p>
+            <span>${escapeHtml(formatVitalTimestamp(note.created_at))}</span>
+        </article>
+    `).join('');
+}
+
+async function loadAndRenderPatientDetails(patientId) {
+    const [biometrics, notesPayload] = await Promise.all([
+        loadDoctorPatientBiometrics(patientId).catch(() => []),
+        loadDoctorPatientNotes(patientId).catch(() => ({ notes: [] }))
+    ]);
+
+    renderPatientVitalsPanel(Array.isArray(biometrics) ? biometrics : []);
+    renderPatientNotesPanel(Array.isArray(notesPayload?.notes) ? notesPayload.notes : []);
+}
+
+window.openPatientDetailsFromDashboard = async function(encodedPatientId) {
+    const patientId = decodeURIComponent(encodedPatientId || '');
+    if (!patientId) {
+        return;
+    }
+
+    const patient = doctorDashboardState.patients.find(item => String(item.id) === String(patientId));
+    const modal = getPatientModalInstance();
+    if (!modal) {
+        return;
+    }
+
+    doctorDashboardState.selectedPatientId = patientId;
+
+    const title = document.getElementById('patientDetailsModalTitle');
+    const subtitle = document.getElementById('patientDetailsModalSubtitle');
+    const input = document.getElementById('patientNoteInput');
+
+    if (title) {
+        title.textContent = patient ? `${patient.name} Details` : 'Patient Details';
+    }
+    if (subtitle) {
+        subtitle.textContent = patient
+            ? `${patient.email || 'No email on file'} • ${patient.code || ''}`
+            : 'Vitals and care notes';
+    }
+    if (input) {
+        input.value = '';
+    }
+
+    const vitals = document.getElementById('patientDetailVitals');
+    const notes = document.getElementById('patientNotesList');
+    const notesCount = document.getElementById('patientNotesCount');
+
+    if (vitals) {
+        vitals.innerHTML = '<p class="text-muted mb-0">Loading vitals...</p>';
+    }
+    if (notes) {
+        notes.innerHTML = '<p class="text-muted mb-0">Loading notes...</p>';
+    }
+    if (notesCount) {
+        notesCount.textContent = '0';
+    }
+
+    modal.show();
+
+    try {
+        await loadAndRenderPatientDetails(patientId);
+    } catch (error) {
+        console.error('Unable to load patient details:', error);
+        setStatusBanner('Unable to load full patient details right now.', 'warning');
+    }
+};
+
+window.escalatePatientFromDashboard = async function(encodedPatientId) {
+    const patientId = decodeURIComponent(encodedPatientId || '');
+    if (!patientId) {
+        return;
+    }
+
+    const patient = doctorDashboardState.patients.find(item => String(item.id) === String(patientId));
+
+    try {
+        await escalateDoctorPatient(patientId);
+        setStatusBanner(`${patient?.name || 'Patient'} has been notified to book an appointment.`, 'info');
+    } catch (error) {
+        console.error('Unable to escalate patient:', error);
+        setStatusBanner(error.message || 'Unable to notify patient right now.', 'warning');
+    }
+};
+
+async function handlePatientNoteSave(event) {
+    event.preventDefault();
+
+    const patientId = doctorDashboardState.selectedPatientId;
+    const input = document.getElementById('patientNoteInput');
+    const saveButton = document.getElementById('savePatientNoteButton');
+    if (!patientId || !input || !saveButton) {
+        return;
+    }
+
+    const noteText = input.value.trim();
+    if (!noteText) {
+        setStatusBanner('Please enter a note before saving.', 'warning');
+        return;
+    }
+
+    saveButton.disabled = true;
+    const originalLabel = saveButton.textContent;
+    saveButton.textContent = 'Saving...';
+
+    try {
+        await createDoctorPatientNote(patientId, noteText);
+        input.value = '';
+        await loadAndRenderPatientDetails(patientId);
+        setStatusBanner('Patient note saved.', 'info');
+    } catch (error) {
+        console.error('Unable to save patient note:', error);
+        setStatusBanner(error.message || 'Unable to save patient note.', 'warning');
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalLabel;
+    }
+}
+
 function setupEventListeners() {
     document.getElementById('logoutButton').addEventListener('click', () => window.logout());
 
@@ -1233,6 +1523,11 @@ function setupEventListeners() {
             setActiveRailButton(button.dataset.railKey || 'dashboard');
         });
     });
+
+    const noteForm = document.getElementById('patientNoteForm');
+    if (noteForm) {
+        noteForm.addEventListener('submit', handlePatientNoteSave);
+    }
 }
 
 if (document.readyState === 'loading') {
