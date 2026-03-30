@@ -818,13 +818,17 @@ function renderHeroPanel() {
     const badge = document.getElementById('doctorNotificationBadge');
     const railAlertDot = document.getElementById('railAlertDot');
 
-    if (urgentCount > 0) {
-        badge.textContent = urgentCount > 99 ? '99+' : String(urgentCount);
-        badge.style.display = 'flex';
-        railAlertDot.hidden = false;
-    } else {
-        badge.style.display = 'none';
-        railAlertDot.hidden = true;
+    if (badge) {
+        if (urgentCount > 0) {
+            badge.textContent = urgentCount > 99 ? '99+' : String(urgentCount);
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    if (railAlertDot) {
+        railAlertDot.hidden = urgentCount <= 0;
     }
 }
 

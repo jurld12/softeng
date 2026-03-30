@@ -17,47 +17,6 @@
     <link rel="stylesheet" href="css/admin-dashboard.css">
 </head>
 <body class="admin-dashboard-body">
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="d-flex align-items-center gap-3">
-                <div class="logo-icon bg-gradient-primary">
-                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <span class="logo-text">Healio</span>
-            </div>
-        </div>
-
-        <nav class="nav-menu">
-            <a href="#overview" class="nav-item-custom active">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Overview</span>
-            </a>
-            <a href="#create-doctor" class="nav-item-custom">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Create Doctor</span>
-            </a>
-            <a href="#doctor-accounts" class="nav-item-custom">
-                <i class="bi bi-hospital-fill"></i>
-                <span>Doctor Accounts</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-user">
-            <div class="d-flex align-items-center gap-3">
-                <img src="https://ui-avatars.com/api/?name=Admin&background=7c3aed&color=fff" alt="Profile" class="rounded-circle" width="40" height="40" id="sidebarUserAvatar">
-                <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="fw-semibold text-dark small text-truncate" id="sidebarUserName">Loading...</div>
-                    <div class="text-muted text-truncate" style="font-size: 12px;" id="sidebarUserEmail">Loading...</div>
-                </div>
-                <button class="btn btn-sm btn-light" onclick="logout()" type="button">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-    </aside>
-
     <main class="main-content">
         <div class="dashboard-header">
             <div class="container-fluid">
@@ -72,6 +31,9 @@
                         </button>
                         <button class="btn-icon" type="button" aria-label="Settings">
                             <i class="bi bi-gear"></i>
+                        </button>
+                        <button class="btn-icon" onclick="logout()" type="button" aria-label="Logout">
+                            <i class="bi bi-box-arrow-right"></i>
                         </button>
                         <button class="btn btn-primary" id="refreshAdminDashboard" type="button">
                             <i class="bi bi-arrow-clockwise me-2"></i>Refresh

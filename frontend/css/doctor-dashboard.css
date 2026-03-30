@@ -46,6 +46,7 @@
 }
 
 .doctor-main-content {
+    margin-left: 0;
     background: var(--healio-bg-secondary);
 }
 

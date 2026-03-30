@@ -17,60 +17,6 @@
     <link rel="stylesheet" href="css/doctor-dashboard.css">
 </head>
 <body class="doctor-dashboard-body">
-    <aside class="sidebar doctor-sidebar" aria-label="Doctor dashboard navigation">
-        <div class="sidebar-logo">
-            <div class="d-flex align-items-center gap-3">
-                <div class="logo-icon bg-gradient-primary">
-                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round" />
-                    </svg>
-                </div>
-                <span class="logo-text">Healio</span>
-            </div>
-        </div>
-
-        <nav class="nav-menu">
-            <button class="nav-item-custom doctor-nav-item active" type="button" data-rail-target="top" data-rail-key="dashboard">
-                <i class="bi bi-house-door-fill"></i>
-                <span>Dashboard</span>
-            </button>
-            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="overview" data-rail-key="pulse">
-                <i class="bi bi-activity"></i>
-                <span>Practice Pulse</span>
-            </button>
-            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="workspace" data-rail-tab="patients" data-rail-key="patients">
-                <i class="bi bi-people-fill"></i>
-                <span>Patients</span>
-            </button>
-            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="workspace" data-rail-tab="queue" data-rail-key="queue">
-                <i class="bi bi-calendar3"></i>
-                <span>Care Queue</span>
-            </button>
-            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="attentionSection" data-rail-key="alerts">
-                <i class="bi bi-bell-fill"></i>
-                <span>Alerts</span>
-                <span class="doctor-nav__dot" id="railAlertDot" hidden></span>
-            </button>
-            <button class="nav-item-custom doctor-nav-item" type="button" data-rail-target="workspace" data-rail-key="settings">
-                <i class="bi bi-gear-fill"></i>
-                <span>Settings</span>
-            </button>
-        </nav>
-
-        <div class="sidebar-user">
-            <div class="d-flex align-items-center gap-3">
-                <div class="doctor-sidebar-avatar" id="sidebarDoctorAvatar">DR</div>
-                <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="fw-semibold text-dark small text-truncate" id="sidebarDoctorName">Loading doctor</div>
-                    <div class="text-muted text-truncate" style="font-size: 12px;" id="sidebarDoctorEmail">Loading profile</div>
-                </div>
-                <button class="btn btn-sm btn-light" id="logoutButton" type="button" aria-label="Logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-    </aside>
-
     <main class="main-content doctor-main-content">
         <header class="dashboard-header">
             <div class="container-fluid">
@@ -89,6 +35,10 @@
                         <button class="btn-icon" type="button" aria-label="Doctor notifications">
                             <i class="bi bi-bell"></i>
                             <span class="notification-badge" id="doctorNotificationBadge" style="display: none;"></span>
+                        </button>
+
+                        <button class="btn-icon" id="logoutButton" type="button" aria-label="Logout">
+                            <i class="bi bi-box-arrow-right"></i>
                         </button>
 
                         <div class="doctor-profile-chip">

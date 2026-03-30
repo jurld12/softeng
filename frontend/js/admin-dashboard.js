@@ -142,11 +142,21 @@ function renderAdminProfile() {
         return;
     }
 
-    document.getElementById('sidebarUserName').textContent = admin.name || 'Admin';
-    document.getElementById('sidebarUserEmail').textContent = admin.email || '';
-
+    const sidebarName = document.getElementById('sidebarUserName');
+    const sidebarEmail = document.getElementById('sidebarUserEmail');
     const avatar = document.getElementById('sidebarUserAvatar');
-    avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.name || 'Admin')}&background=7c3aed&color=fff`;
+
+    if (sidebarName) {
+        sidebarName.textContent = admin.name || 'Admin';
+    }
+
+    if (sidebarEmail) {
+        sidebarEmail.textContent = admin.email || '';
+    }
+
+    if (avatar) {
+        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.name || 'Admin')}&background=7c3aed&color=fff`;
+    }
 }
 
 function renderStats() {

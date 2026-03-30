@@ -2,6 +2,10 @@
     background: var(--healio-bg-secondary);
 }
 
+.admin-dashboard-body .main-content {
+    margin-left: 0;
+}
+
 .admin-status-banner {
     border-radius: var(--healio-radius-lg);
     padding: 12px 16px;
