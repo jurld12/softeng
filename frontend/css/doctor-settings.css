@@ -1,0 +1,43 @@
+.doctor-settings-body {
+    background: var(--healio-bg-secondary);
+}
+
+.doctor-settings-main {
+    margin-left: 0;
+    min-height: 100vh;
+    background: var(--healio-bg-secondary);
+}
+
+.doctor-settings-status {
+    border-radius: var(--healio-radius-lg);
+    padding: 0.8rem 1rem;
+    border: 1px solid transparent;
+    box-shadow: var(--healio-shadow-xs);
+    font-weight: var(--healio-font-medium);
+}
+
+.doctor-settings-status--success {
+    border-color: rgba(16, 185, 129, 0.26);
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.doctor-settings-status--warning {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.doctor-settings-status--danger {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.doctor-settings-card {
+    background: var(--healio-bg-primary);
+}
+
+.doctor-settings-card__header {
+    margin-bottom: 0.45rem;
+}

@@ -10,14 +10,98 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from app.models.schemas import UserResponse, BiometricResponse
+from app.models.schemas import UserResponse, UserProfileResponse, BiometricResponse, DoctorProfileUpdateRequest
 from app.database import get_database
 from app.middleware.auth import get_current_doctor
-from app.utils.user_profiles import parse_object_id
+from app.utils.user_profiles import parse_object_id, normalize_doctor_specialty
 
 
 
 router = APIRouter()
+
+
+@router.get("/me/profile", response_model=UserProfileResponse)
+async def get_doctor_profile(
+    current_user: dict = Depends(get_current_doctor),
+    db = Depends(get_database)
+):
+    """Get current doctor's editable profile."""
+    doctor = await db.users.find_one({"_id": current_user["_id"], "role": "doctor"})
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+
+    doctor["_id"] = str(doctor["_id"])
+    if "profile" not in doctor or not isinstance(doctor.get("profile"), dict):
+        doctor["profile"] = {}
+    return doctor
+
+
+@router.put("/me/profile", response_model=UserProfileResponse)
+async def update_doctor_profile(
+    updates: DoctorProfileUpdateRequest,
+    current_user: dict = Depends(get_current_doctor),
+    db = Depends(get_database)
+):
+    """Update current doctor's basic profile details."""
+    doctor_id = current_user["_id"]
+    existing_doctor = await db.users.find_one({"_id": doctor_id, "role": "doctor"})
+    if not existing_doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+
+    update_doc = {}
+
+    if updates.name is not None:
+        update_doc["name"] = updates.name.strip()
+
+    if updates.email is not None:
+        email_conflict = await db.users.find_one({
+            "email": updates.email,
+            "_id": {"$ne": doctor_id}
+        })
+        if email_conflict:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        update_doc["email"] = updates.email
+
+    if updates.phone is not None:
+        normalized_phone = str(updates.phone).strip()
+        update_doc["phone"] = normalized_phone or None
+
+    if updates.specialty is not None:
+        normalized_specialty = normalize_doctor_specialty(updates.specialty)
+        if not normalized_specialty:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Doctor specialty is required"
+            )
+        update_doc["specialty"] = normalized_specialty
+
+    if not update_doc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No updates provided"
+        )
+
+    update_doc["updated_at"] = datetime.utcnow()
+
+    await db.users.update_one(
+        {"_id": doctor_id},
+        {"$set": update_doc}
+    )
+
+    updated_doctor = await db.users.find_one({"_id": doctor_id, "role": "doctor"})
+    updated_doctor["_id"] = str(updated_doctor["_id"])
+    if "profile" not in updated_doctor or not isinstance(updated_doctor.get("profile"), dict):
+        updated_doctor["profile"] = {}
+    return updated_doctor
 
 
 @router.get("/patients", response_model=List[UserResponse])

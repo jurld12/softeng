@@ -384,6 +384,14 @@ class UserUpdateRequest(BaseModel):
     specialty: Optional[str] = None
 
 
+class DoctorProfileUpdateRequest(BaseModel):
+    """Doctor self-service profile update request"""
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    specialty: Optional[str] = Field(None, min_length=2, max_length=120)
+
+
 class SystemStats(BaseModel):
     """System statistics for admin"""
     total_users: int
