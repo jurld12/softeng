@@ -3,6 +3,9 @@ const doctorDashboardState = {
     patients: [],
     filteredPatients: [],
     queue: [],
+    appointments: [],
+    upcomingAppointments: [],
+    pastAppointments: [],
     activeTab: 'patients',
     activeFilter: 'all',
     searchTerm: '',
@@ -164,6 +167,42 @@ async function loadCurrentDoctor() {
 
 async function loadDoctorPatients() {
     const response = await fetch(getApiUrl(CONFIG.ENDPOINTS.DOCTOR_PATIENTS), {
+        headers: getAuthHeaders()
+    });
+
+    return readJsonResponse(response);
+}
+
+async function loadDoctorAppointments(statusFilter = '') {
+    const query = statusFilter ? `?status_filter=${encodeURIComponent(statusFilter)}` : '';
+    const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_APPOINTMENTS}${query}`), {
+        headers: getAuthHeaders()
+    });
+
+    return readJsonResponse(response);
+}
+
+async function refreshDoctorAppointments() {
+    const [upcomingPayload, pastPayload] = await Promise.all([
+        loadDoctorAppointments('upcoming').catch(() => ({ appointments: [] })),
+        loadDoctorAppointments('past').catch(() => ({ appointments: [] }))
+    ]);
+
+    doctorDashboardState.upcomingAppointments = Array.isArray(upcomingPayload.appointments)
+        ? upcomingPayload.appointments
+        : [];
+    doctorDashboardState.pastAppointments = Array.isArray(pastPayload.appointments)
+        ? pastPayload.appointments
+        : [];
+    doctorDashboardState.appointments = [
+        ...doctorDashboardState.upcomingAppointments,
+        ...doctorDashboardState.pastAppointments
+    ];
+}
+
+async function updateDoctorAppointmentStatus(appointmentId, statusValue) {
+    const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.DOCTOR_APPOINTMENTS}/${appointmentId}/status?status_value=${encodeURIComponent(statusValue)}`), {
+        method: 'PATCH',
         headers: getAuthHeaders()
     });
 
@@ -413,6 +452,178 @@ function formatRelativeUpdate(date) {
         hour: 'numeric',
         minute: '2-digit'
     });
+}
+
+function parseAppointmentDateTime(appointment) {
+    if (!appointment || !appointment.date) {
+        return null;
+    }
+
+    const timePart = appointment.time || '00:00';
+    const parsed = new Date(`${appointment.date}T${timePart}`);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+
+    return parsed;
+}
+
+function renderAppointmentItem(appointment) {
+    const when = parseAppointmentDateTime(appointment);
+    const dateLabel = when
+        ? when.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : (appointment.date || 'Date not set');
+    const timeLabel = appointment.time || 'Time not set';
+    const patientName = appointment.patient_name || 'Unknown patient';
+    const location = appointment.location || 'No location provided';
+    const type = appointment.type || 'other';
+    const status = appointment.status || 'upcoming';
+    const encodedAppointmentId = encodeURIComponent(appointment.id || '');
+    const encodedPatientId = encodeURIComponent(appointment.user_id || '');
+    const showCompleteAction = String(status).toLowerCase() === 'upcoming';
+
+    return `
+        <article class="queue-item">
+            <div class="queue-item__time">
+                <strong>${escapeHtml(timeLabel)}</strong>
+                <span>${escapeHtml(dateLabel)}</span>
+            </div>
+            <div class="queue-item__content">
+                <h3>${escapeHtml(appointment.title || 'Appointment')}</h3>
+                <p>${escapeHtml(patientName)} • ${escapeHtml(location)}</p>
+                <div class="queue-item__meta">
+                    <span class="tag-pill">${escapeHtml(type)}</span>
+                    <span class="status-pill ${getStatusBadgeClass(status === 'cancelled' ? 'missing' : status === 'completed' ? 'normal' : 'attention')}">${escapeHtml(status)}</span>
+                </div>
+                <div class="doctor-table__actions mt-2">
+                    <button type="button" class="doctor-row-button" onclick="openAppointmentPatient('${encodedPatientId}')">
+                        Open patient
+                    </button>
+                    ${showCompleteAction ? `
+                        <button type="button" class="doctor-row-button doctor-row-button--warn" onclick="completeAppointmentFromDashboard('${encodedAppointmentId}')">
+                            Mark completed
+                        </button>
+                        <button type="button" class="doctor-row-button doctor-row-button--danger" onclick="cancelAppointmentFromDashboard('${encodedAppointmentId}')">
+                            Mark cancelled
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+window.openAppointmentPatient = function(encodedPatientId) {
+    const patientId = decodeURIComponent(encodedPatientId || '');
+    if (!patientId) {
+        return;
+    }
+
+    const patient = doctorDashboardState.patients.find(item => String(item.id) === String(patientId));
+    if (!patient) {
+        doctorDashboardState.searchTerm = '';
+        const searchInput = document.getElementById('patientSearch');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        applyPatientFilters();
+        renderPatients();
+        setStatusBanner('Patient card is not available in the current list.', 'info');
+        return;
+    }
+
+    doctorDashboardState.activeTab = 'patients';
+    switchTab('patients');
+    setActiveRailButton('patients');
+    doctorDashboardState.searchTerm = patient.name;
+
+    const searchInput = document.getElementById('patientSearch');
+    if (searchInput) {
+        searchInput.value = patient.name;
+    }
+
+    applyPatientFilters();
+    renderPatients();
+
+    const workspace = document.getElementById('workspace');
+    if (workspace) {
+        workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
+
+window.completeAppointmentFromDashboard = async function(encodedAppointmentId) {
+    const appointmentId = decodeURIComponent(encodedAppointmentId || '');
+    if (!appointmentId) {
+        return;
+    }
+
+    try {
+        await updateDoctorAppointmentStatus(appointmentId, 'completed');
+        await refreshDoctorAppointments();
+        renderAppointments();
+        setStatusBanner('Appointment marked as completed.', 'info');
+    } catch (error) {
+        console.error('Unable to update appointment status:', error);
+        setStatusBanner('Unable to update appointment status right now.', 'warning');
+    }
+};
+
+window.cancelAppointmentFromDashboard = async function(encodedAppointmentId) {
+    const appointmentId = decodeURIComponent(encodedAppointmentId || '');
+    if (!appointmentId) {
+        return;
+    }
+
+    try {
+        await updateDoctorAppointmentStatus(appointmentId, 'cancelled');
+        await refreshDoctorAppointments();
+        renderAppointments();
+        setStatusBanner('Appointment marked as cancelled.', 'info');
+    } catch (error) {
+        console.error('Unable to update appointment status:', error);
+        setStatusBanner('Unable to update appointment status right now.', 'warning');
+    }
+};
+
+function renderAppointments() {
+    const upcomingList = document.getElementById('upcomingAppointmentsList');
+    const pastList = document.getElementById('pastAppointmentsList');
+    const upcomingCount = document.getElementById('upcomingAppointmentsCount');
+    const pastCount = document.getElementById('pastAppointmentsCount');
+
+    if (!upcomingList || !pastList || !upcomingCount || !pastCount) {
+        return;
+    }
+
+    const upcomingAppointments = doctorDashboardState.upcomingAppointments || [];
+    const pastAppointments = doctorDashboardState.pastAppointments || [];
+
+    upcomingCount.textContent = String(upcomingAppointments.length);
+    pastCount.textContent = String(pastAppointments.length);
+
+    if (!upcomingAppointments.length) {
+        upcomingList.innerHTML = `
+            <div class="empty-state py-3">
+                <i class="bi bi-calendar-event"></i>
+                <h3>No upcoming appointments</h3>
+                <p>Appointments assigned to your account will appear here.</p>
+            </div>
+        `;
+    } else {
+        upcomingList.innerHTML = upcomingAppointments.slice(0, 8).map(renderAppointmentItem).join('');
+    }
+
+    if (!pastAppointments.length) {
+        pastList.innerHTML = `
+            <div class="empty-state py-3">
+                <i class="bi bi-clock-history"></i>
+                <h3>No past appointments</h3>
+                <p>Completed and historical appointments will show here.</p>
+            </div>
+        `;
+    } else {
+        pastList.innerHTML = pastAppointments.slice(0, 8).map(renderAppointmentItem).join('');
+    }
 }
 
 function calculateAverageGlucose(patients) {
@@ -868,6 +1079,7 @@ function renderDashboard() {
     renderAttentionBanner();
     renderPatients();
     renderQueue();
+    renderAppointments();
     switchTab(doctorDashboardState.activeTab);
 }
 
@@ -917,6 +1129,7 @@ async function initializeDoctorDashboard() {
         doctorDashboardState.doctor = doctor;
 
         const patients = await loadDoctorPatients();
+        await refreshDoctorAppointments();
         doctorDashboardState.fallbackMode = false;
 
         if (patients.length) {
@@ -937,6 +1150,9 @@ async function initializeDoctorDashboard() {
 
         doctorDashboardState.doctor = doctorDashboardState.doctor || getStoredDoctorFallback();
         doctorDashboardState.patients = await hydratePatients(demoPatients, true);
+        doctorDashboardState.appointments = [];
+        doctorDashboardState.upcomingAppointments = [];
+        doctorDashboardState.pastAppointments = [];
         doctorDashboardState.fallbackMode = true;
         setStatusBanner('Live doctor data is unavailable. Showing a polished reference view with demo patients.', 'warning');
     } finally {
