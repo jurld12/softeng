@@ -478,24 +478,28 @@ function renderAppointmentItem(appointment) {
     const location = appointment.location || 'No location provided';
     const type = appointment.type || 'other';
     const status = appointment.status || 'upcoming';
+    const normalizedStatus = String(status).toLowerCase();
+    const isPast = normalizedStatus === 'completed' || normalizedStatus === 'cancelled' || Boolean(appointment.is_past);
     const encodedAppointmentId = encodeURIComponent(appointment.id || '');
     const encodedPatientId = encodeURIComponent(appointment.user_id || '');
-    const showCompleteAction = String(status).toLowerCase() === 'upcoming';
+    const showCompleteAction = normalizedStatus === 'upcoming';
+    const statusClass = normalizedStatus === 'cancelled' ? 'missing' : normalizedStatus === 'completed' ? 'normal' : 'attention';
+    const statusLabel = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 
     return `
-        <article class="queue-item">
+        <article class="queue-item appointment-item appointment-item--${isPast ? 'past' : 'upcoming'}">
             <div class="queue-item__time">
                 <strong>${escapeHtml(timeLabel)}</strong>
                 <span>${escapeHtml(dateLabel)}</span>
             </div>
             <div class="queue-item__content">
                 <h3>${escapeHtml(appointment.title || 'Appointment')}</h3>
-                <p>${escapeHtml(patientName)} • ${escapeHtml(location)}</p>
+                <p class="appointment-item__patient">${escapeHtml(patientName)} • ${escapeHtml(location)}</p>
                 <div class="queue-item__meta">
                     <span class="tag-pill">${escapeHtml(type)}</span>
-                    <span class="status-pill ${getStatusBadgeClass(status === 'cancelled' ? 'missing' : status === 'completed' ? 'normal' : 'attention')}">${escapeHtml(status)}</span>
+                    <span class="status-pill ${getStatusBadgeClass(statusClass)}">${escapeHtml(statusLabel)}</span>
                 </div>
-                <div class="doctor-table__actions mt-2">
+                <div class="doctor-table__actions appointment-item__actions mt-2">
                     <button type="button" class="doctor-row-button" onclick="openAppointmentPatient('${encodedPatientId}')">
                         Open patient
                     </button>

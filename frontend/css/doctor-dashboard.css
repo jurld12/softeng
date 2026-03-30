@@ -595,6 +595,36 @@
     gap: 0.35rem;
 }
 
+.appointment-item {
+    align-items: stretch;
+    gap: 0.95rem;
+}
+
+.appointment-item .queue-item__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.appointment-item__patient {
+    margin-bottom: 0.55rem;
+    line-height: 1.45;
+}
+
+.appointment-item__actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.appointment-item__actions .doctor-row-button {
+    box-shadow: none;
+}
+
+.appointment-item--past {
+    background: #fcfcff;
+}
+
 .queue-item--skeleton {
     min-height: 108px;
     border: 0;
