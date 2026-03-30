@@ -125,6 +125,26 @@ async def update_user(
     
     # Prepare update document
     update_doc = {}
+
+    if updates.name is not None:
+        update_doc["name"] = updates.name.strip()
+
+    if updates.email is not None:
+        existing_user = await db.users.find_one({
+            "email": updates.email,
+            "_id": {"$ne": user_object_id}
+        })
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        update_doc["email"] = updates.email
+
+    if updates.phone is not None:
+        normalized_phone = str(updates.phone).strip()
+        update_doc["phone"] = normalized_phone or None
+
     if updates.role is not None:
         update_doc["role"] = updates.role
         if updates.role != "doctor":

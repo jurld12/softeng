@@ -2,6 +2,7 @@ const adminDashboardState = {
     admin: null,
     stats: null,
     doctors: [],
+    selectedDoctorId: null,
     loading: false
 };
 
@@ -34,6 +35,7 @@ function checkAdminAuthentication() {
 function attachAdminDashboardHandlers() {
     document.getElementById('refreshAdminDashboard').addEventListener('click', refreshAdminDashboard);
     document.getElementById('createDoctorForm').addEventListener('submit', handleCreateDoctor);
+    document.getElementById('editDoctorForm').addEventListener('submit', handleEditDoctor);
 
     document.querySelectorAll('.nav-item-custom').forEach(link => {
         link.addEventListener('click', () => {
@@ -186,6 +188,7 @@ function renderDoctorRoster() {
         const badgeLabel = active ? 'Active' : 'Inactive';
         const actionLabel = active ? 'Deactivate' : 'Activate';
         const nextActive = active ? 'false' : 'true';
+        const encodedDoctorId = encodeURIComponent(doctor.id || doctor._id || '');
 
         return `
             <div class="admin-roster-item">
@@ -199,11 +202,90 @@ function renderDoctorRoster() {
                 </div>
                 <div class="admin-roster-item__actions">
                     <span class="${badgeClass}">${badgeLabel}</span>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openDoctorEditModal('${encodedDoctorId}')">Edit</button>
                     <button class="btn btn-sm btn-outline-primary" type="button" onclick="toggleDoctorActive('${doctor.id || doctor._id}', ${nextActive})">${actionLabel}</button>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+function getDoctorEditModalInstance() {
+    const modalElement = document.getElementById('editDoctorModal');
+    if (!modalElement || !window.bootstrap || !window.bootstrap.Modal) {
+        return null;
+    }
+
+    return window.bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
+window.openDoctorEditModal = function(encodedDoctorId) {
+    const doctorId = decodeURIComponent(encodedDoctorId || '');
+    const doctor = adminDashboardState.doctors.find(item => String(item.id || item._id) === String(doctorId));
+    if (!doctor) {
+        setAdminStatus('Unable to find this doctor in the current roster.', 'danger');
+        return;
+    }
+
+    adminDashboardState.selectedDoctorId = doctorId;
+    document.getElementById('editDoctorName').value = doctor.name || '';
+    document.getElementById('editDoctorSpecialty').value = doctor.specialty || '';
+    document.getElementById('editDoctorEmail').value = doctor.email || '';
+    document.getElementById('editDoctorPhone').value = doctor.phone || '';
+
+    const modal = getDoctorEditModalInstance();
+    if (modal) {
+        modal.show();
+    }
+};
+
+async function handleEditDoctor(event) {
+    event.preventDefault();
+
+    const doctorId = adminDashboardState.selectedDoctorId;
+    if (!doctorId) {
+        setAdminStatus('No doctor selected for editing.', 'danger');
+        return;
+    }
+
+    const saveButton = document.getElementById('saveDoctorEditButton');
+    const payload = {
+        name: document.getElementById('editDoctorName').value.trim(),
+        specialty: document.getElementById('editDoctorSpecialty').value.trim(),
+        email: document.getElementById('editDoctorEmail').value.trim()
+    };
+    const phoneValue = document.getElementById('editDoctorPhone').value.trim();
+    if (phoneValue) {
+        payload.phone = phoneValue;
+    }
+
+    saveButton.disabled = true;
+    const originalLabel = saveButton.textContent;
+    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+
+    try {
+        const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.ADMIN_USERS}/${doctorId}`), {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        await readJsonResponse(response);
+
+        const modal = getDoctorEditModalInstance();
+        if (modal) {
+            modal.hide();
+        }
+
+        setAdminStatus('Doctor profile updated successfully.', 'success');
+        await refreshAdminDashboard();
+    } catch (error) {
+        console.error('Failed to update doctor profile:', error);
+        setAdminStatus(error.message || 'Failed to update doctor profile.', 'danger');
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalLabel;
+    }
 }
 
 async function handleCreateDoctor(event) {

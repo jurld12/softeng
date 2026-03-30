@@ -376,6 +376,9 @@ class ReminderResponse(BaseModel):
 # Admin Schemas
 class UserUpdateRequest(BaseModel):
     """Admin user update request"""
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     role: Optional[Literal["patient", "doctor", "admin"]] = None
     active: Optional[bool] = None
     specialty: Optional[str] = None

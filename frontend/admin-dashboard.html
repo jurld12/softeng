@@ -209,6 +209,41 @@
         </div>
     </main>
 
+    <div class="modal fade" id="editDoctorModal" tabindex="-1" aria-labelledby="editDoctorModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="editDoctorForm">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="editDoctorModalTitle">Edit Doctor</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="editDoctorName">Full name</label>
+                            <input class="form-control" id="editDoctorName" type="text" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="editDoctorSpecialty">Specialty</label>
+                            <input class="form-control" id="editDoctorSpecialty" type="text" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="editDoctorEmail">Email</label>
+                            <input class="form-control" id="editDoctorEmail" type="email" required>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label" for="editDoctorPhone">Phone</label>
+                            <input class="form-control" id="editDoctorPhone" type="tel" placeholder="Optional">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveDoctorEditButton">Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/admin-dashboard.js"></script>
