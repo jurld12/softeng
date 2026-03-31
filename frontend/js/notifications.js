@@ -2,6 +2,9 @@
 
 // API_BASE_URL is imported from config.js
 let reminders = [];
+let patientAlerts = [];
+let reminderDeleteModal = null;
+let pendingReminderDeleteAction = null;
 
 // Get auth token
 function getAuthToken() {
@@ -12,8 +15,138 @@ function getAuthToken() {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadCurrentUser();
+    setupReminderDeleteModal();
     loadReminders();
 });
+
+// Load patient alerts from API (includes doctor escalation alerts)
+async function loadPatientAlerts() {
+    const token = getAuthToken();
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${CONFIG.ENDPOINTS.PATIENT_ALERTS}?acknowledged=false`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load alerts');
+        }
+
+        patientAlerts = await response.json();
+    } catch (error) {
+        console.error('Error loading patient alerts:', error);
+        patientAlerts = [];
+    }
+}
+
+function createEscalationAlertCard(alert) {
+    const alertId = alert._id || alert.id || '';
+    const createdAt = alert.created_at
+        ? new Date(alert.created_at).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        })
+        : 'Recently';
+
+    return `
+        <div class="section-card border-warning">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-warning-subtle text-warning border border-warning">doctor alert</span>
+                        <small class="text-muted">${escapeHtml(createdAt)}</small>
+                    </div>
+                    <h5 class="mb-1"><i class="bi bi-megaphone me-2 text-warning"></i>Doctor Escalation</h5>
+                    <p class="text-muted small mb-0">${escapeHtml(alert.message || 'Your doctor has asked you to book an appointment.')}</p>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="acknowledgePatientAlert('${alertId}')">Acknowledge</button>
+            </div>
+        </div>
+    `;
+}
+
+async function acknowledgePatientAlert(alertId) {
+    const token = getAuthToken();
+    if (!token || !alertId) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/patients/me/alerts/${alertId}/acknowledge`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to acknowledge alert');
+        }
+
+        showToast('Alert acknowledged', 'success');
+        await loadReminders();
+    } catch (error) {
+        console.error('Error acknowledging alert:', error);
+        showError('Failed to acknowledge alert');
+    }
+}
+
+function setupReminderDeleteModal() {
+    const modalElement = document.getElementById('deleteReminderConfirmModal');
+    const confirmButton = document.getElementById('confirmDeleteReminderBtn');
+    if (!modalElement || !confirmButton || !window.bootstrap || !window.bootstrap.Modal) {
+        return;
+    }
+
+    reminderDeleteModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    confirmButton.addEventListener('click', async () => {
+        if (!pendingReminderDeleteAction) {
+            reminderDeleteModal.hide();
+            return;
+        }
+
+        confirmButton.disabled = true;
+        const originalText = confirmButton.textContent;
+        confirmButton.textContent = 'Deleting...';
+
+        const action = pendingReminderDeleteAction;
+        pendingReminderDeleteAction = null;
+
+        try {
+            await action();
+        } finally {
+            confirmButton.disabled = false;
+            confirmButton.textContent = originalText;
+            reminderDeleteModal.hide();
+        }
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', () => {
+        pendingReminderDeleteAction = null;
+    });
+}
+
+function openDeleteReminderConfirmation(title, message, onConfirm) {
+    const titleElement = document.getElementById('deleteReminderConfirmTitle');
+    const messageElement = document.getElementById('deleteReminderConfirmMessage');
+
+    if (!reminderDeleteModal || !titleElement || !messageElement) {
+        if (window.confirm(message)) {
+            onConfirm();
+        }
+        return;
+    }
+
+    titleElement.textContent = title;
+    messageElement.textContent = message;
+    pendingReminderDeleteAction = onConfirm;
+    reminderDeleteModal.show();
+}
 
 // Check authentication
 function checkAuth() {
@@ -74,6 +207,7 @@ async function loadReminders() {
         }
         
         reminders = await response.json();
+        await loadPatientAlerts();
         console.log('Loaded reminders:', reminders);
         displayActiveReminders();
         displayInactiveReminders();
@@ -102,8 +236,12 @@ function displayActiveReminders() {
     }
     
     const activeReminders = reminders.filter(r => r.active);
+    const escalationAlerts = patientAlerts.filter(alert => {
+        const metric = String(alert.metric || '').toLowerCase();
+        return metric === 'doctor_escalation';
+    });
     
-    if (activeReminders.length === 0) {
+    if (activeReminders.length === 0 && escalationAlerts.length === 0) {
         container.innerHTML = `
             <div class="section-card text-center">
                 <i class="bi bi-bell-slash fs-1 text-muted mb-3 d-block"></i>
@@ -113,13 +251,16 @@ function displayActiveReminders() {
         `;
         return;
     }
-    
-    container.innerHTML = activeReminders.map(reminder => createReminderCard(reminder)).join('');
+
+    const alertCards = escalationAlerts.map(createEscalationAlertCard).join('');
+    const reminderCards = activeReminders.map(reminder => createReminderCard(reminder)).join('');
+    container.innerHTML = `${alertCards}${reminderCards}`;
 }
 
 // Display inactive reminders
 function displayInactiveReminders() {
     const container = document.getElementById('inactiveRemindersContainer');
+    const deleteInactiveBtn = document.getElementById('deleteInactiveBtn');
     if (!container) {
         console.error('inactiveRemindersContainer not found');
         return;
@@ -128,12 +269,19 @@ function displayInactiveReminders() {
     const inactiveReminders = reminders.filter(r => !r.active);
     
     if (inactiveReminders.length === 0) {
+        if (deleteInactiveBtn) {
+            deleteInactiveBtn.hidden = true;
+        }
         container.innerHTML = `
             <div class="section-card text-center">
                 <p class="text-muted mb-0">No inactive reminders</p>
             </div>
         `;
         return;
+    }
+
+    if (deleteInactiveBtn) {
+        deleteInactiveBtn.hidden = false;
     }
     
     container.innerHTML = inactiveReminders.map(reminder => createReminderCard(reminder, false)).join('');
@@ -172,6 +320,15 @@ function createReminderCard(reminder, showHistory = true) {
     const todayHistory = reminder.history?.find(h => h.date === today);
     const isCompletedToday = todayHistory?.completed || false;
     
+    const actionsHtml = reminder.active
+        ? `<button class="btn btn-sm btn-outline-secondary" onclick="toggleReminder('${reminder._id}')">Deactivate</button>`
+        : `
+            <div class="d-flex flex-column gap-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleReminder('${reminder._id}')">Activate</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteReminder('${reminder._id}')">Delete</button>
+            </div>
+        `;
+
     return `
         <div class="section-card ${isCompletedToday ? 'border-success' : ''}">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -197,9 +354,7 @@ function createReminderCard(reminder, showHistory = true) {
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-outline-secondary" onclick="toggleReminder('${reminder._id}')">
-                    ${reminder.active ? 'Deactivate' : 'Activate'}
-                </button>
+                ${actionsHtml}
             </div>
             
             ${showHistory && reminder.history && reminder.history.length > 0 ? `
@@ -613,4 +768,89 @@ async function autoGenerateReminders(event) {
             }
         }
     }
+}
+
+// Delete a single reminder
+async function deleteReminder(id) {
+    const token = getAuthToken();
+    if (!token) return;
+
+    openDeleteReminderConfirmation(
+        'Delete old reminder',
+        'Delete this old reminder permanently?',
+        async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patients/me/reminders/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete reminder');
+                }
+
+                showToast('Reminder deleted', 'success');
+                await loadReminders();
+
+                if (typeof window.updateNotificationBadge === 'function') {
+                    window.updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error deleting reminder:', error);
+                showError('Failed to delete reminder');
+            }
+        }
+    );
+}
+
+// Delete all inactive reminders
+async function deleteInactiveReminders() {
+    const token = getAuthToken();
+    if (!token) return;
+
+    const inactiveReminders = reminders.filter(r => !r.active);
+    if (!inactiveReminders.length) {
+        showToast('No old reminders to delete', 'info');
+        return;
+    }
+
+    openDeleteReminderConfirmation(
+        'Delete old reminders',
+        `Delete ${inactiveReminders.length} old reminder(s)? This cannot be undone.`,
+        async () => {
+            try {
+                const results = await Promise.all(
+                    inactiveReminders.map(reminder =>
+                        fetch(`${API_BASE_URL}/patients/me/reminders/${reminder._id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        })
+                    )
+                );
+
+                const failed = results.filter(response => !response.ok).length;
+                const deleted = inactiveReminders.length - failed;
+
+                if (deleted > 0) {
+                    showToast(`Deleted ${deleted} old reminder(s)`, 'success');
+                }
+                if (failed > 0) {
+                    showToast(`${failed} reminder(s) could not be deleted`, 'danger');
+                }
+
+                await loadReminders();
+
+                if (typeof window.updateNotificationBadge === 'function') {
+                    window.updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error deleting old reminders:', error);
+                showError('Failed to delete old reminders');
+            }
+        }
+    );
 }

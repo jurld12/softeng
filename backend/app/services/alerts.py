@@ -186,8 +186,15 @@ async def acknowledge_alert(db, alert_id: str, acknowledged_by: str) -> bool:
     Returns:
         True if successful, False otherwise
     """
+    normalized_alert_id = alert_id
+    if isinstance(alert_id, str):
+        try:
+            normalized_alert_id = ObjectId(alert_id)
+        except Exception:
+            normalized_alert_id = alert_id
+
     result = await db.alerts.update_one(
-        {"_id": alert_id},
+        {"_id": normalized_alert_id},
         {
             "$set": {
                 "acknowledged": True,

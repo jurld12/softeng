@@ -274,9 +274,17 @@ async def acknowledge_alert_endpoint(
     from app.services.alerts import acknowledge_alert
     
     user_id = str(current_user["_id"])
+
+    try:
+        alert_object_id = ObjectId(alert_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid alert ID format"
+        )
     
     # Verify alert belongs to current user
-    alert = await db.alerts.find_one({"_id": alert_id})
+    alert = await db.alerts.find_one({"_id": alert_object_id})
     if not alert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -289,7 +297,7 @@ async def acknowledge_alert_endpoint(
             detail="Cannot acknowledge another user's alert"
         )
     
-    success = await acknowledge_alert(db, alert_id, user_id)
+    success = await acknowledge_alert(db, alert_object_id, user_id)
     
     if success:
         return {"message": "Alert acknowledged successfully"}
@@ -298,12 +306,6 @@ async def acknowledge_alert_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to acknowledge alert"
         )
-    alerts = []
-    async for alert in cursor:
-        alert["_id"] = str(alert["_id"])
-        alerts.append(alert)
-    
-    return alerts
 
 
 @router.get("/me/achievements", response_model=List[AchievementResponse])

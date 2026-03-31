@@ -2,6 +2,7 @@ const adminDashboardState = {
     admin: null,
     stats: null,
     doctors: [],
+    patients: [],
     selectedDoctorId: null,
     loading: false
 };
@@ -84,9 +85,14 @@ async function refreshAdminDashboard() {
             .filter(user => user.role === 'doctor')
             .sort((left, right) => String(left.name || '').localeCompare(String(right.name || '')));
 
+        adminDashboardState.patients = users
+            .filter(user => user.role === 'patient')
+            .sort((left, right) => String(left.name || '').localeCompare(String(right.name || '')));
+
         renderAdminProfile();
         renderStats();
         renderDoctorRoster();
+        renderUserRoster();
         setAdminStatus('Admin workspace is up to date.', 'success');
     } catch (error) {
         console.error('Admin dashboard refresh failed:', error);
@@ -214,6 +220,53 @@ function renderDoctorRoster() {
                     <span class="${badgeClass}">${badgeLabel}</span>
                     <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openDoctorEditModal('${encodedDoctorId}')">Edit</button>
                     <button class="btn btn-sm btn-outline-primary" type="button" onclick="toggleDoctorActive('${doctor.id || doctor._id}', ${nextActive})">${actionLabel}</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderUserRoster() {
+    const roster = document.getElementById('userRosterList');
+    const count = document.getElementById('userRosterCount');
+    const patients = adminDashboardState.patients;
+
+    count.textContent = `${patients.length} user${patients.length === 1 ? '' : 's'}`;
+
+    if (!patients.length) {
+        roster.innerHTML = `
+            <div class="admin-empty-state">
+                <i class="bi bi-people"></i>
+                <p class="mb-0">No user accounts exist yet.</p>
+            </div>
+        `;
+        return;
+    }
+
+    roster.innerHTML = patients.map(patient => {
+        const patientName = escapeHtml(patient.name || 'User');
+        const patientInitials = escapeHtml(getInitials(patient.name || 'User'));
+        const patientMeta = escapeHtml(patient.email || '');
+        const createdAt = patient.created_at ? escapeHtml(formatDate(patient.created_at)) : 'Unknown';
+        const active = Boolean(patient.active);
+        const badgeClass = active ? 'admin-badge admin-badge--active' : 'admin-badge admin-badge--inactive';
+        const badgeLabel = active ? 'Active' : 'Inactive';
+        const actionLabel = active ? 'Deactivate' : 'Activate';
+        const nextActive = active ? 'false' : 'true';
+
+        return `
+            <div class="admin-roster-item">
+                <div class="admin-roster-item__identity">
+                    <div class="admin-roster-item__avatar">${patientInitials}</div>
+                    <div style="min-width: 0;">
+                        <div class="admin-roster-item__name text-truncate">${patientName}</div>
+                        <div class="admin-roster-item__meta text-truncate">${patientMeta}</div>
+                        <div class="admin-roster-item__meta">Created ${createdAt}</div>
+                    </div>
+                </div>
+                <div class="admin-roster-item__actions">
+                    <span class="${badgeClass}">${badgeLabel}</span>
+                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="toggleUserActive('${patient.id || patient._id}', ${nextActive})">${actionLabel}</button>
                 </div>
             </div>
         `;
@@ -348,6 +401,23 @@ window.toggleDoctorActive = async function(doctorId, nextActive) {
     } catch (error) {
         console.error('Failed to update doctor status:', error);
         setAdminStatus(error.message || 'Failed to update doctor status.', 'danger');
+    }
+};
+
+window.toggleUserActive = async function(userId, nextActive) {
+    try {
+        const response = await fetch(getApiUrl(`${CONFIG.ENDPOINTS.ADMIN_USERS}/${userId}`), {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ active: nextActive })
+        });
+
+        await readJsonResponse(response);
+        setAdminStatus(`User account ${nextActive ? 'activated' : 'deactivated'} successfully.`, 'success');
+        await refreshAdminDashboard();
+    } catch (error) {
+        console.error('Failed to update user status:', error);
+        setAdminStatus(error.message || 'Failed to update user status.', 'danger');
     }
 };
 

@@ -17,6 +17,9 @@ const doctorDashboardState = {
 
 const queueTimes = ['08:30', '09:45', '11:15', '13:30', '15:00', '16:45'];
 
+let escalateConfirmModal = null;
+let pendingEscalationPatientId = null;
+
 const demoPatients = [
     {
         _id: 'P-2024-001',
@@ -734,6 +737,25 @@ function setStatusBanner(message, tone) {
     banner.textContent = message;
 }
 
+function showDoctorPopup(message, tone = 'success') {
+    const toneMap = {
+        success: 'success',
+        warning: 'warning',
+        danger: 'danger',
+        info: 'info'
+    };
+
+    const popup = document.createElement('div');
+    popup.className = `alert alert-${toneMap[tone] || 'info'} position-fixed top-0 end-0 m-3`;
+    popup.style.zIndex = '1100';
+    popup.textContent = message;
+    document.body.appendChild(popup);
+
+    window.setTimeout(() => {
+        popup.remove();
+    }, 3000);
+}
+
 function clearStatusBanner() {
     const banner = document.getElementById('dashboardStatus');
     banner.hidden = true;
@@ -1435,14 +1457,44 @@ window.escalatePatientFromDashboard = async function(encodedPatientId) {
 
     const patient = doctorDashboardState.patients.find(item => String(item.id) === String(patientId));
 
+    const confirmMessage = document.getElementById('escalateConfirmMessage');
+    if (confirmMessage) {
+        confirmMessage.textContent = patient
+            ? `Send an escalation notification to ${patient.name} asking them to book an appointment?`
+            : 'Send an escalation notification asking this patient to book an appointment?';
+    }
+
+    pendingEscalationPatientId = patientId;
+
+    if (escalateConfirmModal) {
+        escalateConfirmModal.show();
+        return;
+    }
+
+    await confirmEscalationAndNotify();
+};
+
+async function confirmEscalationAndNotify() {
+    const patientId = pendingEscalationPatientId;
+    if (!patientId) {
+        return;
+    }
+
+    const patient = doctorDashboardState.patients.find(item => String(item.id) === String(patientId));
+
     try {
         await escalateDoctorPatient(patientId);
-        setStatusBanner(`${patient?.name || 'Patient'} has been notified to book an appointment.`, 'info');
+        const message = `${patient?.name || 'Patient'} has been notified to book an appointment.`;
+        setStatusBanner(message, 'info');
+        showDoctorPopup(message, 'success');
     } catch (error) {
         console.error('Unable to escalate patient:', error);
         setStatusBanner(error.message || 'Unable to notify patient right now.', 'warning');
+        showDoctorPopup(error.message || 'Unable to notify patient right now.', 'danger');
+    } finally {
+        pendingEscalationPatientId = null;
     }
-};
+}
 
 async function handlePatientNoteSave(event) {
     event.preventDefault();
@@ -1531,6 +1583,32 @@ function setupEventListeners() {
     const noteForm = document.getElementById('patientNoteForm');
     if (noteForm) {
         noteForm.addEventListener('submit', handlePatientNoteSave);
+    }
+
+    const escalateModalElement = document.getElementById('escalateConfirmModal');
+    const confirmEscalateButton = document.getElementById('confirmEscalateBtn');
+    if (escalateModalElement && confirmEscalateButton && window.bootstrap && window.bootstrap.Modal) {
+        escalateConfirmModal = window.bootstrap.Modal.getOrCreateInstance(escalateModalElement);
+
+        confirmEscalateButton.addEventListener('click', async () => {
+            confirmEscalateButton.disabled = true;
+            const originalText = confirmEscalateButton.textContent;
+            confirmEscalateButton.textContent = 'Sending...';
+
+            try {
+                await confirmEscalationAndNotify();
+            } finally {
+                confirmEscalateButton.disabled = false;
+                confirmEscalateButton.textContent = originalText;
+                if (escalateConfirmModal) {
+                    escalateConfirmModal.hide();
+                }
+            }
+        });
+
+        escalateModalElement.addEventListener('hidden.bs.modal', () => {
+            pendingEscalationPatientId = null;
+        });
     }
 }
 

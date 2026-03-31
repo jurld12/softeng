@@ -279,6 +279,25 @@ function formatDateForComparison(date) {
     return `${year}-${month}-${day}`;
 }
 
+function getAppointmentDisplayStatus(appointment) {
+    const rawStatus = String(appointment?.status || 'upcoming').toLowerCase();
+
+    if (rawStatus === 'completed') {
+        return { key: 'completed', label: 'Completed' };
+    }
+
+    if (rawStatus === 'cancelled') {
+        return { key: 'cancelled', label: 'Cancelled' };
+    }
+
+    const dueDateTime = new Date(`${appointment.date}T${appointment.time || '00:00'}`);
+    if (!Number.isNaN(dueDateTime.getTime()) && dueDateTime < new Date()) {
+        return { key: 'past-due', label: 'Past due date' };
+    }
+
+    return { key: 'upcoming', label: 'Upcoming' };
+}
+
 // Select date
 function selectDate(date) {
     selectedDate = date;
@@ -322,7 +341,9 @@ function displayAppointmentsForDate(date) {
 // Create appointment card
 function createAppointmentCard(appointment) {
     const card = document.createElement('div');
-    card.className = `appointment-card ${appointment.status}`;
+    const displayStatus = getAppointmentDisplayStatus(appointment);
+    const canMarkCompleted = displayStatus.key === 'upcoming' || displayStatus.key === 'past-due';
+    card.className = `appointment-card ${displayStatus.key}`;
     
     card.innerHTML = `
         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -330,6 +351,7 @@ function createAppointmentCard(appointment) {
                 <i class="bi bi-clock me-1"></i>${appointment.time}
             </div>
             <span class="appointment-type-badge ${appointment.type}">${appointment.type.charAt(0).toUpperCase() + appointment.type.slice(1)}</span>
+            <span class="status-badge ${displayStatus.key}">${displayStatus.label}</span>
         </div>
         <div class="appointment-title">${appointment.title}</div>
         ${appointment.doctor ? `
@@ -345,6 +367,11 @@ function createAppointmentCard(appointment) {
             </div>
         ` : ''}
         <div class="mt-3">
+            ${canMarkCompleted ? `
+                <button class="btn btn-sm btn-success me-2" onclick="markAppointmentCompleted('${appointment.id}')">
+                    <i class="bi bi-check2-circle"></i>
+                </button>
+            ` : ''}
             <button class="btn btn-sm btn-outline-primary me-2" onclick="editAppointment('${appointment.id}')">
                 <i class="bi bi-pencil"></i>
             </button>
@@ -380,6 +407,8 @@ function updateAppointmentsTable() {
     });
     
     tbody.innerHTML = sortedAppointments.map(apt => {
+        const displayStatus = getAppointmentDisplayStatus(apt);
+        const canMarkCompleted = displayStatus.key === 'upcoming' || displayStatus.key === 'past-due';
         const date = new Date(apt.date);
         const formattedDate = date.toLocaleDateString('en-US', { 
             month: 'short', 
@@ -399,8 +428,13 @@ function updateAppointmentsTable() {
                     <div>${apt.doctor || '-'}</div>
                     <div class="small text-muted">${apt.location || '-'}</div>
                 </td>
-                <td><span class="status-badge ${apt.status}">${apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}</span></td>
+                <td><span class="status-badge ${displayStatus.key}">${displayStatus.label}</span></td>
                 <td>
+                    ${canMarkCompleted ? `
+                        <button class="action-btn action-btn-success" onclick="markAppointmentCompleted('${apt.id}')" title="Mark completed">
+                            <i class="bi bi-check2-circle"></i>
+                        </button>
+                    ` : ''}
                     <button class="action-btn" onclick="editAppointment('${apt.id}')">
                         <i class="bi bi-pencil"></i>
                     </button>
@@ -411,6 +445,39 @@ function updateAppointmentsTable() {
             </tr>
         `;
     }).join('');
+}
+
+// Mark appointment as completed
+async function markAppointmentCompleted(id) {
+    try {
+        const token = localStorage.getItem('healio_access_token');
+        const response = await fetch(`${API_BASE_URL}/appointments/${id}/status?status=completed`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || errorData.message || 'Failed to mark appointment as completed');
+        }
+
+        const index = appointments.findIndex(apt => apt.id === id);
+        if (index !== -1) {
+            appointments[index].status = 'completed';
+        }
+
+        renderCalendar();
+        displayAppointmentsForDate(selectedDate);
+        updateAppointmentsTable();
+        updateStats();
+        showNotification('Appointment marked as completed', 'success');
+    } catch (error) {
+        console.error('Error marking appointment completed:', error);
+        showNotification(error.message || 'Failed to mark appointment as completed', 'danger');
+    }
 }
 
 // Update stats
