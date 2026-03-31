@@ -60,54 +60,7 @@
             </section>
 
             <section class="row g-4 mb-4">
-                <div class="col-md-6 col-xl-3">
-                    <article class="admin-kpi-card vital-card">
-                        <div class="admin-kpi-card__icon">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <div>
-                            <div class="admin-kpi-card__value" id="totalUsersStat">--</div>
-                            <div class="admin-kpi-card__label">Total users</div>
-                        </div>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-3">
-                    <article class="admin-kpi-card vital-card">
-                        <div class="admin-kpi-card__icon admin-kpi-card__icon--doctor">
-                            <i class="bi bi-hospital"></i>
-                        </div>
-                        <div>
-                            <div class="admin-kpi-card__value" id="totalDoctorsStat">--</div>
-                            <div class="admin-kpi-card__label">Doctor accounts</div>
-                        </div>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-3">
-                    <article class="admin-kpi-card vital-card">
-                        <div class="admin-kpi-card__icon admin-kpi-card__icon--patient">
-                            <i class="bi bi-heart-pulse-fill"></i>
-                        </div>
-                        <div>
-                            <div class="admin-kpi-card__value" id="totalPatientsStat">--</div>
-                            <div class="admin-kpi-card__label">Patients</div>
-                        </div>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-3">
-                    <article class="admin-kpi-card vital-card">
-                        <div class="admin-kpi-card__icon admin-kpi-card__icon--active">
-                            <i class="bi bi-shield-check"></i>
-                        </div>
-                        <div>
-                            <div class="admin-kpi-card__value" id="activeUsersStat">--</div>
-                            <div class="admin-kpi-card__label">Active users</div>
-                        </div>
-                    </article>
-                </div>
-            </section>
-
-            <section class="row g-4">
-                <div class="col-xl-5" id="create-doctor">
+                <div class="col-xl-8">
                     <article class="section-card admin-panel h-100">
                         <div class="admin-panel__header">
                             <div>
@@ -147,8 +100,58 @@
                         </form>
                     </article>
                 </div>
+                <div class="col-xl-4">
+                    <div class="row g-4">
+                        <div class="col-xl-12 col-md-6">
+                            <article class="admin-kpi-card vital-card">
+                                <div class="admin-kpi-card__icon">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="admin-kpi-card__value" id="totalUsersStat">--</div>
+                                    <div class="admin-kpi-card__label">Total users</div>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-xl-12 col-md-6">
+                            <article class="admin-kpi-card vital-card">
+                                <div class="admin-kpi-card__icon admin-kpi-card__icon--doctor">
+                                    <i class="bi bi-hospital"></i>
+                                </div>
+                                <div>
+                                    <div class="admin-kpi-card__value" id="totalDoctorsStat">--</div>
+                                    <div class="admin-kpi-card__label">Doctor accounts</div>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-xl-12 col-md-6">
+                            <article class="admin-kpi-card vital-card">
+                                <div class="admin-kpi-card__icon admin-kpi-card__icon--patient">
+                                    <i class="bi bi-heart-pulse-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="admin-kpi-card__value" id="totalPatientsStat">--</div>
+                                    <div class="admin-kpi-card__label">Patients</div>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-xl-12 col-md-6">
+                            <article class="admin-kpi-card vital-card">
+                                <div class="admin-kpi-card__icon admin-kpi-card__icon--active">
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+                                <div>
+                                    <div class="admin-kpi-card__value" id="activeUsersStat">--</div>
+                                    <div class="admin-kpi-card__label">Active users</div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                <div class="col-xl-7" id="doctor-accounts">
+            <section class="row g-4 mb-4">
+                <div class="col-12" id="doctor-accounts">
                     <article class="section-card admin-panel h-100">
                         <div class="admin-panel__header admin-panel__header--spread">
                             <div>
@@ -159,6 +162,10 @@
                             <span class="admin-count-pill" id="doctorRosterCount">0 doctors</span>
                         </div>
 
+                        <div class="admin-roster-search">
+                            <input type="search" class="form-control" id="doctorSearch" placeholder="Search by email...">
+                        </div>
+
                         <div class="admin-roster" id="doctorRosterList">
                             <div class="admin-empty-state">
                                 <i class="bi bi-hospital"></i>
@@ -167,7 +174,9 @@
                         </div>
                     </article>
                 </div>
+            </section>
 
+            <section class="row g-4 mb-4">
                 <div class="col-12" id="user-accounts">
                     <article class="section-card admin-panel h-100">
                         <div class="admin-panel__header admin-panel__header--spread">
@@ -177,6 +186,10 @@
                                 <p class="section-subtitle mb-0">Current user roster and access state.</p>
                             </div>
                             <span class="admin-count-pill" id="userRosterCount">0 users</span>
+                        </div>
+
+                        <div class="admin-roster-search">
+                            <input type="search" class="form-control" id="userSearch" placeholder="Search by email...">
                         </div>
 
                         <div class="admin-roster" id="userRosterList">

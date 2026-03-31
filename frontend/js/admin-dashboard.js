@@ -4,7 +4,9 @@ const adminDashboardState = {
     doctors: [],
     patients: [],
     selectedDoctorId: null,
-    loading: false
+    loading: false,
+    doctorSearchTerm: '',
+    patientSearchTerm: ''
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -37,6 +39,14 @@ function attachAdminDashboardHandlers() {
     document.getElementById('refreshAdminDashboard').addEventListener('click', refreshAdminDashboard);
     document.getElementById('createDoctorForm').addEventListener('submit', handleCreateDoctor);
     document.getElementById('editDoctorForm').addEventListener('submit', handleEditDoctor);
+    document.getElementById('doctorSearch').addEventListener('input', (e) => {
+        adminDashboardState.doctorSearchTerm = e.target.value;
+        renderDoctorRoster();
+    });
+    document.getElementById('userSearch').addEventListener('input', (e) => {
+        adminDashboardState.patientSearchTerm = e.target.value;
+        renderUserRoster();
+    });
 
     document.querySelectorAll('.nav-item-custom').forEach(link => {
         link.addEventListener('click', () => {
@@ -180,7 +190,8 @@ function renderStats() {
 function renderDoctorRoster() {
     const roster = document.getElementById('doctorRosterList');
     const count = document.getElementById('doctorRosterCount');
-    const doctors = adminDashboardState.doctors;
+    const searchTerm = adminDashboardState.doctorSearchTerm.toLowerCase();
+    const doctors = adminDashboardState.doctors.filter(d => !searchTerm || d.email.toLowerCase().includes(searchTerm));
 
     count.textContent = `${doctors.length} doctor${doctors.length === 1 ? '' : 's'}`;
 
@@ -229,7 +240,8 @@ function renderDoctorRoster() {
 function renderUserRoster() {
     const roster = document.getElementById('userRosterList');
     const count = document.getElementById('userRosterCount');
-    const patients = adminDashboardState.patients;
+    const searchTerm = adminDashboardState.patientSearchTerm.toLowerCase();
+    const patients = adminDashboardState.patients.filter(p => !searchTerm || p.email.toLowerCase().includes(searchTerm));
 
     count.textContent = `${patients.length} user${patients.length === 1 ? '' : 's'}`;
 
