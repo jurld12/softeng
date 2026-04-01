@@ -13,8 +13,24 @@ services:
       MONGO_INITDB_DATABASE: healio
     volumes:
       - healio-data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
     networks:
       - healio-network
+
+  mongo-restore:
+    image: mongo:7.0
+    container_name: healio-mongo-restore
+    depends_on:
+      - mongodb
+    volumes:
+      - ./mongo-backup:/data/backup
+    networks:
+      - healio-network
+    command: >
+      sh -c "
+        mongorestore --host mongodb --username admin --password healio_dev_password --authenticationDatabase admin --db healio --drop /data/backup/healio &&
+        echo 'MongoDB data restored successfully.'
+      "
 
 volumes:
   healio-data:
