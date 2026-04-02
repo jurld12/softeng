@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     
     # Environment
     environment: str = "development"
+
+    # Gemini Chatbot
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-1.5-flash"
+    gemini_timeout_seconds: int = 20
     
     # CORS - Allowed Origins
     allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000,http://127.0.0.1:8000"

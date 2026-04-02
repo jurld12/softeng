@@ -24,6 +24,7 @@ const CONFIG = {
         PATIENT_ALERTS: '/patients/me/alerts',
         PATIENT_ACHIEVEMENTS: '/patients/me/achievements',
         PATIENT_MEDICATIONS: '/patients/me/medications',
+        PATIENT_CHATBOT: '/patients/me/chatbot/message',
         
         // Doctor
         DOCTOR_DIRECTORY: '/auth/doctors',

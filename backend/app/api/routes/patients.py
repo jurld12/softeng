@@ -11,16 +11,34 @@ from pathlib import Path
 import io
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from app.models.schemas import BiometricEntry, BiometricResponse, DashboardSummary, AlertResponse, AchievementResponse, PatientProfileUpdate, UserProfileResponse
+from app.models.schemas import BiometricEntry, BiometricResponse, DashboardSummary, AlertResponse, AchievementResponse, PatientProfileUpdate, UserProfileResponse, ChatbotMessageRequest, ChatbotMessageResponse
 from app.database import get_database
 from app.middleware.auth import get_current_patient
 from app.services.alerts import check_and_create_alert
+from app.services.chatbot import generate_chatbot_reply
 from app.services.export import generate_csv_report, generate_pdf_report
 from app.services import gamification
 from app.utils.user_profiles import normalize_emergency_contact, parse_object_id, serialize_doctor_reference, serialize_user_profile, resolve_doctor_assignment
 
 
 router = APIRouter()
+
+
+@router.post("/me/chatbot/message", response_model=ChatbotMessageResponse)
+async def patient_chatbot_message(
+    payload: ChatbotMessageRequest,
+    current_user: dict = Depends(get_current_patient),
+    db = Depends(get_database)
+):
+    """Exchange one safe, contextual chatbot message for the current patient."""
+    response = await generate_chatbot_reply(
+        db=db,
+        user=current_user,
+        message=payload.message,
+        conversation=[item.model_dump() for item in payload.conversation],
+        context_types=payload.context_types,
+    )
+    return ChatbotMessageResponse(**response)
 
 
 @router.get("/me/profile", response_model=UserProfileResponse)

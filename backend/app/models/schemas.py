@@ -401,3 +401,24 @@ class SystemStats(BaseModel):
     active_users: int
     total_biometric_entries: int
     total_alerts: int
+
+
+class ChatMessage(BaseModel):
+    """Single chat message exchanged with the assistant."""
+    role: Literal["user", "assistant"]
+    text: str = Field(..., min_length=1, max_length=4000)
+
+
+class ChatbotMessageRequest(BaseModel):
+    """Chatbot request from the patient dashboard."""
+    message: str = Field(..., min_length=1, max_length=4000)
+    conversation: List[ChatMessage] = Field(default_factory=list)
+    context_types: List[Literal["vitals", "medications", "appointments", "reminders"]] = Field(default_factory=list)
+
+
+class ChatbotMessageResponse(BaseModel):
+    """Chatbot response returned to the patient dashboard."""
+    reply: str
+    should_escalate: bool = False
+    escalation_message: Optional[str] = None
+    used_context: List[str] = Field(default_factory=list)
