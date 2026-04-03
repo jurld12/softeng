@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # Gemini Chatbot
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-flash-lite-latest"
     gemini_timeout_seconds: int = 20
     
     # CORS - Allowed Origins

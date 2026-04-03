@@ -26,11 +26,39 @@
     contextTypes: [...DEFAULT_CONTEXT],
   };
 
-  document.addEventListener("DOMContentLoaded", initializeChatbot);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeChatbot);
+  } else {
+    initializeChatbot();
+  }
+
+  // Support BFCache restores where DOMContentLoaded may not fire again.
+  window.addEventListener("pageshow", initializeChatbot);
+  window.addEventListener("resize", function () {
+    const drawer = document.getElementById("chatbotDrawer");
+    if (drawer) {
+      applyDrawerBaseStyles(drawer);
+    }
+  });
 
   function initializeChatbot() {
-    if (chatbotState.initialized || !shouldEnableChatbot()) {
+    const eligibility = getChatbotEligibility();
+    if (chatbotState.initialized || !eligibility.enabled) {
+      if (!eligibility.enabled) {
+        window.__healioChatbotDebug = eligibility;
+        console.info(
+          "[Healio Chatbot] Initialization skipped:",
+          eligibility.reasons.join("; "),
+        );
+      }
       return;
+    }
+
+    if (eligibility.warnings?.length) {
+      console.info(
+        "[Healio Chatbot] Initialization warnings:",
+        eligibility.warnings.join("; "),
+      );
     }
 
     if (!ensureChatbotUi()) {
@@ -44,38 +72,77 @@
     updateChatContextToggles();
   }
 
-  function shouldEnableChatbot() {
-    return (
-      window.location.pathname.endsWith("dashboard-v2.html") &&
-      localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE) === "patient" &&
-      !!localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN) &&
-      !!document.querySelector(".dashboard-header") &&
-      !!document.querySelector(".main-content")
-    );
+  function getChatbotEligibility() {
+    const role = (
+      localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE) || ""
+    ).trim().toLowerCase();
+    const hasToken = !!localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+    const hasHeader = !!document.querySelector(".dashboard-header");
+    const hasMainContent = !!document.querySelector(".main-content");
+    const hasDashboardMarkers =
+      !!document.getElementById("greetingText") ||
+      !!document.getElementById("profileName") ||
+      !!document.querySelector("#medicationsList") ||
+      !!document.querySelector("#dashboardAppointmentsList");
+
+    const reasons = [];
+    const warnings = [];
+
+    if (role !== "patient") {
+      warnings.push(`role is '${role || "missing"}' (expected patient)`);
+    }
+    if (!hasToken) {
+      warnings.push("access token missing");
+    }
+    if (!hasHeader) {
+      reasons.push(".dashboard-header not found");
+    }
+    if (!hasMainContent) {
+      reasons.push(".main-content not found");
+    }
+    if (!hasDashboardMarkers) {
+      reasons.push("patient dashboard markers not found");
+    }
+
+    return {
+      enabled: reasons.length === 0,
+      reasons,
+      warnings,
+    };
   }
 
   function ensureChatbotUi() {
-    const actionsContainer = document.querySelector(
-      ".dashboard-header .d-flex.gap-2",
-    );
+    const actionsContainer =
+      document.querySelector(".dashboard-header .d-flex.gap-2") ||
+      document.querySelector(".dashboard-header .d-flex:last-child");
     const mainContent = document.querySelector(".main-content");
 
-    if (!actionsContainer || !mainContent) {
+    if (!mainContent) {
       return false;
     }
 
     if (!document.getElementById("chatbotLauncher")) {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "btn-icon";
       button.id = "chatbotLauncher";
       button.setAttribute("aria-label", "Open Healio assistant");
       button.innerHTML = '<i class="bi bi-chat-dots"></i>';
-      actionsContainer.insertBefore(button, actionsContainer.firstChild);
+      button.addEventListener("click", toggleDrawer);
+      button.dataset.chatbotBound = "true";
+
+      if (actionsContainer) {
+        button.className = "btn-icon";
+        actionsContainer.insertBefore(button, actionsContainer.firstChild);
+      } else {
+        ensureFloatingLauncherStyles();
+        button.className = "healio-chatbot-floating-launcher";
+        button.title = "Open Healio assistant";
+        document.body.appendChild(button);
+      }
     }
 
     if (!document.getElementById("chatbotDrawer")) {
-      mainContent.insertAdjacentHTML(
+      document.body.insertAdjacentHTML(
         "beforeend",
         `
                 <aside class="healio-chatbot-drawer" id="chatbotDrawer" aria-hidden="true">
@@ -111,13 +178,74 @@
       );
     }
 
+    const drawer = document.getElementById("chatbotDrawer");
+    if (drawer) {
+      if (drawer.parentElement !== document.body) {
+        document.body.appendChild(drawer);
+      }
+      applyDrawerBaseStyles(drawer);
+    }
+
     return true;
   }
 
+  function applyDrawerBaseStyles(drawer) {
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+    drawer.style.position = "fixed";
+    drawer.style.top = isMobile ? "0" : "24px";
+    drawer.style.right = isMobile ? "0" : "24px";
+    drawer.style.bottom = isMobile ? "0" : "24px";
+    drawer.style.left = "auto";
+    drawer.style.width = isMobile ? "100vw" : "min(380px, calc(100vw - 48px))";
+    drawer.style.maxWidth = isMobile ? "100vw" : "380px";
+    drawer.style.zIndex = "1065";
+    drawer.style.transition = "transform 260ms ease, opacity 180ms ease";
+
+    // Prevent horizontal page expansion from off-canvas transforms.
+    document.documentElement.style.overflowX = "hidden";
+    document.body.style.overflowX = "hidden";
+  }
+
+  function ensureFloatingLauncherStyles() {
+    if (document.getElementById("healioChatbotFloatingLauncherStyles")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "healioChatbotFloatingLauncherStyles";
+    style.textContent = `
+      .healio-chatbot-floating-launcher {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 1060;
+        width: 56px;
+        height: 56px;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #1e40af, #0891b2);
+        color: #ffffff;
+        font-size: 1.2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
+      }
+
+      .healio-chatbot-floating-launcher:hover {
+        filter: brightness(1.05);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function attachChatbotHandlers() {
-    document
-      .getElementById("chatbotLauncher")
-      ?.addEventListener("click", toggleDrawer);
+    const launcher = document.getElementById("chatbotLauncher");
+    if (launcher && !launcher.dataset.chatbotBound) {
+      launcher.addEventListener("click", toggleDrawer);
+      launcher.dataset.chatbotBound = "true";
+    }
     document
       .getElementById("chatbotCloseButton")
       ?.addEventListener("click", closeDrawer);
@@ -150,8 +278,23 @@
       return;
     }
 
+    applyDrawerBaseStyles(drawer);
+
     drawer.classList.toggle("is-open", chatbotState.open);
     drawer.setAttribute("aria-hidden", chatbotState.open ? "false" : "true");
+
+    // Inline fallback in case class-based transition styles are overridden.
+    if (chatbotState.open) {
+      drawer.style.transform = "translateX(0)";
+      drawer.style.pointerEvents = "auto";
+      drawer.style.visibility = "visible";
+      drawer.style.opacity = "1";
+    } else {
+      drawer.style.transform = "translateX(calc(100% + 32px))";
+      drawer.style.pointerEvents = "none";
+      drawer.style.visibility = "hidden";
+      drawer.style.opacity = "0";
+    }
   }
 
   function restoreSessionMessages() {
@@ -271,6 +414,25 @@
 
   async function submitMessage() {
     if (chatbotState.sending) {
+      return;
+    }
+
+    const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+    const role = (
+      localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE) || ""
+    ).trim().toLowerCase();
+
+    if (!token || role !== "patient") {
+      chatbotState.open = true;
+      renderDrawerState();
+      chatbotState.messages.push({
+        role: "assistant",
+        text: "Please sign in with a patient account to use the Healio assistant.",
+      });
+      persistMessages();
+      renderChatMessages();
+      setStatus("Patient login required.");
+      setSendButtonState();
       return;
     }
 

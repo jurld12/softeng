@@ -5,11 +5,15 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import datetime
 from typing import Any
 from urllib import error, request
 
 from config import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 SYSTEM_INSTRUCTIONS = """You are Healio Assistant, a calm and supportive in-app health helper for patients.
@@ -280,7 +284,8 @@ async def call_gemini(prompt: str) -> str:
 
     try:
         return await asyncio.to_thread(_make_request)
-    except RuntimeError:
+    except RuntimeError as exc:
+        logger.warning("Gemini request failed: %s", exc)
         return (
             "I’m having trouble reaching the Healio assistant right now. "
             "Please try again in a moment or contact your doctor for medical guidance."

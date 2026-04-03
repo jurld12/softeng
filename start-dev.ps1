@@ -147,10 +147,10 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "   ✅ All Services Started!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "🗄️  MongoDB:  Running in Docker" -ForegroundColor Cyan
-Write-Host "🔧 Backend:   http://127.0.0.1:5000" -ForegroundColor Cyan
-Write-Host "📚 API Docs:  http://127.0.0.1:5000/docs" -ForegroundColor Cyan
-Write-Host "🌐 Frontend:  http://localhost:3000" -ForegroundColor Cyan
+Write-Host "MongoDB:  Running in Docker" -ForegroundColor Cyan
+Write-Host "Backend:  http://127.0.0.1:5000" -ForegroundColor Cyan
+Write-Host "API Docs: http://127.0.0.1:5000/docs" -ForegroundColor Cyan
+Write-Host "Frontend: http://localhost:3000" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "To stop all services:" -ForegroundColor Yellow
 Write-Host "  Run: .\stop-dev.ps1" -ForegroundColor Yellow
