@@ -94,6 +94,16 @@
     --healio-space-lg: 24px;
     --healio-space-xl: 32px;
     --healio-space-2xl: 48px;
+
+    /* Sidebar Layout Lock */
+    --healio-sidebar-width: 280px;
+    --healio-sidebar-logo-size: 40px;
+    --healio-sidebar-logo-text-size: 24px;
+    --healio-sidebar-nav-font-size: 14px;
+    --healio-sidebar-nav-icon-size: 20px;
+    --healio-sidebar-nav-item-height: 46px;
+    --healio-sidebar-user-name-size: 14px;
+    --healio-sidebar-user-meta-size: 12px;
     
     /* Typography */
     --healio-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -181,6 +191,15 @@
     --healio-shadow-md: 0 8px 18px rgba(0, 0, 0, 0.45);
     --healio-shadow-lg: 0 12px 26px rgba(0, 0, 0, 0.5);
     --healio-shadow-xl: 0 20px 34px rgba(0, 0, 0, 0.55);
+
+    --bs-body-bg: var(--healio-bg-secondary);
+    --bs-body-color: var(--healio-text-primary);
+    --bs-emphasis-color: var(--healio-text-primary);
+    --bs-secondary-color: var(--healio-text-secondary);
+    --bs-secondary-color-rgb: 203, 213, 225;
+    --bs-tertiary-color: var(--healio-text-muted);
+    --bs-tertiary-color-rgb: 148, 163, 184;
+    --bs-border-color: var(--healio-border-light);
 }
 
 :root[data-theme="ocean"] {
@@ -245,6 +264,53 @@
     
     --bs-link-color: var(--healio-primary);
     --bs-link-hover-color: var(--healio-primary-hover);
+}
+
+/* Theme-aware Buttons */
+.btn-primary {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: var(--healio-primary);
+    --bs-btn-border-color: var(--healio-primary);
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: var(--healio-primary-hover);
+    --bs-btn-hover-border-color: var(--healio-primary-hover);
+    --bs-btn-focus-shadow-rgb: var(--healio-primary-rgb);
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: var(--healio-primary-dark);
+    --bs-btn-active-border-color: var(--healio-primary-dark);
+    --bs-btn-disabled-color: #ffffff;
+    --bs-btn-disabled-bg: var(--healio-primary);
+    --bs-btn-disabled-border-color: var(--healio-primary);
+    background-image: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    border-color: transparent;
+    box-shadow: var(--healio-shadow-sm);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    background-image: linear-gradient(135deg, var(--healio-primary-hover), var(--healio-primary));
+    border-color: transparent;
+}
+
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+    background-image: linear-gradient(135deg, var(--healio-primary-dark), var(--healio-primary));
+    border-color: transparent;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--healio-primary);
+    --bs-btn-border-color: rgba(var(--healio-primary-rgb), 0.55);
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: var(--healio-primary);
+    --bs-btn-hover-border-color: var(--healio-primary);
+    --bs-btn-focus-shadow-rgb: var(--healio-primary-rgb);
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: var(--healio-primary-dark);
+    --bs-btn-active-border-color: var(--healio-primary-dark);
+    --bs-btn-disabled-color: var(--healio-primary);
+    --bs-btn-disabled-border-color: rgba(var(--healio-primary-rgb), 0.45);
 }
 
 /* Global Styles */
@@ -447,5 +513,43 @@ body {
 
 :root[data-theme="dark"] .text-muted,
 :root[data-theme="dark"] .form-text {
+    color: var(--healio-text-muted) !important;
+}
+
+:root[data-theme="dark"] .text-dark {
+    color: var(--healio-text-primary) !important;
+}
+
+:root[data-theme="dark"] .sidebar-user .text-muted {
+    color: #b8c4db !important;
+}
+
+:root[data-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--healio-text-primary);
+    --bs-table-border-color: var(--healio-border-light);
+    --bs-table-striped-color: var(--healio-text-primary);
+    --bs-table-hover-color: var(--healio-text-primary);
+    --bs-table-hover-bg: rgba(148, 163, 184, 0.08);
+}
+
+:root[data-theme="dark"] .table > :not(caption) > * > * {
+    color: var(--bs-table-color);
+}
+
+:root[data-theme="dark"] .card.bg-light,
+:root[data-theme="dark"] .bg-light.card {
+    background-color: #1a2740 !important;
+    color: var(--healio-text-primary) !important;
+    border-color: var(--healio-border) !important;
+}
+
+:root[data-theme="dark"] .card.bg-light .card-title,
+:root[data-theme="dark"] .card.bg-light .card-text,
+:root[data-theme="dark"] .card.bg-light .small {
+    color: var(--healio-text-secondary) !important;
+}
+
+:root[data-theme="dark"] .card.bg-light .text-muted {
     color: var(--healio-text-muted) !important;
 }

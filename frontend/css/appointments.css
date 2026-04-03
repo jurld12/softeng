@@ -96,7 +96,9 @@
     background: white;
 }
 
-/* Appointment Cwhite;
+/* Appointment Cards */
+.appointment-card {
+    background: var(--healio-bg-primary);
     border: 1px solid var(--healio-border-light);
     border-radius: var(--healio-radius-md);
     padding: var(--healio-space-lg);
@@ -108,8 +110,6 @@
 
 .appointment-card:hover {
     border-left-width: 6px;
-    box-shadow: var(--healio-shadow-lg);
-    transform: translateX(4pxary);
     transform: translateX(4px);
     box-shadow: var(--healio-shadow-md);
 }
@@ -193,6 +193,8 @@
     background: var(--healio-gray-200);
     color: var(--healio-gray-700);
 }
+
+.empty-state {
     background: var(--healio-bg-tertiary);
     border-radius: var(--healio-radius-md);
 }
@@ -221,10 +223,8 @@
 }
 
 /* Table Styles */
-.table-hover tbody tr {
-    cu {
+.table {
     margin-bottom: 0;
-    }
 }
 
 .table thead th {
@@ -252,6 +252,7 @@
     padding: 1rem;
     vertical-align: middle;
     text-transform: capitalize;
+    color: var(--healio-text-primary);
 }
 
 .status-badge {
@@ -384,4 +385,69 @@
         height: 100%;
         overflow-y: auto;
     }
+}
+
+/* Dark mode readability adjustments */
+:root[data-theme="dark"] .calendar-container {
+    background: var(--healio-bg-primary);
+    border-color: var(--healio-border);
+}
+
+:root[data-theme="dark"] .calendar-header {
+    border-bottom-color: var(--healio-border);
+}
+
+:root[data-theme="dark"] #currentMonth {
+    color: var(--healio-text-primary);
+}
+
+:root[data-theme="dark"] .calendar-weekday {
+    color: var(--healio-text-secondary);
+}
+
+:root[data-theme="dark"] .calendar-day {
+    background: #0b1730;
+    border-color: rgba(148, 163, 184, 0.22);
+    color: var(--healio-text-secondary);
+}
+
+:root[data-theme="dark"] .calendar-day:hover {
+    background: rgba(var(--healio-primary-rgb), 0.28);
+    border-color: var(--healio-primary-light);
+}
+
+:root[data-theme="dark"] .calendar-day.other-month {
+    color: #5f6e8c;
+}
+
+:root[data-theme="dark"] .calendar-day.has-appointment::after {
+    background: #22d3ee;
+}
+
+:root[data-theme="dark"] .calendar-day.today.has-appointment::after {
+    background: #f8fafc;
+}
+
+:root[data-theme="dark"] .appointment-card {
+    background: var(--healio-bg-tertiary);
+    border-color: var(--healio-border-light);
+}
+
+:root[data-theme="dark"] .appointment-card:hover {
+    background: #1a2841;
+}
+
+:root[data-theme="dark"] .table thead th {
+    background: #0f1b35;
+    color: #cbd5e1;
+    border-bottom-color: var(--healio-border);
+}
+
+:root[data-theme="dark"] .table tbody td {
+    color: #d9e2f2;
+    border-color: var(--healio-border-light);
+}
+
+:root[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(148, 163, 184, 0.1);
 }

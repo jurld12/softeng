@@ -7,7 +7,9 @@
     top: 0;
     left: 0;
     height: 100vh;
-    width: 280px;
+    width: var(--healio-sidebar-width);
+    min-width: var(--healio-sidebar-width);
+    max-width: var(--healio-sidebar-width);
     background: var(--healio-bg-primary);
     border-right: 1px solid var(--healio-border-light);
     z-index: var(--healio-z-fixed);
@@ -21,8 +23,10 @@
 }
 
 .logo-icon {
-    width: 40px;
-    height: 40px;
+    width: var(--healio-sidebar-logo-size);
+    height: var(--healio-sidebar-logo-size);
+    min-width: var(--healio-sidebar-logo-size);
+    min-height: var(--healio-sidebar-logo-size);
     border-radius: var(--healio-radius-md);
     display: flex;
     align-items: center;
@@ -30,8 +34,10 @@
 }
 
 .logo-text {
-    font-size: var(--healio-font-size-3xl);
+    font-size: var(--healio-sidebar-logo-text-size);
     font-weight: var(--healio-font-bold);
+    line-height: 1;
+    white-space: nowrap;
     background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -48,12 +54,15 @@
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
+    min-height: var(--healio-sidebar-nav-item-height);
     border-radius: var(--healio-radius-md);
     color: var(--healio-text-secondary);
     text-decoration: none;
     margin-bottom: 4px;
-    transition: all var(--healio-transition-base);
+    transition: background-color var(--healio-transition-base), color var(--healio-transition-base), box-shadow var(--healio-transition-base), border-color var(--healio-transition-base);
     font-weight: var(--healio-font-medium);
+    font-size: var(--healio-sidebar-nav-font-size);
+    line-height: 1.2;
 }
 
 .nav-item-custom:hover {
@@ -66,9 +75,14 @@
     color: white;
 }
 
+.nav-item-custom i,
 .nav-item-custom svg {
-    width: 20px;
-    height: 20px;
+    width: var(--healio-sidebar-nav-icon-size);
+    height: var(--healio-sidebar-nav-icon-size);
+    min-width: var(--healio-sidebar-nav-icon-size);
+    min-height: var(--healio-sidebar-nav-icon-size);
+    font-size: var(--healio-sidebar-nav-icon-size);
+    flex-shrink: 0;
 }
 
 /* Sidebar User Section */
@@ -84,9 +98,26 @@
 
 /* Main Content Area */
 .main-content {
-    margin-left: 280px;
+    margin-left: var(--healio-sidebar-width);
     min-height: 100vh;
     background: var(--healio-bg-secondary);
+}
+
+.sidebar-user img.rounded-circle {
+    width: var(--healio-sidebar-logo-size);
+    height: var(--healio-sidebar-logo-size);
+    min-width: var(--healio-sidebar-logo-size);
+    min-height: var(--healio-sidebar-logo-size);
+}
+
+.sidebar-user .fw-semibold {
+    font-size: var(--healio-sidebar-user-name-size) !important;
+    line-height: 1.25;
+}
+
+.sidebar-user .text-muted {
+    font-size: var(--healio-sidebar-user-meta-size) !important;
+    line-height: 1.25;
 }
 
 /* Header */

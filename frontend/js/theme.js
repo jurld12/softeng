@@ -60,12 +60,15 @@
     function applyTheme(theme, persist = true) {
         const resolvedTheme = normalizeTheme(theme);
         const root = document.documentElement;
+        const bootstrapTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
 
         root.setAttribute('data-theme', resolvedTheme);
+        root.setAttribute('data-bs-theme', bootstrapTheme);
         root.style.colorScheme = resolvedTheme === 'dark' ? 'dark' : 'light';
 
         if (document.body) {
             document.body.setAttribute('data-theme', resolvedTheme);
+            document.body.setAttribute('data-bs-theme', bootstrapTheme);
         }
 
         if (persist) {

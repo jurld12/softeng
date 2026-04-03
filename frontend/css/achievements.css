@@ -21,6 +21,24 @@
     background: linear-gradient(180deg, #ffffff 0%, #fbfaff 100%);
 }
 
+:root[data-theme="dark"] #achievementsList .gamification-achievement {
+    background: linear-gradient(180deg, #121d34 0%, #0f172a 100%);
+    border-color: var(--healio-border);
+}
+
+:root[data-theme="dark"] #achievementsList .gamification-achievement__title {
+    color: #e6edf8;
+}
+
+:root[data-theme="dark"] #achievementsList .gamification-achievement__description,
+:root[data-theme="dark"] #achievementsList .gamification-achievement__meta {
+    color: #b8c4db;
+}
+
+:root[data-theme="dark"] #achievementsList .gamification-achievement__points {
+    color: #a78bfa;
+}
+
 @media (max-width: 992px) {
     .achievement-summary-grid .gamification-stat {
         min-height: 96px;
