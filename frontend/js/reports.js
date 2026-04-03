@@ -3,9 +3,36 @@
 let vitalsChart = null;
 let latestVitalStatusSummary = [];
 
+function getAuthToken() {
+    if (typeof getStoredAccessToken === 'function') {
+        return getStoredAccessToken();
+    }
+
+    return localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+}
+
+function getReportAuthHeaders() {
+    const token = getAuthToken();
+    return {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json'
+    };
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadUserData();
+    if (typeof ensureAuthenticated === 'function' && !ensureAuthenticated({
+        requiredRole: 'patient',
+        allowMissingRole: true
+    })) {
+        return;
+    }
+
+    const isUserLoaded = await loadUserData();
+    if (!isUserLoaded) {
+        return;
+    }
+
     await loadPatientSummary();
     await loadCurrentVitals();
     await loadMedications();
@@ -15,27 +42,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load user data for sidebar
 async function loadUserData() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         if (!token) {
             window.location.href = 'login-v2.html';
-            return;
+            return false;
         }
 
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+            headers: getReportAuthHeaders()
         });
 
         if (response.ok) {
             const data = await response.json();
             updateUserDisplay(data);
-        } else if (response.status === 401) {
-            window.location.href = 'login-v2.html';
+            return true;
         }
+
+        if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return false;
+        }
+
+        return false;
     } catch (error) {
         console.error('Error loading user data:', error);
+        return false;
     }
 }
 
@@ -54,17 +84,15 @@ function updateUserDisplay(user) {
 // Load patient summary
 async function loadPatientSummary() {
     try {
-        const token = localStorage.getItem('healio_access_token');
         const response = await fetch(`${API_BASE_URL}${CONFIG.ENDPOINTS.PATIENT_PROFILE}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+            headers: getReportAuthHeaders()
         });
 
         if (response.ok) {
             const patient = await response.json();
             displayPatientSummary(patient);
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading patient summary:', error);
@@ -134,7 +162,7 @@ function calculateAge(dateOfBirth) {
 // Load current vitals
 async function loadCurrentVitals() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         const [
             bloodGlucose,
             heartRate,
@@ -163,6 +191,10 @@ async function loadCurrentVitals() {
         displayCurrentVitals(vitals);
         generateHealthInsights();
     } catch (error) {
+        if (error.message === 'SESSION_EXPIRED') {
+            return;
+        }
+
         console.error('Error loading current vitals:', error);
         latestVitalStatusSummary = [];
         generateHealthInsights();
@@ -177,12 +209,16 @@ async function loadCurrentVitals() {
 async function fetchLatestMetricValue(metric, token) {
     const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${metric}&limit=1`, {
         headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            ...getReportAuthHeaders(),
+            'Authorization': token ? `Bearer ${token}` : ''
         }
     });
 
     if (!response.ok) {
+        if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            throw new Error('SESSION_EXPIRED');
+        }
+
         return null;
     }
 
@@ -303,17 +339,15 @@ function displayCurrentVitals(vitals) {
 // Load medications
 async function loadMedications() {
     try {
-        const token = localStorage.getItem('healio_access_token');
         const response = await fetch(`${API_BASE_URL}/patients/me/medications`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+            headers: getReportAuthHeaders()
         });
 
         if (response.ok) {
             const medications = await response.json();
             displayMedications(medications);
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading medications:', error);
@@ -342,15 +376,11 @@ function displayMedications(medications) {
 // Load vitals trend
 async function loadVitalsTrend() {
     try {
-        const token = localStorage.getItem('healio_access_token');
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
         const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?limit=100`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+            headers: getReportAuthHeaders()
         });
 
         if (response.ok) {
@@ -359,6 +389,8 @@ async function loadVitalsTrend() {
             const groupedData = groupBiometricsByDate(biometrics);
             createVitalsChart(groupedData);
             calculateActivityAverages(biometrics);
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading vitals trend:', error);
@@ -559,7 +591,7 @@ async function downloadReport() {
     }
 
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         if (!token) {
             window.location.href = 'login-v2.html';
             return;
@@ -580,6 +612,10 @@ async function downloadReport() {
         });
 
         if (!response.ok) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                return;
+            }
+
             const errorPayload = await response.json().catch(() => ({ detail: 'Failed to download report' }));
             throw new Error(errorPayload.detail || 'Failed to download report');
         }
@@ -644,7 +680,20 @@ function extractFilenameFromDisposition(disposition) {
 
 // Logout function
 function logout() {
-    localStorage.removeItem('healio_access_token');
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
+    if (typeof clearAuthState === 'function') {
+        clearAuthState();
+    } else {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+    }
+
     window.location.href = 'login-v2.html';
 }
 

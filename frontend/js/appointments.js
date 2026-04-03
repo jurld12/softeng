@@ -10,6 +10,14 @@ let availableDoctors = [];
 const appointmentDoctorSelect = document.getElementById('appointmentDoctor');
 const appointmentDoctorStatus = document.getElementById('appointmentDoctorStatus');
 
+function getAuthToken() {
+    if (typeof getStoredAccessToken === 'function') {
+        return getStoredAccessToken();
+    }
+
+    return localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+}
+
 function getTodayDateString() {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -27,6 +35,13 @@ function applyAppointmentDateMin() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof ensureAuthenticated === 'function' && !ensureAuthenticated({
+        requiredRole: 'patient',
+        allowMissingRole: true
+    })) {
+        return;
+    }
+
     await loadUserData();
     await loadAvailableDoctors();
     await loadAppointments();
@@ -45,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load user data
 async function loadUserData() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         if (!token) {
             window.location.href = 'login-v2.html';
             return;
@@ -61,6 +76,8 @@ async function loadUserData() {
         if (response.ok) {
             const data = await response.json();
             updateUserDisplay(data);
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         } else {
             console.error('Failed to load user data');
         }
@@ -156,7 +173,7 @@ async function loadAppointments() {
     console.log('Loading appointments from:', `${API_BASE_URL}/appointments`);
     
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         console.log('Token exists:', !!token);
         
         const response = await fetch(`${API_BASE_URL}/appointments`, {
@@ -172,9 +189,7 @@ async function loadAppointments() {
             const data = await response.json();
             appointments = data.appointments || [];
             console.log('Loaded appointments:', appointments.length);
-        } else if (response.status === 401) {
-            // Unauthorized - redirect to login
-            window.location.href = '/frontend/login-v2.html';
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
             return;
         } else {
             throw new Error(`Failed to load appointments: ${response.status}`);
@@ -565,7 +580,7 @@ async function saveAppointment() {
     console.log('Appointment data:', appointmentData);
     
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         console.log('Token exists:', !!token);
         
         console.log('Sending POST request to:', `${API_BASE_URL}/appointments`);
@@ -635,9 +650,8 @@ async function saveAppointment() {
             console.log('=== SAVE APPOINTMENT COMPLETED SUCCESSFULLY ===');
             return;
             
-        } else if (response.status === 401) {
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
             console.log('Unauthorized, redirecting to login...');
-            window.location.href = '/frontend/login-v2.html';
             return;
         } else {
             console.log('Response not OK, parsing error...');
@@ -710,7 +724,7 @@ async function updateAppointment(id) {
     console.log('Update data:', updateData);
     
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         console.log('Sending PUT request to:', `${API_BASE_URL}/appointments/${id}`);
         
         const response = await fetch(`${API_BASE_URL}/appointments/${id}`, {
@@ -767,9 +781,8 @@ async function updateAppointment(id) {
             console.log('=== UPDATE APPOINTMENT COMPLETED SUCCESSFULLY ===');
             return;
             
-        } else if (response.status === 401) {
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
             console.log('Unauthorized, redirecting to login...');
-            window.location.href = '/frontend/login-v2.html';
             return;
         } else {
             console.log('Response not OK, parsing error...');
@@ -797,7 +810,7 @@ async function deleteAppointment(id) {
     }
     
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         const response = await fetch(`${API_BASE_URL}/appointments/${id}`, {
             method: 'DELETE',
             headers: {
@@ -819,8 +832,7 @@ async function deleteAppointment(id) {
             updateStats();
             
             showNotification('Appointment deleted successfully!', 'success');
-        } else if (response.status === 401) {
-            window.location.href = '/frontend/login-v2.html';
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
             return;
         } else {
             const errorData = await response.json();

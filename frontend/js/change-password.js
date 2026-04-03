@@ -11,6 +11,13 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function checkAuthentication() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     if (!token) {
         window.location.href = 'login-v2.html';
@@ -20,7 +27,10 @@ function checkAuthentication() {
 }
 
 function buildAuthHeaders() {
-    const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+    const token = typeof getStoredAccessToken === 'function'
+        ? getStoredAccessToken()
+        : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
@@ -210,7 +220,20 @@ function clearAlert() {
 }
 
 function logout() {
-    localStorage.clear();
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
+    if (typeof clearAuthState === 'function') {
+        clearAuthState();
+    } else {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+    }
+
     window.location.href = 'login-v2.html';
 }
 

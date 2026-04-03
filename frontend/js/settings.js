@@ -4,7 +4,10 @@ let pendingAssignedDoctorId = '';
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuthentication();
+    if (!checkAuthentication()) {
+        return;
+    }
+
     loadCurrentUser();
     loadAvailableDoctors();
     loadUserProfile();
@@ -35,6 +38,13 @@ window.addEventListener('healio:doctor-assignment-updated', event => {
 
 // Check if user is authenticated
 function checkAuthentication() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     if (!token) {
         window.location.href = 'login-v2.html';
@@ -45,7 +55,10 @@ function checkAuthentication() {
 
 // Get auth headers
 function getAuthHeaders() {
-    const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+    const token = typeof getStoredAccessToken === 'function'
+        ? getStoredAccessToken()
+        : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
@@ -55,7 +68,9 @@ function getAuthHeaders() {
 // Load current user info for sidebar
 async function loadCurrentUser() {
     try {
-        const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        const token = typeof getStoredAccessToken === 'function'
+            ? getStoredAccessToken()
+            : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -71,6 +86,8 @@ async function loadCurrentUser() {
             if (avatar && data.name) {
                 avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=7c3aed&color=fff`;
             }
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading user:', error);
@@ -556,7 +573,9 @@ async function triggerExport() {
         if (fromDate) url += `&from_date=${fromDate}T00:00:00`;
         if (toDate) url += `&to_date=${toDate}T23:59:59`;
 
-        const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        const token = typeof getStoredAccessToken === 'function'
+            ? getStoredAccessToken()
+            : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -592,6 +611,11 @@ async function triggerExport() {
 
 // Logout function
 function logout() {
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
     localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
     localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);

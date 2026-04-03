@@ -125,20 +125,20 @@
 
 .doctor-status-banner--warning {
     border-color: rgba(245, 158, 11, 0.3);
-    background: #fffbeb;
-    color: #92400e;
+    background: rgba(245, 158, 11, 0.14);
+    color: var(--healio-attention);
 }
 
 .doctor-status-banner--info {
     border-color: rgba(59, 130, 246, 0.26);
-    background: #eff6ff;
-    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.14);
+    color: var(--healio-info);
 }
 
 .doctor-status-banner--success {
     border-color: rgba(16, 185, 129, 0.26);
-    background: #ecfdf5;
-    color: #047857;
+    background: rgba(16, 185, 129, 0.14);
+    color: var(--healio-normal);
 }
 
 .doctor-kicker {
@@ -154,13 +154,13 @@
 
 .doctor-intro {
     overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+    background: linear-gradient(180deg, var(--healio-bg-primary) 0%, var(--healio-bg-tertiary) 100%);
 }
 
 .doctor-next-review {
     border-radius: var(--healio-radius-md);
     border: 1px solid rgba(124, 58, 237, 0.15);
-    background: #f8f7ff;
+    background: var(--healio-bg-tertiary);
     padding: 1rem;
 }
 
@@ -222,7 +222,7 @@
     align-items: flex-start;
     gap: 1rem;
     border-left: 4px solid var(--healio-danger);
-    background: linear-gradient(180deg, #ffffff 0%, #fff8f8 100%);
+    background: linear-gradient(180deg, var(--healio-bg-primary) 0%, rgba(var(--healio-primary-rgb), 0.06) 100%);
 }
 
 .doctor-alert__icon {
@@ -292,7 +292,7 @@
 }
 
 .doctor-tab.active {
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     color: var(--healio-text-primary);
     box-shadow: var(--healio-shadow-xs);
 }
@@ -320,7 +320,7 @@
     gap: 0.55rem;
     border-radius: var(--healio-radius-md);
     border: 1px solid var(--healio-border-light);
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     padding: 0.72rem 0.85rem;
 }
 
@@ -362,7 +362,7 @@
 .doctor-table-card {
     border: 1px solid var(--healio-border-light);
     border-radius: var(--healio-radius-lg);
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     overflow: hidden;
 }
 
@@ -384,7 +384,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--healio-text-muted);
-    background: #fafbff;
+    background: var(--healio-bg-tertiary);
     border-bottom: 1px solid var(--healio-border-light);
 }
 
@@ -400,7 +400,7 @@
 }
 
 .doctor-table tbody tr:hover td {
-    background: #fbfbff;
+    background: rgba(var(--healio-primary-rgb), 0.06);
 }
 
 .doctor-table__patient {
@@ -483,7 +483,7 @@
 
 .doctor-table-row--skeleton td {
     height: 60px;
-    background: linear-gradient(90deg, #f6f7fb 0%, #eceef8 50%, #f6f7fb 100%);
+    background: linear-gradient(90deg, rgba(var(--healio-primary-rgb), 0.04) 0%, rgba(var(--healio-primary-rgb), 0.1) 50%, rgba(var(--healio-primary-rgb), 0.04) 100%);
     background-size: 200% 100%;
     animation: doctor-shimmer 1.25s linear infinite;
 }
@@ -508,23 +508,23 @@
 }
 
 .alert-pill {
-    color: #b42318;
-    background: #fff2f2;
+    color: var(--healio-critical);
+    background: rgba(239, 68, 68, 0.14);
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .status-pill--normal {
-    color: #047857;
+    color: var(--healio-normal);
     background: rgba(16, 185, 129, 0.14);
 }
 
 .status-pill--attention {
-    color: #b45309;
+    color: var(--healio-attention);
     background: rgba(245, 158, 11, 0.14);
 }
 
 .status-pill--critical {
-    color: #b42318;
+    color: var(--healio-critical);
     background: rgba(239, 68, 68, 0.14);
 }
 
@@ -548,8 +548,8 @@
 .queue-note {
     border-radius: var(--healio-radius-md);
     border: 1px solid rgba(59, 130, 246, 0.2);
-    background: #eff6ff;
-    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.14);
+    color: var(--healio-info);
     padding: 0.72rem 0.85rem;
     display: flex;
     align-items: flex-start;
@@ -566,7 +566,7 @@
 .queue-item {
     border-radius: var(--healio-radius-md);
     border: 1px solid var(--healio-border-light);
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     box-shadow: var(--healio-shadow-xs);
     display: flex;
     align-items: flex-start;
@@ -578,7 +578,7 @@
     min-width: 86px;
     text-align: center;
     border-radius: var(--healio-radius);
-    background: #f5f3ff;
+    background: rgba(var(--healio-primary-rgb), 0.12);
     color: var(--healio-primary-dark);
     padding: 0.55rem;
 }
@@ -647,13 +647,13 @@
 }
 
 .appointment-item--past {
-    background: #fcfcff;
+    background: var(--healio-bg-tertiary);
 }
 
 .queue-item--skeleton {
     min-height: 108px;
     border: 0;
-    background: linear-gradient(90deg, #f6f7fb 0%, #eceef8 50%, #f6f7fb 100%);
+    background: linear-gradient(90deg, rgba(var(--healio-primary-rgb), 0.04) 0%, rgba(var(--healio-primary-rgb), 0.1) 50%, rgba(var(--healio-primary-rgb), 0.04) 100%);
     background-size: 200% 100%;
     animation: doctor-shimmer 1.25s linear infinite;
 }
@@ -665,7 +665,7 @@
 }
 
 .queue-sidebar__card {
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     border: 1px solid var(--healio-border-light);
     border-radius: var(--healio-radius-lg);
     padding: 0.95rem;
@@ -707,7 +707,7 @@
 .empty-state {
     border: 1px dashed var(--healio-border);
     border-radius: var(--healio-radius-md);
-    background: #fbfbfe;
+    background: var(--healio-bg-tertiary);
     text-align: center;
     color: var(--healio-text-secondary);
     padding: 1.7rem 1rem;
@@ -741,7 +741,7 @@
 }
 
 .doctor-patient-modal .modal-body {
-    background: #fcfcff;
+    background: var(--healio-bg-tertiary);
 }
 
 .doctor-patient-vitals {
@@ -753,7 +753,7 @@
 .doctor-patient-vital-card {
     border: 1px solid var(--healio-border-light);
     border-radius: var(--healio-radius-md);
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     padding: 0.75rem;
 }
 
@@ -786,7 +786,7 @@
 .doctor-note-item {
     border: 1px solid var(--healio-border-light);
     border-radius: var(--healio-radius-md);
-    background: #ffffff;
+    background: var(--healio-bg-primary);
     padding: 0.72rem;
 }
 

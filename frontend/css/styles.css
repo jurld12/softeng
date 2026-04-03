@@ -240,6 +240,31 @@ footer {
     font-size: 2.5rem;
 }
 
+.patient-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.patient-summary-section {
+    background: var(--healio-bg-secondary);
+    border: 1px solid var(--healio-border-light);
+    border-radius: var(--healio-radius-md);
+    padding: 1rem;
+    min-height: 100%;
+}
+
+.patient-summary-section--wide {
+    grid-column: 1 / -1;
+}
+
+.patient-summary-metric-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+}
+
 /* Stat Cards */
 .stat-card {
     background: var(--healio-bg-secondary);
@@ -334,6 +359,14 @@ canvas {
 
 /* Responsive adjustments for reports */
 @media (max-width: 768px) {
+    .patient-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-summary-section--wide {
+        grid-column: auto;
+    }
+
     .patient-avatar-large {
         width: 60px;
         height: 60px;

@@ -1,5 +1,12 @@
 // ==================== Authentication Check ====================
 function checkAuthentication() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     const role = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
     
@@ -9,9 +16,8 @@ function checkAuthentication() {
         return false;
     }
     
-    if (role !== 'patient') {
+    if (role && role !== 'patient') {
         console.log('User is not a patient, redirecting');
-        alert('Access denied. This page is for patients only.');
         window.location.href = 'login-v2.html';
         return false;
     }
@@ -21,6 +27,11 @@ function checkAuthentication() {
 
 // ==================== Logout Function ====================
 window.logout = async function() {
+    if (typeof performLogout === 'function') {
+        await performLogout();
+        return;
+    }
+
     try {
         // Call logout API
         await fetch(getApiUrl(CONFIG.ENDPOINTS.LOGOUT), {
@@ -49,7 +60,7 @@ async function loadCurrentUser() {
         });
         
         if (!response.ok) {
-            if (response.status === 401) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
                 // Token expired or invalid
                 throw new Error('Session expired');
             }
@@ -80,8 +91,7 @@ async function loadCurrentUser() {
     } catch (error) {
         console.error('Error loading user:', error);
         if (error.message === 'Session expired') {
-            alert('Your session has expired. Please login again.');
-            window.logout();
+            return null;
         }
         throw error;
     }
@@ -118,6 +128,78 @@ async function loadDashboardProfile(userData) {
         console.error('Error loading dashboard profile:', error);
         return userData;
     }
+}
+
+const VITAL_STATUS_RULES = {
+    bloodSugar: {
+        normal: [70, 130],
+        attention: [54, 180]
+    },
+    heartRate: {
+        normal: [60, 100],
+        attention: [50, 120]
+    },
+    steps: {
+        normal: [10000, 25000],
+        attention: [5000, 35000]
+    },
+    sleep: {
+        normal: [7, 9],
+        attention: [6, 10]
+    },
+    oxygen: {
+        normal: [95, 100],
+        attention: [90, 94]
+    },
+    temp: {
+        normal: [97, 99],
+        attention: [95, 100.4]
+    },
+    respRate: {
+        normal: [12, 20],
+        attention: [10, 24]
+    },
+    hydration: {
+        normal: [2, 3.5],
+        attention: [1.5, 4]
+    }
+};
+
+function resolveRangeStatus(value, rule) {
+    if (!rule || !Number.isFinite(value)) {
+        return 'attention';
+    }
+
+    const [normalMin, normalMax] = rule.normal;
+    const [attentionMin, attentionMax] = rule.attention;
+
+    if (value >= normalMin && value <= normalMax) {
+        return 'normal';
+    }
+
+    if (value >= attentionMin && value <= attentionMax) {
+        return 'attention';
+    }
+
+    return 'critical';
+}
+
+function resolveBloodPressureStatus(systolic, diastolic) {
+    if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
+        return 'attention';
+    }
+
+    const isNormal = systolic >= 90 && systolic <= 120 && diastolic >= 60 && diastolic <= 80;
+    if (isNormal) {
+        return 'normal';
+    }
+
+    const isAttention = systolic >= 80 && systolic <= 139 && diastolic >= 50 && diastolic <= 89;
+    if (isAttention) {
+        return 'attention';
+    }
+
+    return 'critical';
 }
 
 // ==================== Update Profile Section ====================
@@ -270,19 +352,9 @@ async function loadCurrentVitals() {
                             } else {
                                 element.textContent = Math.round(value);
                             }
-                            
-                            // Update status badge if there's a threshold
-                            const thresholds = {
-                                'oxygen': { low: 90, normal: 95, high: 100 },
-                                'temp': { low: 97, normal: 98.6, high: 99.5 },
-                                'steps': { low: 5000, normal: 10000, high: 15000 },
-                                'respRate': { low: 12, normal: 20, high: 25 },
-                                'hydration': { low: 1.5, normal: 2.5, high: 4 }
-                            };
-                            
-                            if (thresholds[vital.id]) {
-                                const t = thresholds[vital.id];
-                                updateVitalStatus(vital.id, value, t.low, t.normal, t.high);
+
+                            if (['oxygen', 'temp', 'steps', 'respRate', 'hydration'].includes(vital.id)) {
+                                updateVitalStatus(vital.id, value);
                             }
                         }
                     }
@@ -313,28 +385,28 @@ function updateVitals(latestMetrics) {
     if (latestMetrics.blood_glucose) {
         const value = Math.round(latestMetrics.blood_glucose.value);
         setVitalText('bloodSugarValue', value);
-        updateVitalStatus('bloodSugar', value, 70, 100, 140);
+        updateVitalStatus('bloodSugar', value);
     }
     
     // Update heart rate
     if (latestMetrics.heart_rate) {
         const value = Math.round(latestMetrics.heart_rate.value);
         setVitalText('heartRateValue', value);
-        updateVitalStatus('heartRate', value, 60, 100, 110);
+        updateVitalStatus('heartRate', value);
     }
     
     // Update steps
     if (latestMetrics.steps) {
         const value = Math.round(latestMetrics.steps.value);
         setVitalText('stepsValue', value.toLocaleString());
-        updateVitalStatus('steps', value, 5000, 10000, 15000);
+        updateVitalStatus('steps', value);
     }
     
     // Update sleep hours
     if (latestMetrics.sleep_hours) {
         const value = latestMetrics.sleep_hours.value.toFixed(1);
         setVitalText('sleepValue', value);
-        updateVitalStatus('sleep', value, 6, 7, 9);
+        updateVitalStatus('sleep', value);
     }
     
     // Update blood pressure
@@ -342,7 +414,7 @@ function updateVitals(latestMetrics) {
         const systolic = Math.round(latestMetrics.blood_pressure_systolic.value);
         const diastolic = Math.round(latestMetrics.blood_pressure_diastolic.value);
         setVitalText('bpValue', `${systolic}/${diastolic}`);
-        updateVitalStatus('bp', systolic, 90, 120, 140);
+        updateVitalStatus('bp', systolic, diastolic);
     }
     
     // Update calories
@@ -355,14 +427,14 @@ function updateVitals(latestMetrics) {
     if (latestMetrics.blood_oxygen) {
         const value = Math.round(latestMetrics.blood_oxygen.value);
         setVitalText('oxygenValue', value);
-        updateVitalStatus('oxygen', value, 90, 95, 100);
+        updateVitalStatus('oxygen', value);
     }
     
     // Update body temperature
     if (latestMetrics.body_temperature) {
         const value = latestMetrics.body_temperature.value.toFixed(1);
         setVitalText('tempValue', value);
-        updateVitalStatus('temp', value, 97, 98.6, 99.5);
+        updateVitalStatus('temp', value);
     }
     
     // Update weight
@@ -375,19 +447,19 @@ function updateVitals(latestMetrics) {
     if (latestMetrics.respiratory_rate) {
         const value = Math.round(latestMetrics.respiratory_rate.value);
         setVitalText('respRateValue', value);
-        updateVitalStatus('respRate', value, 12, 20, 25);
+        updateVitalStatus('respRate', value);
     }
     
     // Update hydration
     if (latestMetrics.hydration) {
         const value = latestMetrics.hydration.value.toFixed(1);
         setVitalText('hydrationValue', value);
-        updateVitalStatus('hydration', value, 1.5, 2.5, 4);
+        updateVitalStatus('hydration', value);
     }
 }
 
 // ==================== Update Vital Status Badge ====================
-function updateVitalStatus(vitalId, value, lowThreshold, normalThreshold, highThreshold) {
+function updateVitalStatus(vitalId, value, secondaryValue = null) {
     const vitalCard = document.querySelector(`[data-vital-id="${vitalId}"]`);
     if (!vitalCard) return;
     
@@ -397,13 +469,22 @@ function updateVitalStatus(vitalId, value, lowThreshold, normalThreshold, highTh
     // Remove all status classes
     vitalCard.classList.remove('vital-card-normal', 'vital-card-attention', 'vital-card-critical');
     statusBadge.classList.remove('badge-normal', 'badge-attention', 'badge-critical');
-    
-    // Determine status
-    if (value >= lowThreshold && value <= normalThreshold) {
+
+    const numericValue = Number(value);
+    const secondaryNumericValue = Number(secondaryValue);
+
+    let statusLevel = 'attention';
+    if (vitalId === 'bp') {
+        statusLevel = resolveBloodPressureStatus(numericValue, secondaryNumericValue);
+    } else {
+        statusLevel = resolveRangeStatus(numericValue, VITAL_STATUS_RULES[vitalId]);
+    }
+
+    if (statusLevel === 'normal') {
         vitalCard.classList.add('vital-card-normal');
         statusBadge.classList.add('badge-normal');
         statusBadge.textContent = 'Normal';
-    } else if (value < lowThreshold || (value > normalThreshold && value <= highThreshold)) {
+    } else if (statusLevel === 'attention') {
         vitalCard.classList.add('vital-card-attention');
         statusBadge.classList.add('badge-attention');
         statusBadge.textContent = 'Attention';
@@ -519,7 +600,7 @@ window.saveVitalData = async function() {
         
         // Update display
         document.getElementById('bpValue').textContent = `${systolic}/${diastolic}`;
-        updateVitalStatus('bp', systolicValue, 90, 120, 140);
+        updateVitalStatus('bp', systolicValue, diastolicValue);
         
     } else {
         value = document.getElementById('vitalValue').value;
@@ -562,6 +643,10 @@ window.saveVitalData = async function() {
             ? Math.round(numericValue).toLocaleString() 
             : Math.round(numericValue);
         document.getElementById(`${vitalId}Value`).textContent = displayValue;
+
+        if (VITAL_STATUS_RULES[vitalId]) {
+            updateVitalStatus(vitalId, numericValue);
+        }
     }
     
     // Close modal
@@ -694,13 +779,13 @@ window.openVitalModal = function(element) {
     
     // Set helpful hints
     const hints = {
-        'bloodSugar': 'Normal range: 70-100 mg/dL (fasting)',
+        'bloodSugar': 'Target range: 70-130 mg/dL',
         'heartRate': 'Normal range: 60-100 bpm',
         'steps': 'Recommended: 10,000 steps per day',
         'sleep': 'Recommended: 7-9 hours',
         'bp': 'Normal: <120/80 mmHg',
         'oxygen': 'Normal range: 95-100%',
-        'temp': 'Normal range: 97.8-99°F',
+        'temp': 'Normal range: 97-99°F',
         'weight': 'Track your weight over time',
         'bmi': 'Normal range: 18.5-24.9 kg/m²',
         'calories': 'Track daily calorie burn',

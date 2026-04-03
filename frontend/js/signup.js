@@ -510,11 +510,18 @@ signupForm.querySelectorAll('input, select').forEach((field) => {
 });
 
 // Check if already logged in
-const token = localStorage.getItem('healio_access_token');
+const token = typeof getStoredAccessToken === 'function'
+    ? getStoredAccessToken()
+    : localStorage.getItem('healio_access_token');
 if (token) {
     // Already logged in, redirect to dashboard
-    const role = localStorage.getItem('healio_user_role');
-    if (role === 'patient') {
+    const role = typeof getStoredUserRole === 'function'
+        ? getStoredUserRole()
+        : localStorage.getItem('healio_user_role');
+
+    if (typeof redirectToRoleHome === 'function' && redirectToRoleHome(role)) {
+        // No-op. Redirect handled in helper.
+    } else if (role === 'patient') {
         window.location.href = 'dashboard-v2.html';
     } else if (role === 'doctor') {
         window.location.href = 'doctor-dashboard.html';

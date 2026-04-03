@@ -18,6 +18,13 @@
     document.addEventListener('DOMContentLoaded', initializeChatbotPage);
 
     function checkAuthentication() {
+        if (typeof ensureAuthenticated === 'function') {
+            return ensureAuthenticated({
+                requiredRole: 'patient',
+                allowMissingRole: true
+            });
+        }
+
         const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
         const role = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
 
@@ -26,7 +33,7 @@
             return false;
         }
 
-        if (role !== 'patient') {
+        if (role && role !== 'patient') {
             alert('Access denied. This page is for patients only.');
             window.location.href = 'login-v2.html';
             return false;
@@ -36,6 +43,11 @@
     }
 
     window.logout = async function () {
+        if (typeof performLogout === 'function') {
+            await performLogout();
+            return;
+        }
+
         try {
             await fetch(getApiUrl(CONFIG.ENDPOINTS.LOGOUT), {
                 method: 'POST',
@@ -72,6 +84,9 @@
             });
 
             if (!response.ok) {
+                if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                    return;
+                }
                 return;
             }
 
@@ -255,6 +270,9 @@
 
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
+                if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                    return;
+                }
                 throw new Error(payload.detail || 'Unable to reach the Healio assistant right now.');
             }
 

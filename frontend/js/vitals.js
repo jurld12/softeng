@@ -123,23 +123,38 @@ let vitalPreferences = {};
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuthentication();
+    if (!checkAuthentication()) {
+        return;
+    }
+
     loadCurrentUser();
     loadVitalPreferences();
 });
 
 // Check if user is authenticated
 function checkAuthentication() {
-    const token = localStorage.getItem('healio_access_token');
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
+    const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     if (!token) {
         window.location.href = 'login-v2.html';
-        return;
+        return false;
     }
+
+    return true;
 }
 
 // Get auth headers
 function getAuthHeaders() {
-    const token = localStorage.getItem('healio_access_token');
+    const token = typeof getStoredAccessToken === 'function'
+        ? getStoredAccessToken()
+        : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
@@ -149,7 +164,9 @@ function getAuthHeaders() {
 // Load current user info
 async function loadCurrentUser() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = typeof getStoredAccessToken === 'function'
+            ? getStoredAccessToken()
+            : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -165,6 +182,8 @@ async function loadCurrentUser() {
             if (avatar && data.name) {
                 avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=7c3aed&color=fff`;
             }
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading user:', error);
@@ -173,7 +192,20 @@ async function loadCurrentUser() {
 
 // Logout function
 function logout() {
-    localStorage.clear();
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
+    if (typeof clearAuthState === 'function') {
+        clearAuthState();
+    } else {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+    }
+
     window.location.href = 'login-v2.html';
 }
 

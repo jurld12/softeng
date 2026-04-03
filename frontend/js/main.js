@@ -18,7 +18,10 @@ window.updateNotificationBadge = async function() {
     const badge = document.querySelector('.notification-badge');
     if (!badge) return; // No badge on this page
     
-    const token = localStorage.getItem('healio_access_token');
+    const token = typeof getStoredAccessToken === 'function'
+        ? getStoredAccessToken()
+        : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+
     if (!token) {
         badge.style.display = 'none';
         return;
@@ -114,7 +117,11 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
     const response = await fetch(getApiUrl(endpoint), options);
     
     if (!response.ok) {
-        const error = await response.json();
+        if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            throw new Error('Session expired');
+        }
+
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.detail || 'API request failed');
     }
     
@@ -134,6 +141,10 @@ function showNotification(message, type = 'info') {
  * Helper: Check if user is logged in
  */
 function isLoggedIn() {
+    if (typeof getStoredAccessToken === 'function') {
+        return !!getStoredAccessToken();
+    }
+
     return !!localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
 }
 
@@ -141,6 +152,10 @@ function isLoggedIn() {
  * Helper: Get current user role
  */
 function getUserRole() {
+    if (typeof getStoredUserRole === 'function') {
+        return getStoredUserRole();
+    }
+
     return localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
 }
 
@@ -148,11 +163,21 @@ function getUserRole() {
  * Helper: Logout user
  */
 function logout() {
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
-    window.location.href = '/index.html';
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
+    if (typeof clearAuthState === 'function') {
+        clearAuthState();
+    } else {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+    }
+
+    window.location.href = 'login-v2.html';
 }
 
 /**

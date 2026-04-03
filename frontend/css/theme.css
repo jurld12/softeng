@@ -516,7 +516,8 @@ body {
     color: var(--healio-text-muted) !important;
 }
 
-:root[data-theme="dark"] .text-dark {
+:root[data-theme="dark"] .sidebar-user .text-dark,
+:root[data-theme="dark"] .sidebar-user .fw-semibold.text-dark {
     color: var(--healio-text-primary) !important;
 }
 
@@ -552,4 +553,17 @@ body {
 
 :root[data-theme="dark"] .card.bg-light .text-muted {
     color: var(--healio-text-muted) !important;
+}
+
+.reminder-meta-badge {
+    background: var(--healio-bg-tertiary) !important;
+    color: var(--healio-text-secondary) !important;
+    border: 1px solid var(--healio-border-light) !important;
+    font-weight: var(--healio-font-medium);
+}
+
+:root[data-theme="dark"] .reminder-meta-badge {
+    background: #1a2740 !important;
+    color: #d9e2f2 !important;
+    border-color: var(--healio-border) !important;
 }

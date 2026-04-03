@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function checkDoctorAuthentication() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'doctor',
+            allowMissingRole: false
+        });
+    }
+
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     const role = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
 
@@ -29,6 +36,11 @@ function checkDoctorAuthentication() {
 }
 
 window.logout = async function() {
+    if (typeof performLogout === 'function') {
+        await performLogout();
+        return;
+    }
+
     try {
         await fetch(getApiUrl(CONFIG.ENDPOINTS.LOGOUT), {
             method: 'POST',

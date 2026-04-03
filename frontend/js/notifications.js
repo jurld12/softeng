@@ -8,12 +8,19 @@ let pendingReminderDeleteAction = null;
 
 // Get auth token
 function getAuthToken() {
-    return localStorage.getItem('healio_access_token');
+    if (typeof getStoredAccessToken === 'function') {
+        return getStoredAccessToken();
+    }
+
+    return localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+    if (!checkAuth()) {
+        return;
+    }
+
     loadCurrentUser();
     setupReminderDeleteModal();
     loadReminders();
@@ -150,17 +157,26 @@ function openDeleteReminderConfirmation(title, message, onConfirm) {
 
 // Check authentication
 function checkAuth() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
     const token = getAuthToken();
     if (!token) {
         window.location.href = 'login-v2.html';
-        return;
+        return false;
     }
+
+    return true;
 }
 
 // Load current user info
 async function loadCurrentUser() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -180,6 +196,8 @@ async function loadCurrentUser() {
             avatars.forEach(avatar => {
                 avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}&background=7c3aed&color=fff`;
             });
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading user:', error);
@@ -199,8 +217,7 @@ async function loadReminders() {
         });
         
         if (!response.ok) {
-            if (response.status === 401) {
-                window.location.href = 'login-v2.html';
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
                 return;
             }
             throw new Error('Failed to load reminders');
@@ -346,10 +363,10 @@ function createReminderCard(reminder, showHistory = true) {
                         </div>
                         <p class="text-muted small mb-3 ${isCompletedToday ? 'text-decoration-line-through' : ''}">${escapeHtml(reminder.description || '')}</p>
                         <div class="d-flex flex-wrap gap-2">
-                            <span class="badge bg-light text-dark border">
+                            <span class="badge reminder-meta-badge">
                                 <i class="bi bi-clock me-1"></i>${reminder.time}
                             </span>
-                            <span class="badge bg-light text-dark border">${reminder.frequency}</span>
+                            <span class="badge reminder-meta-badge">${reminder.frequency}</span>
                             <span class="badge bg-${color}-subtle text-${color} border border-${color}">${reminder.category}</span>
                         </div>
                     </div>
@@ -478,7 +495,20 @@ async function saveReminder() {
 
 // Logout function
 function logout() {
-    localStorage.removeItem('healio_access_token');
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
+    if (typeof clearAuthState === 'function') {
+        clearAuthState();
+    } else {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+    }
+
     window.location.href = 'login-v2.html';
 }
 

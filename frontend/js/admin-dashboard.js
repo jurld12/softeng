@@ -19,6 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function checkAdminAuthentication() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'admin',
+            allowMissingRole: false
+        });
+    }
+
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     const role = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
 
@@ -57,6 +64,11 @@ function attachAdminDashboardHandlers() {
 }
 
 window.logout = async function() {
+    if (typeof performLogout === 'function') {
+        await performLogout();
+        return;
+    }
+
     try {
         await fetch(getApiUrl(CONFIG.ENDPOINTS.LOGOUT), {
             method: 'POST',

@@ -1,6 +1,13 @@
 let achievementsPageSummary = null;
 
 function checkAuthentication() {
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     const role = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
 
@@ -9,7 +16,7 @@ function checkAuthentication() {
         return false;
     }
 
-    if (role !== 'patient') {
+    if (role && role !== 'patient') {
         alert('Access denied. This page is for patients only.');
         window.location.href = 'login-v2.html';
         return false;
@@ -19,6 +26,11 @@ function checkAuthentication() {
 }
 
 window.logout = async function() {
+    if (typeof performLogout === 'function') {
+        await performLogout();
+        return;
+    }
+
     try {
         await fetch(getApiUrl(CONFIG.ENDPOINTS.LOGOUT), {
             method: 'POST',
@@ -54,6 +66,9 @@ async function loadCurrentUser() {
         });
 
         if (!response.ok) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                return;
+            }
             return;
         }
 
@@ -83,6 +98,9 @@ async function loadGamificationSummary() {
         });
 
         if (!response.ok) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                return;
+            }
             throw new Error('Failed to load gamification summary');
         }
 
@@ -106,6 +124,9 @@ async function loadAchievements() {
         });
 
         if (!response.ok) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                return;
+            }
             throw new Error('Failed to load achievements');
         }
 

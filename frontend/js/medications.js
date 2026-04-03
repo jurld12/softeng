@@ -3,6 +3,14 @@ let medicationModal;
 let deleteModal;
 let currentMedicationId = null;
 
+function getAuthToken() {
+    if (typeof getStoredAccessToken === 'function') {
+        return getStoredAccessToken();
+    }
+
+    return localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+}
+
 function parseDateInputValue(value) {
     if (!value) {
         return null;
@@ -31,7 +39,10 @@ function updateEndDateMinimum() {
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuthentication();
+    if (!checkAuthentication()) {
+        return;
+    }
+
     initializeModals();
     loadCurrentUser();
     loadMedications();
@@ -39,11 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Check if user is authenticated
 function checkAuthentication() {
-    const token = localStorage.getItem('healio_access_token');
+    if (typeof ensureAuthenticated === 'function') {
+        return ensureAuthenticated({
+            requiredRole: 'patient',
+            allowMissingRole: true
+        });
+    }
+
+    const token = getAuthToken();
     if (!token) {
         window.location.href = 'login-v2.html';
-        return;
+        return false;
     }
+
+    return true;
 }
 
 // Initialize Bootstrap modals
@@ -60,7 +80,7 @@ function initializeModals() {
 // Load current user info
 async function loadCurrentUser() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -78,6 +98,8 @@ async function loadCurrentUser() {
             if (avatar) {
                 avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}&background=7c3aed&color=fff`;
             }
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         }
     } catch (error) {
         console.error('Error loading user:', error);
@@ -87,7 +109,11 @@ async function loadCurrentUser() {
 // Load medications from API
 async function loadMedications() {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
+        if (!token) {
+            return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/patients/me/medications`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -97,6 +123,8 @@ async function loadMedications() {
         if (response.ok) {
             const medications = await response.json();
             displayMedications(medications);
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         } else {
             showError('Failed to load medications');
         }
@@ -238,7 +266,11 @@ function openAddModal() {
 // Open modal to edit existing medication
 async function openEditModal(medicationId) {
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
+        if (!token) {
+            return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/patients/me/medications/${medicationId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -266,6 +298,8 @@ async function openEditModal(medicationId) {
             document.getElementById('activeCheckbox').checked = medication.active;
             
             medicationModal.show();
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         } else {
             showError('Failed to load medication details');
         }
@@ -313,7 +347,11 @@ async function saveMedication() {
     }
 
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
+        if (!token) {
+            return;
+        }
+
         const url = medicationId 
             ? `${API_BASE_URL}/patients/me/medications/${medicationId}`
             : `${API_BASE_URL}/patients/me/medications`;
@@ -333,6 +371,8 @@ async function saveMedication() {
             medicationModal.hide();
             loadMedications();
             showSuccess(medicationId ? 'Medication updated successfully' : 'Medication added successfully');
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         } else {
             const error = await response.json();
             showError(error.detail || 'Failed to save medication');
@@ -360,7 +400,11 @@ async function confirmDelete() {
     }
 
     try {
-        const token = localStorage.getItem('healio_access_token');
+        const token = getAuthToken();
+        if (!token) {
+            return;
+        }
+
         const url = `${API_BASE_URL}/patients/me/medications/${currentMedicationId}`;
         console.log('Deleting medication at:', url);
         
@@ -377,6 +421,8 @@ async function confirmDelete() {
             deleteModal.hide();
             loadMedications();
             showSuccess('Medication deleted successfully');
+        } else if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+            return;
         } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('Delete failed:', errorData);
@@ -453,9 +499,14 @@ function showWarning(message) {
 }
 
 function logout() {
-    localStorage.removeItem('healio_access_token');
-    localStorage.removeItem('healio_user_id');
-    localStorage.removeItem('healio_user_role');
-    localStorage.removeItem('healio_user_name');
+    if (typeof performLogout === 'function') {
+        performLogout();
+        return;
+    }
+
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
     window.location.href = 'login-v2.html';
 }

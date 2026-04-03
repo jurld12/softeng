@@ -15,21 +15,21 @@
 }
 
 .admin-status-banner--success {
-    background: #ecfdf5;
-    border-color: rgba(16, 185, 129, 0.22);
-    color: #047857;
+    background: rgba(16, 185, 129, 0.14);
+    border-color: rgba(16, 185, 129, 0.28);
+    color: var(--healio-normal);
 }
 
 .admin-status-banner--danger {
-    background: #fef2f2;
-    border-color: rgba(239, 68, 68, 0.2);
-    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.28);
+    color: var(--healio-critical);
 }
 
 .admin-status-banner--info {
-    background: #eff6ff;
-    border-color: rgba(59, 130, 246, 0.2);
-    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.28);
+    color: var(--healio-info);
 }
 
 .admin-hero {
@@ -111,17 +111,17 @@
 
 .admin-kpi-card__icon--doctor {
     background: rgba(59, 130, 246, 0.12);
-    color: #2563eb;
+    color: var(--healio-info);
 }
 
 .admin-kpi-card__icon--patient {
     background: rgba(16, 185, 129, 0.12);
-    color: #059669;
+    color: var(--healio-normal);
 }
 
 .admin-kpi-card__icon--active {
     background: rgba(245, 158, 11, 0.14);
-    color: #d97706;
+    color: var(--healio-attention);
 }
 
 .admin-kpi-card__value {
@@ -251,19 +251,19 @@
 
 .admin-badge--active {
     background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+    color: var(--healio-normal);
 }
 
 .admin-badge--inactive {
     background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
+    color: var(--healio-critical);
 }
 
 .admin-empty-state {
     padding: 24px 16px;
     border-radius: var(--healio-radius-md);
     border: 1px dashed rgba(124, 58, 237, 0.18);
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--healio-bg-primary);
     text-align: center;
     color: var(--healio-text-muted);
 }

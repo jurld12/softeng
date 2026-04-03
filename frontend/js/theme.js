@@ -4,6 +4,7 @@
     const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
     const AVAILABLE_THEMES = ['light', 'dark', 'ocean', 'sunset'];
     const DEFAULT_THEME = 'light';
+    let themeDropdownCounter = 0;
     const PATIENT_SIDEBAR_ITEMS = [
         { href: 'dashboard-v2.html', iconClass: 'bi bi-house-door-fill', label: 'Dashboard' },
         { href: 'vitals.html', iconClass: 'bi bi-heart-pulse', label: 'Vitals' },
@@ -200,7 +201,8 @@
         const trigger = document.createElement('button');
         trigger.type = 'button';
         trigger.className = 'btn-icon dropdown-toggle dashboard-theme-trigger';
-        trigger.id = 'healioThemeDropdown';
+        trigger.id = `healioThemeDropdown-${themeDropdownCounter}`;
+        themeDropdownCounter += 1;
         trigger.setAttribute('data-bs-toggle', 'dropdown');
         trigger.setAttribute('aria-expanded', 'false');
         trigger.setAttribute('title', 'Change theme');
@@ -301,6 +303,25 @@
         });
     }
 
+    function ensureGlobalHeaderThemeControl() {
+        const headerRows = document.querySelectorAll('.dashboard-header .container-fluid > .d-flex');
+        if (!headerRows.length) {
+            return;
+        }
+
+        headerRows.forEach((headerRow) => {
+            const actions = getHeaderActionsContainer(headerRow);
+            if (!actions || actions.querySelector('.dashboard-theme-trigger')) {
+                return;
+            }
+
+            const dropdown = createThemeDropdown();
+            actions.insertBefore(dropdown, actions.firstChild || null);
+        });
+
+        syncThemeOptionState();
+    }
+
     function enforcePatientNavigationConsistency() {
         const nav = document.querySelector('nav.nav-menu');
         if (!nav || !isPatientSidebar(nav)) {
@@ -322,6 +343,7 @@
         }
 
         enforcePatientNavigationConsistency();
+        ensureGlobalHeaderThemeControl();
         syncThemeOptionState();
     });
 
@@ -334,6 +356,9 @@
         setTheme: applyTheme,
         getTheme,
         listThemes,
-        refreshNavigation: enforcePatientNavigationConsistency
+        refreshNavigation: () => {
+            enforcePatientNavigationConsistency();
+            ensureGlobalHeaderThemeControl();
+        }
     };
 })();
