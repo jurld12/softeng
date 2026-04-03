@@ -84,9 +84,45 @@ function getApiUrl(endpoint) {
     return CONFIG.API_BASE_URL + endpoint;
 }
 
+function parseJwtPayload(token) {
+    if (!token || typeof token !== 'string') {
+        return null;
+    }
+
+    const parts = token.split('.');
+    if (parts.length !== 3 || !parts[1]) {
+        return null;
+    }
+
+    try {
+        const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+        const json = atob(padded);
+        return JSON.parse(json);
+    } catch (error) {
+        return null;
+    }
+}
+
+function isAccessTokenExpired(token, skewSeconds = 20) {
+    const payload = parseJwtPayload(token);
+    const exp = Number(payload?.exp);
+
+    if (!Number.isFinite(exp)) {
+        return false;
+    }
+
+    return Date.now() >= (exp * 1000) - (Math.max(0, skewSeconds) * 1000);
+}
+
 // Helper: read currently stored access token from standard key.
 function getStoredAccessToken() {
     return localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+}
+
+function isStoredAccessTokenExpired() {
+    const token = getStoredAccessToken();
+    return token ? isAccessTokenExpired(token) : true;
 }
 
 function getStoredUserRole() {
@@ -167,6 +203,12 @@ function ensureAuthenticated(options = {}) {
         return false;
     }
 
+    if (isAccessTokenExpired(token)) {
+        clearAuthState();
+        redirectToLogin();
+        return false;
+    }
+
     if (!requiredRole) {
         return true;
     }
@@ -232,11 +274,114 @@ async function performLogout(options = {}) {
 // Helper function to get auth headers
 function getAuthHeaders() {
     const token = getStoredAccessToken();
+
+    if (token && isAccessTokenExpired(token)) {
+        clearAuthState();
+    }
+
+    const refreshedToken = getStoredAccessToken();
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Authorization': refreshedToken ? `Bearer ${refreshedToken}` : ''
     };
 }
+
+function readHeaderValue(headers, headerName) {
+    if (!headers || !headerName) {
+        return '';
+    }
+
+    if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+        return headers.get(headerName) || '';
+    }
+
+    if (Array.isArray(headers)) {
+        const match = headers.find(([name]) => String(name).toLowerCase() === String(headerName).toLowerCase());
+        return match ? String(match[1] || '') : '';
+    }
+
+    if (typeof headers === 'object') {
+        const directValue = headers[headerName] || headers[headerName.toLowerCase()] || headers[headerName.toUpperCase()];
+        if (directValue) {
+            return String(directValue);
+        }
+
+        const key = Object.keys(headers).find((item) => item.toLowerCase() === String(headerName).toLowerCase());
+        return key ? String(headers[key] || '') : '';
+    }
+
+    return '';
+}
+
+function getRequestAuthorizationHeader(resource, init) {
+    const initHeader = readHeaderValue(init?.headers, 'Authorization');
+    if (initHeader) {
+        return initHeader;
+    }
+
+    if (resource && typeof resource === 'object' && 'headers' in resource) {
+        return readHeaderValue(resource.headers, 'Authorization');
+    }
+
+    return '';
+}
+
+function getRequestUrl(resource) {
+    if (typeof resource === 'string') {
+        return resource;
+    }
+
+    if (resource && typeof resource === 'object' && typeof resource.url === 'string') {
+        return resource.url;
+    }
+
+    return '';
+}
+
+function shouldSkipAuthInterceptor(resource) {
+    const rawUrl = getRequestUrl(resource);
+    if (!rawUrl) {
+        return false;
+    }
+
+    try {
+        const parsedUrl = new URL(rawUrl, window.location.origin);
+        const path = parsedUrl.pathname.toLowerCase();
+        return path.endsWith('/auth/login') || path.endsWith('/auth/register');
+    } catch (error) {
+        return false;
+    }
+}
+
+function installAuthFetchInterceptor() {
+    if (typeof window === 'undefined' || typeof window.fetch !== 'function' || window.__healioAuthFetchPatched) {
+        return;
+    }
+
+    const nativeFetch = window.fetch.bind(window);
+
+    window.fetch = async function(resource, init) {
+        const response = await nativeFetch(resource, init);
+
+        try {
+            const authHeader = getRequestAuthorizationHeader(resource, init);
+            const hasBearerToken = typeof authHeader === 'string'
+                && authHeader.trim().toLowerCase().startsWith('bearer ');
+
+            if (hasBearerToken && !shouldSkipAuthInterceptor(resource)) {
+                handleUnauthorizedResponse(response);
+            }
+        } catch (error) {
+            // If interceptor parsing fails, keep response behavior unchanged.
+        }
+
+        return response;
+    };
+
+    window.__healioAuthFetchPatched = true;
+}
+
+installAuthFetchInterceptor();
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
@@ -244,6 +389,8 @@ if (typeof module !== 'undefined' && module.exports) {
         CONFIG,
         getApiUrl,
         getAuthHeaders,
+        isAccessTokenExpired,
+        isStoredAccessTokenExpired,
         getStoredAccessToken,
         getStoredUserRole,
         getStoredUserName,
