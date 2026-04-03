@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Healio - Achievements</title>
+    <title>Healio - Chatbot</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +22,8 @@
     <!-- Shared dashboard CSS -->
     <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-4">
 
-    <!-- Achievements CSS -->
-    <link rel="stylesheet" href="css/achievements.css?v=20260403-1">
+    <!-- Chatbot page CSS -->
+    <link rel="stylesheet" href="css/chatbot-page.css?v=20260403-1">
 </head>
 <body>
     <!-- Sidebar -->
@@ -56,7 +56,7 @@
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Reports</span>
             </a>
-            <a href="achievements.html" class="nav-item-custom active">
+            <a href="achievements.html" class="nav-item-custom">
                 <i class="bi bi-trophy"></i>
                 <span>Achievements</span>
             </a>
@@ -67,6 +67,10 @@
             <a href="notifications.html" class="nav-item-custom">
                 <i class="bi bi-bell"></i>
                 <span>Notifications</span>
+            </a>
+            <a href="chatbot.html" class="nav-item-custom active">
+                <i class="bi bi-chat-dots"></i>
+                <span>Chatbot</span>
             </a>
             <a href="settings.html" class="nav-item-custom">
                 <i class="bi bi-gear"></i>
@@ -94,8 +98,8 @@
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="greeting-title mb-1">Achievements 🏆</h1>
-                        <p class="greeting-subtitle mb-0">Your health milestones and earned rewards</p>
+                        <h1 class="greeting-title mb-1">Healio Assistant</h1>
+                        <p class="greeting-subtitle mb-0">Chat with your personal health helper in a focused workspace</p>
                     </div>
                     <div class="d-flex gap-2">
                         <a href="notifications.html" class="btn-icon">
@@ -114,65 +118,49 @@
         </div>
 
         <div class="container-fluid px-4 pb-4">
-            <div class="section-card gamification-card mb-4">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-                    <div>
-                        <h2 class="section-title mb-1">Progress Snapshot</h2>
-                        <p class="section-subtitle mb-0">Overview of your current rewards progress</p>
-                    </div>
-                    <span class="gamification-progress-pill" id="achievementsBadgeProgress">0 / 0 badges</span>
-                </div>
-
-                <div class="row g-3 achievement-summary-grid">
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Total Points</div>
-                            <div class="gamification-stat__value" id="achievementsPointsValue">0</div>
-                        </article>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Level</div>
-                            <div class="gamification-stat__value" id="achievementsLevelValue">1</div>
-                        </article>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Rank</div>
-                            <div class="gamification-stat__value" id="achievementsRankValue">-</div>
-                        </article>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Current Streak</div>
-                            <div class="gamification-stat__value" id="achievementsStreakValue">0 days</div>
-                        </article>
-                    </div>
-                </div>
-            </div>
-
             <div class="row g-4">
-                <div class="col-lg-7">
-                    <div class="section-card h-100">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="section-title mb-0">Achievement History</h2>
-                            <span class="achievement-count-pill" id="achievementCountPill">0 items</span>
-                        </div>
-                        <p class="section-subtitle mb-3">Recent milestones unlocked from your activity</p>
-                        <div id="achievementsList" class="gamification-achievements-list">
-                            <div class="gamification-empty">Loading achievements...</div>
-                        </div>
-                    </div>
+                <div class="col-xl-4">
+                    <section class="section-card chatbot-side-card">
+                        <h2 class="section-title mb-2">Context to include</h2>
+                        <p class="section-subtitle mb-3">Choose which Healio data the assistant can reference in this chat.</p>
+                        <div id="chatbotPageContextToggles" class="healio-chatbot-context"></div>
+
+                        <hr class="my-4">
+
+                        <h3 class="chatbot-side-heading">Quick prompts</h3>
+                        <div id="chatbotPageStarters" class="healio-chatbot-starters"></div>
+
+                        <button type="button" id="chatbotPageClearButton" class="btn btn-outline-secondary btn-sm w-100 mt-3">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Clear session
+                        </button>
+                        <p class="chatbot-side-note mb-0 mt-3">
+                            Informational only. For diagnosis or medication changes, contact your doctor.
+                        </p>
+                    </section>
                 </div>
 
-                <div class="col-lg-5">
-                    <div class="section-card h-100">
-                        <h2 class="section-title mb-1">Unlocked Badges</h2>
-                        <p class="section-subtitle mb-3">Badges earned from consistent healthy tracking</p>
-                        <div id="achievementBadgesGrid" class="gamification-badges-grid">
-                            <div class="gamification-empty">Loading badges...</div>
+                <div class="col-xl-8">
+                    <section class="section-card chatbot-main-card">
+                        <div class="chatbot-main-header">
+                            <div>
+                                <h2 class="section-title mb-1">Ask your health questions</h2>
+                                <p class="section-subtitle mb-0">The assistant uses your selected context and recent conversation only.</p>
+                            </div>
+                            <span class="chatbot-session-pill">Session-only</span>
                         </div>
-                    </div>
+
+                        <div id="chatbotPageMessages" class="healio-chatbot-messages chatbot-page-messages"></div>
+
+                        <form class="healio-chatbot-form" id="chatbotPageForm">
+                            <textarea id="chatbotPageInput" class="form-control" rows="3" maxlength="4000" placeholder="Ask about your vitals, medications, appointments, reminders, or general wellness..."></textarea>
+                            <div class="healio-chatbot-formbar">
+                                <div class="healio-chatbot-status" id="chatbotPageStatus">Session-only chat. Nothing is saved to your account.</div>
+                                <button type="submit" class="btn btn-primary" id="chatbotPageSendButton">
+                                    <i class="bi bi-send me-2"></i>Send
+                                </button>
+                            </div>
+                        </form>
+                    </section>
                 </div>
             </div>
         </div>
@@ -182,10 +170,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Config and Main JS -->
-    <script src="js/config.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/config.js?v=20260403-1"></script>
+    <script src="js/main.js?v=20260403-1"></script>
 
-    <!-- Achievements JS -->
-    <script src="js/achievements.js?v=20260403-1"></script>
+    <!-- Chatbot Page JS -->
+    <script src="js/chatbot-page.js?v=20260403-1"></script>
 </body>
 </html>

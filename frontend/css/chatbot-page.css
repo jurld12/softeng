@@ -1,0 +1,95 @@
+.chatbot-side-card {
+    position: sticky;
+    top: 104px;
+}
+
+.chatbot-side-heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #1f2937;
+}
+
+.chatbot-side-note {
+    font-size: 0.82rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.chatbot-main-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: calc(100vh - 210px);
+}
+
+.chatbot-main-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.chatbot-session-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.01em;
+    padding: 0.38rem 0.72rem;
+}
+
+.chatbot-page-messages {
+    flex: 1;
+    min-height: 360px;
+    max-height: calc(100vh - 390px);
+    border-radius: 0.9rem;
+}
+
+#chatbotPageContextToggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+#chatbotPageStarters {
+    display: grid;
+    gap: 0.55rem;
+}
+
+#chatbotPageStarters .healio-chatbot-chip {
+    width: 100%;
+    text-align: left;
+}
+
+#chatbotPageForm textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+@media (max-width: 1199.98px) {
+    .chatbot-side-card {
+        position: static;
+        top: auto;
+    }
+
+    .chatbot-main-card {
+        min-height: auto;
+    }
+
+    .chatbot-page-messages {
+        max-height: 58vh;
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .chatbot-page-messages {
+        min-height: 280px;
+    }
+}

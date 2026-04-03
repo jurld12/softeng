@@ -153,9 +153,14 @@
                                 <h2 class="healio-chatbot-title">Health help, kept simple</h2>
                                 <p class="healio-chatbot-subtitle">I can explain your Healio info and suggest questions for your doctor.</p>
                             </div>
+                          <div class="d-flex align-items-center gap-2">
+                            <a href="chatbot.html" class="btn btn-sm btn-light" aria-label="Open full chatbot page" title="Open full chatbot page">
+                              <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
                             <button type="button" class="btn btn-sm btn-light" id="chatbotCloseButton" aria-label="Close assistant">
-                                <i class="bi bi-x-lg"></i>
+                              <i class="bi bi-x-lg"></i>
                             </button>
+                          </div>
                         </div>
                         <div class="healio-chatbot-disclaimer">
                             Informational only. No diagnosis or medication changes.
