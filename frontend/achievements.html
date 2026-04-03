@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-7">
 
     <!-- Achievements CSS -->
-    <link rel="stylesheet" href="css/achievements.css?v=20260403-2">
+    <link rel="stylesheet" href="css/achievements.css?v=20260403-4">
 </head>
 <body>
     <!-- Sidebar -->
@@ -119,69 +119,132 @@
         </div>
 
         <div class="container-fluid px-4 pb-4">
-            <div class="section-card gamification-card mb-4">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-                    <div>
-                        <h2 class="section-title mb-1">Progress Snapshot</h2>
-                        <p class="section-subtitle mb-0">Overview of your current rewards progress</p>
-                    </div>
-                    <span class="gamification-progress-pill" id="achievementsBadgeProgress">0 / 0 badges</span>
+            <div class="row g-4 achievement-board mb-4">
+                <div class="col-xl-3">
+                    <section class="section-card player-panel panel-animate">
+                        <div class="player-profile text-center">
+                            <div class="player-avatar-shell mx-auto mb-3">
+                                <img src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff" alt="Profile" class="player-avatar" id="playerPanelAvatar">
+                            </div>
+                            <h2 class="player-name" id="playerPanelName">Loading...</h2>
+                            <p class="player-joined" id="playerPanelJoined">Building your health streak</p>
+                        </div>
+
+                        <div class="player-stat-grid mt-3">
+                            <article class="player-stat-chip">
+                                <div class="player-stat-chip__label">Level</div>
+                                <div class="player-stat-chip__value" id="achievementsLevelValue">1</div>
+                            </article>
+                            <article class="player-stat-chip">
+                                <div class="player-stat-chip__label">Points</div>
+                                <div class="player-stat-chip__value" id="achievementsPointsValue">0</div>
+                            </article>
+                            <article class="player-stat-chip">
+                                <div class="player-stat-chip__label">Streak</div>
+                                <div class="player-stat-chip__value" id="achievementsStreakValue">0 days</div>
+                            </article>
+                            <article class="player-stat-chip">
+                                <div class="player-stat-chip__label">Rank</div>
+                                <div class="player-stat-chip__value" id="achievementsRankValue">-</div>
+                            </article>
+                        </div>
+
+                        <div class="player-badge-summary mt-3" id="achievementsBadgeProgress">0 / 0 badges</div>
+
+                        <div class="player-pie-stack mt-3">
+                            <article class="player-pie-card">
+                                <div class="pie-ring pie-ring-lg pie-ring-level" id="levelPieRing" style="--progress: 0%;">
+                                    <span id="levelPiePercent">0%</span>
+                                </div>
+                                <div class="player-pie-copy">
+                                    <div class="player-pie-title" id="levelTrackTitle">Level 1 to Level 2</div>
+                                    <div class="player-pie-meta" id="levelTrackMeta">100 points to next level</div>
+                                </div>
+                            </article>
+
+                            <article class="player-pie-card">
+                                <div class="pie-ring pie-ring-lg pie-ring-badge" id="badgePieRing" style="--progress: 0%;">
+                                    <span id="badgePiePercent">0%</span>
+                                </div>
+                                <div class="player-pie-copy">
+                                    <div class="player-pie-title" id="badgeTrackTitle">Next badge loading...</div>
+                                    <div class="player-pie-meta" id="badgeTrackMeta">Calculating badge progress</div>
+                                    <div class="player-pie-hint" id="badgeTrackHint">Keep logging health data to unlock more badges.</div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
                 </div>
 
-                <div class="row g-3 achievement-summary-grid">
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Total Points</div>
-                            <div class="gamification-stat__value" id="achievementsPointsValue">0</div>
-                        </article>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Level</div>
-                            <div class="gamification-stat__value" id="achievementsLevelValue">1</div>
-                        </article>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Rank</div>
-                            <div class="gamification-stat__value" id="achievementsRankValue">-</div>
-                        </article>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <article class="gamification-stat">
-                            <div class="gamification-stat__label">Current Streak</div>
-                            <div class="gamification-stat__value" id="achievementsStreakValue">0 days</div>
-                        </article>
-                    </div>
+                <div class="col-xl-5">
+                    <section class="section-card challenge-panel panel-animate delay-1">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                            <div>
+                                <h2 class="section-title mb-1">Milestone Journey</h2>
+                                <p class="section-subtitle mb-0">Progress each challenge with pie-based completion</p>
+                            </div>
+                            <span class="achievement-count-pill" id="milestoneCountPill">0 / 0 complete</span>
+                        </div>
+
+                        <div class="challenge-tabs" id="milestoneFilterGroup">
+                            <button type="button" class="challenge-tab active" data-milestone-filter="ongoing">Ongoing</button>
+                            <button type="button" class="challenge-tab" data-milestone-filter="available">Available</button>
+                            <button type="button" class="challenge-tab" data-milestone-filter="completed">Completed</button>
+                        </div>
+
+                        <div class="milestone-roadmap" id="milestoneRoadmap">
+                            <div class="gamification-empty">Preparing your milestone roadmap...</div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-xl-4">
+                    <section class="section-card badge-panel panel-animate delay-2">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+                            <h2 class="section-title mb-0">Badge Gallery</h2>
+                            <div class="badge-filter-group" id="badgeFilterGroup">
+                                <button type="button" class="badge-filter-btn active" data-badge-filter="all">All</button>
+                                <button type="button" class="badge-filter-btn" data-badge-filter="unlocked">Unlocked</button>
+                                <button type="button" class="badge-filter-btn" data-badge-filter="locked">Locked</button>
+                            </div>
+                        </div>
+                        <p class="section-subtitle mb-3" id="badgeGallerySubtitle">Every badge appears as visual icon art, including locked rewards.</p>
+                        <div id="achievementBadgesGrid" class="badge-gallery-grid">
+                            <div class="gamification-empty">Loading badges...</div>
+                        </div>
+                    </section>
                 </div>
             </div>
 
             <div class="row g-4">
-                <div class="col-lg-7">
-                    <div class="section-card h-100">
+                <div class="col-xl-8">
+                    <section class="section-card panel-animate delay-2 h-100">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h2 class="section-title mb-0">Achievement History</h2>
                             <span class="achievement-count-pill" id="achievementCountPill">0 items</span>
                         </div>
-                        <p class="section-subtitle mb-3">Recent milestones unlocked from your activity</p>
+                        <p class="section-subtitle mb-3">Recent milestones and unlocks from your activity</p>
                         <div id="achievementsList" class="gamification-achievements-list">
                             <div class="gamification-empty">Loading achievements...</div>
                         </div>
-                    </div>
+                    </section>
                 </div>
 
-                <div class="col-lg-5">
-                    <div class="section-card h-100">
-                        <h2 class="section-title mb-1">Unlocked Badges</h2>
-                        <p class="section-subtitle mb-3">Badges earned from consistent healthy tracking</p>
-                        <div id="achievementBadgesGrid" class="gamification-badges-grid">
-                            <div class="gamification-empty">Loading badges...</div>
+                <div class="col-xl-4">
+                    <section class="section-card motivation-card panel-animate delay-3 h-100">
+                        <div class="motivation-card__spark">
+                            <i class="bi bi-stars"></i>
                         </div>
-                    </div>
+                        <h2 class="section-title mb-2">Daily Motivation</h2>
+                        <p class="motivation-quote mb-3" id="motivationQuoteText">Building healthy momentum, one entry at a time.</p>
+                        <p class="motivation-note mb-0" id="motivationHintText">Your next badge target will appear here once progress data loads.</p>
+                    </section>
                 </div>
             </div>
         </div>
     </main>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="achievementToastContainer" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -191,6 +254,6 @@
     <script src="js/main.js?v=20260403-8"></script>
 
     <!-- Achievements JS -->
-    <script src="js/achievements.js?v=20260403-8"></script>
+    <script src="js/achievements.js?v=20260403-10"></script>
 </body>
 </html>

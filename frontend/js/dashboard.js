@@ -880,6 +880,104 @@ function displayMedications(medications) {
     }).join('');
 }
 
+let dashboardGamificationBadgeStates = [];
+let dashboardGamificationBiometricStats = createEmptyDashboardBiometricStats();
+
+const DASHBOARD_BADGE_ART_THEMES = {
+    first_entry: { start: '#2563eb', end: '#06b6d4', rim: '#f59e0b', symbol: '🎯' },
+    week_streak: { start: '#f97316', end: '#ef4444', rim: '#facc15', symbol: '🔥' },
+    month_streak: { start: '#0f766e', end: '#22c55e', rim: '#eab308', symbol: '🏆' },
+    consistent_tracker: { start: '#0284c7', end: '#14b8a6', rim: '#22d3ee', symbol: '📊' },
+    data_master: { start: '#4338ca', end: '#7c3aed', rim: '#f59e0b', symbol: '⭐' },
+    heart_health: { start: '#ec4899', end: '#ef4444', rim: '#fda4af', symbol: '❤️' },
+    step_crusher: { start: '#16a34a', end: '#0ea5e9', rim: '#fde047', symbol: '👟' },
+    sleep_champion: { start: '#4f46e5', end: '#6366f1', rim: '#a78bfa', symbol: '😴' },
+    wellness_warrior: { start: '#059669', end: '#14b8a6', rim: '#facc15', symbol: '💪' },
+    default: { start: '#334155', end: '#0ea5e9', rim: '#cbd5e1', symbol: '🏅' }
+};
+
+const DASHBOARD_BADGE_ART_CACHE = {};
+
+const DASHBOARD_BADGE_LIBRARY = [
+    {
+        id: 'first_entry',
+        name: 'First Steps',
+        description: 'Logged your first health data entry',
+        icon: '🎯',
+        points: 10,
+        criteria: { type: 'entries', target: 1, unit: 'entries' }
+    },
+    {
+        id: 'week_streak',
+        name: 'Week Warrior',
+        description: 'Logged data for 7 consecutive days',
+        icon: '🔥',
+        points: 50,
+        criteria: { type: 'streak', target: 7, unit: 'streak days' }
+    },
+    {
+        id: 'month_streak',
+        name: 'Monthly Champion',
+        description: 'Logged data for 30 consecutive days',
+        icon: '🏆',
+        points: 200,
+        criteria: { type: 'streak', target: 30, unit: 'streak days' }
+    },
+    {
+        id: 'consistent_tracker',
+        name: 'Consistent Tracker',
+        description: 'Logged 50 total entries',
+        icon: '📊',
+        points: 100,
+        criteria: { type: 'entries', target: 50, unit: 'entries' }
+    },
+    {
+        id: 'data_master',
+        name: 'Data Master',
+        description: 'Logged 100 total entries',
+        icon: '⭐',
+        points: 250,
+        criteria: { type: 'entries', target: 100, unit: 'entries' }
+    },
+    {
+        id: 'heart_health',
+        name: 'Heart Health Guardian',
+        description: 'Logged heart rate 20 times',
+        icon: '❤️',
+        points: 75,
+        criteria: { type: 'metric_count', metric: 'heart_rate', target: 20, unit: 'heart logs' }
+    },
+    {
+        id: 'step_crusher',
+        name: 'Step Crusher',
+        description: 'Logged 10,000+ steps in a single day',
+        icon: '👟',
+        points: 50,
+        criteria: { type: 'metric_peak', metric: 'steps', target: 10000, unit: 'steps peak' }
+    },
+    {
+        id: 'sleep_champion',
+        name: 'Sleep Champion',
+        description: 'Logged 8+ hours of sleep',
+        icon: '😴',
+        points: 30,
+        criteria: { type: 'metric_peak', metric: 'sleep_hours', target: 8, unit: 'hours peak' }
+    },
+    {
+        id: 'wellness_warrior',
+        name: 'Wellness Warrior',
+        description: 'Logged all metric types at least once',
+        icon: '💪',
+        points: 100,
+        criteria: {
+            type: 'metric_coverage',
+            metrics: ['heart_rate', 'steps', 'calories', 'blood_glucose', 'sleep_hours'],
+            target: 5,
+            unit: 'metric types'
+        }
+    }
+];
+
 // ==================== Load Gamification ====================
 async function loadGamification() {
     const endpoint = CONFIG?.ENDPOINTS?.PATIENT_GAMIFICATION || '/patients/me/gamification';
@@ -890,41 +988,52 @@ async function loadGamification() {
         });
 
         if (!response.ok) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                return null;
+            }
             throw new Error('Failed to load gamification summary');
         }
 
         const summary = await response.json();
-        renderGamification(summary);
+        dashboardGamificationBiometricStats = await loadDashboardBiometricStats();
+        dashboardGamificationBadgeStates = buildDashboardBadgeStates(summary, dashboardGamificationBiometricStats);
+
+        renderGamification(summary, {
+            isError: false,
+            badgeStates: dashboardGamificationBadgeStates
+        });
         return summary;
     } catch (error) {
         console.error('Error loading gamification:', error);
-        renderGamification(null, true);
+        dashboardGamificationBadgeStates = [];
+        dashboardGamificationBiometricStats = createEmptyDashboardBiometricStats();
+        renderGamification(null, { isError: true, badgeStates: [] });
         return null;
     }
 }
 
 // ==================== Render Gamification ====================
-function renderGamification(summary, isError = false) {
-    const points = summary?.points || {};
-    const totalPointsRaw = Number(points.total_points);
-    const levelRaw = Number(points.level);
-    const rankRaw = Number(points.rank);
-    const streakRaw = Number(summary?.current_streak);
-    const badgesEarnedRaw = Number(summary?.badges_earned);
-    const totalBadgesRaw = Number(summary?.total_badges_available);
+function renderGamification(summary, options = {}) {
+    const isError = typeof options === 'boolean' ? options : Boolean(options?.isError);
+    const badgeStates = typeof options === 'object' && Array.isArray(options.badgeStates)
+        ? options.badgeStates
+        : dashboardGamificationBadgeStates;
 
-    const totalPoints = Number.isFinite(totalPointsRaw) ? totalPointsRaw : 0;
-    const level = Number.isFinite(levelRaw) && levelRaw > 0 ? levelRaw : 1;
-    const rank = Number.isFinite(rankRaw) && rankRaw > 0 ? `#${rankRaw}` : '-';
-    const streak = Number.isFinite(streakRaw) && streakRaw >= 0 ? streakRaw : 0;
-    const badgesEarned = Number.isFinite(badgesEarnedRaw) && badgesEarnedRaw >= 0 ? badgesEarnedRaw : 0;
-    const totalBadges = Number.isFinite(totalBadgesRaw) && totalBadgesRaw >= 0 ? totalBadgesRaw : 0;
+    const points = summary?.points || {};
+    const totalPoints = toDashboardSafeNumber(points.total_points);
+    const level = toDashboardSafeNumber(points.level, 1, 1);
+    const rank = Number.isFinite(Number(points.rank)) && Number(points.rank) > 0 ? `#${Number(points.rank)}` : '-';
+    const streak = toDashboardSafeNumber(summary?.current_streak);
+    const badgesEarned = toDashboardSafeNumber(summary?.badges_earned);
+    const totalBadges = toDashboardSafeNumber(summary?.total_badges_available);
 
     setGamificationText('gamificationPointsValue', totalPoints.toLocaleString());
     setGamificationText('gamificationLevelValue', String(level));
     setGamificationText('gamificationRankValue', rank);
     setGamificationText('gamificationStreakValue', `${streak} day${streak === 1 ? '' : 's'}`);
-    setGamificationText('badgeProgressPill', `${badgesEarned} / ${totalBadges} badges`);
+    setGamificationText('badgeProgressPill', `${badgesEarned} / ${totalBadges} badges unlocked`);
+
+    renderGamificationProgressInsights(summary, badgeStates, isError);
 
     const badgesContainer = document.getElementById('recentBadgesList');
     if (!badgesContainer) {
@@ -936,27 +1045,81 @@ function renderGamification(summary, isError = false) {
         return;
     }
 
-    const badges = Array.isArray(summary?.badges) ? summary.badges.slice(0, 6) : [];
+    const badges = Array.isArray(badgeStates) ? badgeStates.slice(0, 6) : [];
     if (!badges.length) {
         badgesContainer.innerHTML = '<div class="gamification-empty">No badges yet. Keep tracking to earn your first badge.</div>';
         return;
     }
 
     badgesContainer.innerHTML = badges.map((badge) => {
-        const icon = escapeHtml(String(badge?.icon || '🏅'));
+        const progressPercent = Math.round(clampDashboardValue((badge?.progress?.ratio || 0) * 100, 0, 100));
+        const unlocked = Boolean(badge?.unlocked);
+        const unlockedClass = unlocked ? 'is-unlocked' : 'is-locked';
         const name = escapeHtml(String(badge?.name || 'Badge'));
-        const dateLabel = escapeHtml(formatBadgeDate(badge?.date_awarded));
+        const description = escapeHtml(String(badge?.progress?.detail || badge?.description || 'Track progress to unlock this badge.'));
+        const caption = unlocked
+            ? escapeHtml(formatBadgeDate(badge?.date_awarded))
+            : escapeHtml(String(badge?.progress?.label || 'In progress'));
+        const artSrc = badge?.artSrc || getDashboardBadgeArtDataUri(badge?.id, badge?.icon);
+        const statusIcon = unlocked ? 'bi-check-lg' : 'bi-lock-fill';
+        const statusClass = unlocked ? 'is-unlocked' : '';
+        const pieClass = unlocked
+            ? 'pie-ring pie-ring-xs pie-ring-success badge-gallery-pie'
+            : 'pie-ring pie-ring-xs badge-gallery-pie';
 
         return `
-            <article class="gamification-badge">
-                <div class="gamification-badge__icon">${icon}</div>
-                <div>
-                    <div class="gamification-badge__title">${name}</div>
-                    <div class="gamification-badge__date">${dateLabel}</div>
+            <article class="badge-gallery-item ${unlockedClass}" title="${description}">
+                <div class="badge-gallery-thumb">
+                    <img src="${artSrc}" alt="${name} badge icon" class="badge-gallery-art" loading="lazy">
+                    <span class="badge-gallery-lock ${statusClass}"><i class="bi ${statusIcon}"></i></span>
+                </div>
+                <div class="badge-gallery-name">${name}</div>
+                <div class="badge-gallery-caption">${caption}</div>
+                <div class="${pieClass}" style="--progress: ${progressPercent}%;">
+                    <span>${progressPercent}%</span>
                 </div>
             </article>
         `;
     }).join('');
+}
+
+function renderGamificationProgressInsights(summary, badgeStates, isError = false) {
+    if (!summary || isError) {
+        setGamificationText('gamificationLevelTrackTitle', 'Level progress unavailable');
+        setGamificationText('gamificationLevelTrackMeta', 'Unable to calculate level progress right now.');
+        setDashboardPieProgress('gamificationLevelPieRing', 0, 'gamificationLevelPiePercent');
+
+        setGamificationText('gamificationBadgeTrackTitle', 'Badge progress unavailable');
+        setGamificationText('gamificationBadgeTrackMeta', 'Unable to calculate badge progress right now.');
+        setGamificationText('gamificationBadgeTrackHint', 'Try refreshing in a moment.');
+        setDashboardPieProgress('gamificationBadgePieRing', 0, 'gamificationBadgePiePercent');
+        return;
+    }
+
+    const totalPoints = toDashboardSafeNumber(summary?.points?.total_points);
+    const level = toDashboardSafeNumber(summary?.points?.level, 1, 1);
+    const pointsIntoCurrentLevel = totalPoints % 100;
+    const pointsNeeded = pointsIntoCurrentLevel === 0 ? 100 : 100 - pointsIntoCurrentLevel;
+    const levelProgressPercent = clampDashboardValue((pointsIntoCurrentLevel / 100) * 100, 0, 100);
+
+    setGamificationText('gamificationLevelTrackTitle', `Level ${level} to Level ${level + 1}`);
+    setGamificationText('gamificationLevelTrackMeta', `${pointsNeeded} points to next level`);
+    setDashboardPieProgress('gamificationLevelPieRing', levelProgressPercent, 'gamificationLevelPiePercent');
+
+    const nextBadge = getDashboardTopLockedBadge(badgeStates);
+    if (!nextBadge) {
+        setGamificationText('gamificationBadgeTrackTitle', 'All badges unlocked');
+        setGamificationText('gamificationBadgeTrackMeta', 'Amazing consistency. You completed every badge.');
+        setGamificationText('gamificationBadgeTrackHint', 'Keep your streak alive to stay on top.');
+        setDashboardPieProgress('gamificationBadgePieRing', 100, 'gamificationBadgePiePercent');
+        return;
+    }
+
+    const badgeProgressPercent = Math.round(clampDashboardValue(nextBadge.progress.ratio * 100, 0, 100));
+    setGamificationText('gamificationBadgeTrackTitle', `${nextBadge.icon} ${nextBadge.name}`);
+    setGamificationText('gamificationBadgeTrackMeta', nextBadge.progress.label);
+    setGamificationText('gamificationBadgeTrackHint', nextBadge.progress.detail || nextBadge.description);
+    setDashboardPieProgress('gamificationBadgePieRing', badgeProgressPercent, 'gamificationBadgePiePercent');
 }
 
 // ==================== Load Dashboard Achievements ====================
@@ -976,7 +1139,10 @@ async function loadDashboardAchievements(gamificationSummary = null) {
         const list = Array.isArray(achievements) ? achievements : [];
 
         if (!list.length) {
-            const derived = deriveAchievementsFromBadges(gamificationSummary?.badges || []);
+            const derived = deriveAchievementsFromBadges(
+                dashboardGamificationBadgeStates,
+                gamificationSummary?.badges || []
+            );
             renderDashboardAchievements(derived, { derived: true });
             return derived;
         }
@@ -985,7 +1151,10 @@ async function loadDashboardAchievements(gamificationSummary = null) {
         return list;
     } catch (error) {
         console.error('Error loading achievements:', error);
-        const derived = deriveAchievementsFromBadges(gamificationSummary?.badges || []);
+        const derived = deriveAchievementsFromBadges(
+            dashboardGamificationBadgeStates,
+            gamificationSummary?.badges || []
+        );
 
         if (derived.length) {
             renderDashboardAchievements(derived, { derived: true });
@@ -997,12 +1166,25 @@ async function loadDashboardAchievements(gamificationSummary = null) {
     }
 }
 
-function deriveAchievementsFromBadges(badges) {
-    if (!Array.isArray(badges) || !badges.length) {
+function deriveAchievementsFromBadges(badgeStates = [], fallbackBadges = []) {
+    const unlockedStates = Array.isArray(badgeStates)
+        ? badgeStates.filter((badge) => badge?.unlocked).slice(0, 4)
+        : [];
+
+    if (unlockedStates.length) {
+        return unlockedStates.map((badge) => ({
+            title: badge.name,
+            description: badge.description,
+            points: badge.points,
+            date_awarded: badge.date_awarded || null
+        }));
+    }
+
+    if (!Array.isArray(fallbackBadges) || !fallbackBadges.length) {
         return [];
     }
 
-    return badges.slice(0, 4).map((badge) => ({
+    return fallbackBadges.slice(0, 4).map((badge) => ({
         title: `Badge unlocked: ${badge?.name || 'Achievement'}`,
         description: badge?.description || 'Unlocked through your health tracking progress.',
         points: null,
@@ -1038,7 +1220,10 @@ function renderDashboardAchievements(items, options = {}) {
 
         return `
             <article class="gamification-achievement">
-                <div class="gamification-achievement__title">${title}</div>
+                <div class="gamification-achievement__title-wrap">
+                    <span class="gamification-achievement__icon"><i class="bi bi-trophy-fill"></i></span>
+                    <span class="gamification-achievement__title">${title}</span>
+                </div>
                 <div class="gamification-achievement__description">${description}</div>
                 <div class="gamification-achievement__meta">
                     <span>${dateLabel}</span>
@@ -1080,6 +1265,279 @@ function formatBadgeDate(value) {
     }
 
     return `Earned ${parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+function createEmptyDashboardBiometricStats() {
+    return {
+        metricCounts: {},
+        metricPeaks: {},
+        metricTypes: new Set()
+    };
+}
+
+async function loadDashboardBiometricStats() {
+    const endpoint = '/patients/me/biometrics?limit=1000';
+    const fallback = createEmptyDashboardBiometricStats();
+
+    try {
+        const response = await fetch(getApiUrl(endpoint), {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            if (typeof handleUnauthorizedResponse === 'function' && handleUnauthorizedResponse(response)) {
+                return fallback;
+            }
+            return fallback;
+        }
+
+        const entries = await response.json();
+        if (!Array.isArray(entries)) {
+            return fallback;
+        }
+
+        const metricCounts = {};
+        const metricPeaks = {};
+        const metricTypes = new Set();
+
+        entries.forEach((entry) => {
+            const metric = String(entry?.metric || '').toLowerCase();
+            if (!metric) {
+                return;
+            }
+
+            metricTypes.add(metric);
+            metricCounts[metric] = (metricCounts[metric] || 0) + 1;
+
+            const numericValue = Number(entry?.value);
+            if (Number.isFinite(numericValue)) {
+                const previousPeak = Number.isFinite(metricPeaks[metric])
+                    ? metricPeaks[metric]
+                    : Number.NEGATIVE_INFINITY;
+                metricPeaks[metric] = Math.max(previousPeak, numericValue);
+            }
+        });
+
+        return {
+            metricCounts,
+            metricPeaks,
+            metricTypes
+        };
+    } catch (error) {
+        console.error('Error loading dashboard biometric stats:', error);
+        return fallback;
+    }
+}
+
+function buildDashboardBadgeStates(summary, biometricStats) {
+    const earnedBadges = Array.isArray(summary?.badges) ? summary.badges : [];
+    const earnedById = new Map();
+    const earnedByName = new Map();
+
+    earnedBadges.forEach((badge) => {
+        const badgeId = badge?.badge_id ? String(badge.badge_id) : '';
+        const badgeName = badge?.name ? String(badge.name).toLowerCase() : '';
+
+        if (badgeId) {
+            earnedById.set(badgeId, badge);
+        }
+        if (badgeName) {
+            earnedByName.set(badgeName, badge);
+        }
+    });
+
+    return DASHBOARD_BADGE_LIBRARY.map((badge) => {
+        const earnedBadge = earnedById.get(badge.id) || earnedByName.get(String(badge.name).toLowerCase()) || null;
+        const progress = earnedBadge
+            ? {
+                ratio: 1,
+                label: 'Completed',
+                detail: formatBadgeDate(earnedBadge?.date_awarded)
+            }
+            : getDashboardBadgeProgress(badge.criteria, summary, biometricStats);
+
+        return {
+            ...badge,
+            unlocked: Boolean(earnedBadge),
+            date_awarded: earnedBadge?.date_awarded || null,
+            artSrc: getDashboardBadgeArtDataUri(badge.id, badge.icon),
+            progress
+        };
+    }).sort((a, b) => {
+        if (a.unlocked !== b.unlocked) {
+            return Number(b.unlocked) - Number(a.unlocked);
+        }
+        return b.progress.ratio - a.progress.ratio;
+    });
+}
+
+function getDashboardBadgeProgress(criteria, summary, biometricStats) {
+    if (!criteria || typeof criteria !== 'object') {
+        return {
+            ratio: 0,
+            label: '0%',
+            detail: 'Track health data to unlock this badge.'
+        };
+    }
+
+    const target = Number(criteria.target);
+    const current = getDashboardCurrentValueByCriteria(criteria, summary, biometricStats);
+    const safeTarget = Number.isFinite(target) && target > 0 ? target : 1;
+    const ratio = clampDashboardValue(current / safeTarget, 0, 1);
+
+    return {
+        ratio,
+        label: getDashboardCriteriaProgressLabel(criteria, current, safeTarget),
+        detail: getDashboardCriteriaRemainingLabel(criteria, current, safeTarget)
+    };
+}
+
+function getDashboardCurrentValueByCriteria(criteria, summary, biometricStats) {
+    switch (criteria.type) {
+        case 'entries':
+            return toDashboardSafeNumber(summary?.total_entries);
+        case 'streak':
+            return toDashboardSafeNumber(summary?.current_streak);
+        case 'metric_count': {
+            const metric = String(criteria.metric || '').toLowerCase();
+            return toDashboardSafeNumber(biometricStats?.metricCounts?.[metric]);
+        }
+        case 'metric_peak': {
+            const metric = String(criteria.metric || '').toLowerCase();
+            return toDashboardSafeNumber(biometricStats?.metricPeaks?.[metric]);
+        }
+        case 'metric_coverage': {
+            const metrics = Array.isArray(criteria.metrics) ? criteria.metrics : [];
+            return metrics.reduce((count, metric) => {
+                const key = String(metric || '').toLowerCase();
+                const hasMetric = toDashboardSafeNumber(biometricStats?.metricCounts?.[key]) > 0;
+                return count + (hasMetric ? 1 : 0);
+            }, 0);
+        }
+        default:
+            return 0;
+    }
+}
+
+function getDashboardCriteriaProgressLabel(criteria, current, target) {
+    const formattedCurrent = formatDashboardProgressValue(criteria, current);
+    const formattedTarget = formatDashboardProgressValue(criteria, target);
+    const unit = criteria.unit ? ` ${criteria.unit}` : '';
+    return `${formattedCurrent} / ${formattedTarget}${unit}`;
+}
+
+function getDashboardCriteriaRemainingLabel(criteria, current, target) {
+    const remaining = Math.max(target - current, 0);
+    if (remaining <= 0) {
+        return 'Ready to unlock on your next sync.';
+    }
+
+    if (criteria.type === 'metric_peak' && criteria.metric === 'steps') {
+        return `${formatDashboardProgressValue(criteria, remaining)} more steps in one day needed.`;
+    }
+
+    if (criteria.type === 'metric_peak' && criteria.metric === 'sleep_hours') {
+        return `${formatDashboardProgressValue(criteria, remaining)} more sleep hours needed.`;
+    }
+
+    if (criteria.type === 'metric_count') {
+        return `${formatDashboardProgressValue(criteria, remaining)} more logs needed.`;
+    }
+
+    if (criteria.type === 'metric_coverage') {
+        return `${formatDashboardProgressValue(criteria, remaining)} more metric types to log.`;
+    }
+
+    const unit = criteria.unit || 'steps';
+    return `${formatDashboardProgressValue(criteria, remaining)} more ${unit} needed.`;
+}
+
+function getDashboardTopLockedBadge(badgeStates) {
+    if (!Array.isArray(badgeStates)) {
+        return null;
+    }
+
+    return badgeStates
+        .filter((badge) => !badge.unlocked)
+        .sort((a, b) => b.progress.ratio - a.progress.ratio)[0] || null;
+}
+
+function setDashboardPieProgress(elementId, percent, labelId = null) {
+    const safePercent = Math.round(clampDashboardValue(percent, 0, 100));
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.style.setProperty('--progress', `${safePercent}%`);
+    }
+
+    if (labelId) {
+        setGamificationText(labelId, `${safePercent}%`);
+    }
+}
+
+function toDashboardSafeNumber(value, fallback = 0, minimum = 0) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return fallback;
+    }
+    return Math.max(minimum, numeric);
+}
+
+function clampDashboardValue(value, min, max) {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+    return Math.min(Math.max(value, min), max);
+}
+
+function formatDashboardProgressValue(criteria, value) {
+    if (criteria.type === 'metric_peak' && criteria.metric === 'sleep_hours') {
+        return Number(value).toFixed(1).replace(/\.0$/, '');
+    }
+
+    return Math.round(Number(value)).toLocaleString();
+}
+
+function getDashboardBadgeArtDataUri(badgeId, fallbackSymbol = '🏅') {
+    if (DASHBOARD_BADGE_ART_CACHE[badgeId]) {
+        return DASHBOARD_BADGE_ART_CACHE[badgeId];
+    }
+
+    const theme = DASHBOARD_BADGE_ART_THEMES[badgeId] || DASHBOARD_BADGE_ART_THEMES.default;
+    const symbol = escapeDashboardSvgText(theme.symbol || fallbackSymbol || '🏅');
+
+    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" role="img" aria-label="badge icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${theme.start}" />
+      <stop offset="100%" stop-color="${theme.end}" />
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.9" />
+    </linearGradient>
+  </defs>
+  <path d="M110 8L190 50V170L110 212L30 170V50Z" fill="url(#bg)" />
+  <path d="M110 13L185 53V167L110 207L35 167V53Z" fill="none" stroke="${theme.rim}" stroke-width="6" stroke-linejoin="round" />
+  <circle cx="110" cy="110" r="65" fill="url(#core)" />
+  <circle cx="110" cy="110" r="56" fill="#ffffff" fill-opacity="0.35" />
+  <circle cx="78" cy="74" r="10" fill="#ffffff" fill-opacity="0.45" />
+  <text x="110" y="128" text-anchor="middle" font-size="66" font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif">${symbol}</text>
+</svg>
+    `.trim();
+
+    const uri = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    DASHBOARD_BADGE_ART_CACHE[badgeId] = uri;
+    return uri;
+}
+
+function escapeDashboardSvgText(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
 }
 
 function initializeDashboardThemePicker() {

@@ -121,6 +121,15 @@ let vitalHistoryData = {};
 // User's vital preferences
 let vitalPreferences = {};
 
+const RECENT_HEALTH_ENTRY_KEY = 'healio_recent_health_entry';
+const VITAL_MOTIVATION_QUOTES = [
+    'Great consistency. Your future self will thank you.',
+    'Strong habit. One healthy log at a time.',
+    'Momentum looks good on you. Keep it up.',
+    'Every entry sharpens your health progress.',
+    'You showed up today. That is what wins long term.'
+];
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     if (!checkAuthentication()) {
@@ -1029,8 +1038,21 @@ window.addVitalReading = async function(vitalId) {
             // Update main display value
             document.getElementById(`${vitalId}Value`).textContent = value;
             
-            // Show success message
-            showSuccessMessage(`${vital.name} reading added successfully!`);
+            // Keep a short-lived record so the achievements page can celebrate recent progress.
+            rememberRecentHealthEntry(vital.name, value, responseData?.badges_earned || []);
+
+            const motivation = getVitalMotivationQuote();
+            showSuccessMessage(`${vital.name} reading added successfully! ${motivation}`);
+
+            if (Array.isArray(responseData?.badges_earned) && responseData.badges_earned.length) {
+                const badgeNames = responseData.badges_earned
+                    .map((badge) => badge?.name)
+                    .filter(Boolean)
+                    .slice(0, 2);
+                if (badgeNames.length) {
+                    showSuccessMessage(`Badge unlocked: ${badgeNames.join(', ')}`);
+                }
+            }
         } else {
             const backendMessage = extractBackendErrorMessage(responseData, 'Failed to save data.');
             alert(`Failed to save data: ${backendMessage}`);
@@ -1056,6 +1078,24 @@ function showSuccessMessage(message) {
     setTimeout(() => {
         toast.remove();
     }, 3000);
+}
+
+function getVitalMotivationQuote() {
+    const index = Math.floor(Math.random() * VITAL_MOTIVATION_QUOTES.length);
+    return VITAL_MOTIVATION_QUOTES[index];
+}
+
+function rememberRecentHealthEntry(metric, value, badgesEarned = []) {
+    try {
+        localStorage.setItem(RECENT_HEALTH_ENTRY_KEY, JSON.stringify({
+            metric,
+            value,
+            badgesEarned,
+            timestamp: new Date().toISOString()
+        }));
+    } catch (error) {
+        console.warn('Could not cache recent health entry context:', error);
+    }
 }
 
 // Update card appearance based on enabled state

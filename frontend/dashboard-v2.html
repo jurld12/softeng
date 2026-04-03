@@ -21,7 +21,7 @@
     <script src="js/theme.js?v=20260403-8"></script>
     
     <!-- Custom Dashboard CSS -->
-    <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-7">
+    <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-8">
 </head>
 <body>
     <!-- Sidebar -->
@@ -232,46 +232,78 @@
             <!-- Gamification Section -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="section-card gamification-card">
+                    <div class="section-card gamification-card panel-animate">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                             <div>
                                 <h2 class="section-title mb-1">Gamification</h2>
                                 <p class="section-subtitle mb-0">Track your progress and celebrate your consistency</p>
                             </div>
-                            <span class="gamification-progress-pill" id="badgeProgressPill">0 / 0 badges</span>
+                            <span class="gamification-progress-pill" id="badgeProgressPill">0 / 0 badges unlocked</span>
                         </div>
 
                         <div class="row g-3 mb-4">
-                            <div class="col-6 col-lg-3">
-                                <article class="gamification-stat">
-                                    <div class="gamification-stat__label">Total Points</div>
-                                    <div class="gamification-stat__value" id="gamificationPointsValue">0</div>
-                                </article>
+                            <div class="col-lg-6">
+                                <div class="row g-3 gamification-stat-grid h-100">
+                                    <div class="col-6">
+                                        <article class="gamification-stat">
+                                            <div class="gamification-stat__label">Total Points</div>
+                                            <div class="gamification-stat__value" id="gamificationPointsValue">0</div>
+                                        </article>
+                                    </div>
+                                    <div class="col-6">
+                                        <article class="gamification-stat">
+                                            <div class="gamification-stat__label">Level</div>
+                                            <div class="gamification-stat__value" id="gamificationLevelValue">1</div>
+                                        </article>
+                                    </div>
+                                    <div class="col-6">
+                                        <article class="gamification-stat">
+                                            <div class="gamification-stat__label">Rank</div>
+                                            <div class="gamification-stat__value" id="gamificationRankValue">-</div>
+                                        </article>
+                                    </div>
+                                    <div class="col-6">
+                                        <article class="gamification-stat">
+                                            <div class="gamification-stat__label">Current Streak</div>
+                                            <div class="gamification-stat__value" id="gamificationStreakValue">0 days</div>
+                                        </article>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-6 col-lg-3">
-                                <article class="gamification-stat">
-                                    <div class="gamification-stat__label">Level</div>
-                                    <div class="gamification-stat__value" id="gamificationLevelValue">1</div>
-                                </article>
-                            </div>
-                            <div class="col-6 col-lg-3">
-                                <article class="gamification-stat">
-                                    <div class="gamification-stat__label">Rank</div>
-                                    <div class="gamification-stat__value" id="gamificationRankValue">-</div>
-                                </article>
-                            </div>
-                            <div class="col-6 col-lg-3">
-                                <article class="gamification-stat">
-                                    <div class="gamification-stat__label">Current Streak</div>
-                                    <div class="gamification-stat__value" id="gamificationStreakValue">0 days</div>
-                                </article>
+
+                            <div class="col-lg-6">
+                                <div class="dashboard-gamification-pie-stack h-100">
+                                    <article class="dashboard-gamification-pie-card">
+                                        <div class="pie-ring pie-ring-lg pie-ring-level" id="gamificationLevelPieRing" style="--progress: 0%;">
+                                            <span id="gamificationLevelPiePercent">0%</span>
+                                        </div>
+                                        <div class="dashboard-gamification-pie-copy">
+                                            <div class="dashboard-gamification-pie-title" id="gamificationLevelTrackTitle">Level 1 to Level 2</div>
+                                            <div class="dashboard-gamification-pie-meta" id="gamificationLevelTrackMeta">100 points to next level</div>
+                                        </div>
+                                    </article>
+
+                                    <article class="dashboard-gamification-pie-card">
+                                        <div class="pie-ring pie-ring-lg pie-ring-badge" id="gamificationBadgePieRing" style="--progress: 0%;">
+                                            <span id="gamificationBadgePiePercent">0%</span>
+                                        </div>
+                                        <div class="dashboard-gamification-pie-copy">
+                                            <div class="dashboard-gamification-pie-title" id="gamificationBadgeTrackTitle">Next badge loading...</div>
+                                            <div class="dashboard-gamification-pie-meta" id="gamificationBadgeTrackMeta">Calculating badge progress</div>
+                                            <div class="dashboard-gamification-pie-hint" id="gamificationBadgeTrackHint">Keep tracking vitals to unlock more badges.</div>
+                                        </div>
+                                    </article>
+                                </div>
                             </div>
                         </div>
 
                         <div>
-                            <h3 class="h6 fw-semibold mb-3">Recent Badges</h3>
-                            <div id="recentBadgesList" class="gamification-badges-grid">
-                                <div class="text-muted small">Loading badges...</div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <h3 class="h6 fw-semibold mb-0">Badge Gallery</h3>
+                                <a href="achievements.html" class="text-healio-primary text-decoration-none fw-semibold small">View All</a>
+                            </div>
+                            <div id="recentBadgesList" class="gamification-badge-gallery">
+                                <div class="gamification-empty">Loading badges...</div>
                             </div>
                         </div>
 
@@ -658,7 +690,7 @@
     <script src="js/main.js?v=20260403-8"></script>
     
     <!-- Dashboard JS -->
-    <script src="js/dashboard.js?v=20260403-8"></script>
+    <script src="js/dashboard.js?v=20260403-9"></script>
     
     <!-- Vitals Toggle Script -->
     <script>

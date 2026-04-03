@@ -1,7 +1,51 @@
-/* Achievements page specific styling */
+/* Achievements page visual refresh inspired by game profile layouts */
 
-.achievement-summary-grid .gamification-stat {
-    min-height: 110px;
+.achievement-board .section-card {
+    height: 100%;
+}
+
+.panel-animate {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+    animation: panelIn 0.65s cubic-bezier(0.21, 0.98, 0.38, 0.99) forwards;
+}
+
+.panel-animate.delay-1 {
+    animation-delay: 0.09s;
+}
+
+.panel-animate.delay-2 {
+    animation-delay: 0.16s;
+}
+
+.panel-animate.delay-3 {
+    animation-delay: 0.22s;
+}
+
+@keyframes panelIn {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes iconFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes sheenMove {
+    from {
+        transform: translateX(-120%);
+    }
+    to {
+        transform: translateX(220%);
+    }
 }
 
 .achievement-count-pill {
@@ -11,14 +55,590 @@
     font-size: 12px;
     color: var(--healio-text-secondary);
     background: var(--healio-bg-primary);
+    font-weight: var(--healio-font-semibold);
 }
 
-#achievementBadgesGrid .gamification-badge {
-    min-height: 78px;
+/* Left profile panel */
+.player-panel {
+    background:
+        radial-gradient(circle at 12% 12%, rgba(var(--healio-primary-rgb), 0.16), transparent 34%),
+        radial-gradient(circle at 86% 8%, rgba(16, 185, 129, 0.09), transparent 36%),
+        var(--healio-bg-primary);
+}
+
+.player-avatar-shell {
+    width: 102px;
+    height: 102px;
+    border-radius: 50%;
+    padding: 4px;
+    background: linear-gradient(140deg, var(--healio-primary), #06b6d4);
+    box-shadow: 0 10px 20px rgba(var(--healio-primary-rgb), 0.2);
+}
+
+.player-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--healio-bg-primary);
+}
+
+.player-name {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+}
+
+.player-joined {
+    margin: 6px 0 0;
+    color: var(--healio-text-muted);
+    font-size: 13px;
+}
+
+.player-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.player-stat-chip {
+    border: 1px solid var(--healio-border-light);
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--healio-bg-primary) 0%, var(--healio-bg-tertiary) 100%);
+    padding: 10px;
+}
+
+.player-stat-chip__label {
+    font-size: 11px;
+    color: var(--healio-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.45px;
+}
+
+.player-stat-chip__value {
+    margin-top: 4px;
+    font-size: 1.12rem;
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+    line-height: 1.15;
+}
+
+.player-badge-summary {
+    border-radius: 999px;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: var(--healio-font-semibold);
+    color: var(--healio-primary);
+    background: rgba(var(--healio-primary-rgb), 0.12);
+}
+
+.player-pie-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.player-pie-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--healio-border-light);
+    background: var(--healio-bg-primary);
+    padding: 10px;
+}
+
+.player-pie-copy {
+    min-width: 0;
+}
+
+.player-pie-title {
+    font-size: 14px;
+    color: var(--healio-text-primary);
+    font-weight: var(--healio-font-semibold);
+    line-height: 1.3;
+}
+
+.player-pie-meta {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--healio-text-muted);
+}
+
+.player-pie-hint {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--healio-text-muted);
+    line-height: 1.4;
+}
+
+/* Pie progress */
+.pie-ring {
+    --progress: 0%;
+    --pie-color: var(--healio-primary);
+    --pie-track: rgba(var(--healio-primary-rgb), 0.16);
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    background: conic-gradient(from -90deg, var(--pie-color) 0 var(--progress), var(--pie-track) var(--progress) 100%);
+    transition: background 0.45s ease;
+    box-shadow: inset 0 0 0 1px rgba(var(--healio-primary-rgb), 0.12);
+}
+
+.pie-ring::before {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    border-radius: 50%;
+    background: var(--healio-bg-primary);
+    box-shadow: inset 0 0 0 1px var(--healio-border-light);
+}
+
+.pie-ring > span {
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    font-weight: var(--healio-font-bold);
+    color: var(--healio-text-primary);
+}
+
+.pie-ring-lg {
+    width: 84px;
+    height: 84px;
+}
+
+.pie-ring-sm {
+    width: 60px;
+    height: 60px;
+}
+
+.pie-ring-sm::before {
+    inset: 7px;
+}
+
+.pie-ring-sm > span {
+    font-size: 11px;
+}
+
+.pie-ring-xs {
+    width: 44px;
+    height: 44px;
+}
+
+.pie-ring-xs::before {
+    inset: 5px;
+}
+
+.pie-ring-xs > span {
+    font-size: 9px;
+}
+
+.pie-ring-level {
+    --pie-color: #2563eb;
+}
+
+.pie-ring-badge {
+    --pie-color: #f59e0b;
+}
+
+.pie-ring-success {
+    --pie-color: var(--healio-success);
+    --pie-track: rgba(16, 185, 129, 0.2);
+}
+
+/* Middle milestone panel */
+.challenge-panel {
+    background:
+        radial-gradient(circle at 95% 0%, rgba(var(--healio-primary-rgb), 0.09), transparent 35%),
+        var(--healio-bg-primary);
+}
+
+.challenge-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 14px;
+}
+
+.challenge-tab {
+    border: 1px solid var(--healio-border-light);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--healio-bg-primary);
+    color: var(--healio-text-secondary);
+    font-size: 12px;
+    font-weight: var(--healio-font-semibold);
+    transition: all var(--healio-transition-base);
+}
+
+.challenge-tab:hover {
+    border-color: rgba(var(--healio-primary-rgb), 0.35);
+    color: var(--healio-primary);
+}
+
+.challenge-tab.active {
+    color: #ffffff;
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--healio-primary), var(--healio-secondary));
+    box-shadow: var(--healio-shadow-sm);
+}
+
+.milestone-roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 590px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.milestone-item {
+    border: 1px solid var(--healio-border-light);
+    border-radius: 16px;
+    background: var(--healio-bg-primary);
+    padding: 11px;
+    display: grid;
+    grid-template-columns: 42px 1fr 62px;
+    gap: 12px;
+    align-items: center;
+    transition: transform var(--healio-transition-base), box-shadow var(--healio-transition-base), border-color var(--healio-transition-base);
+}
+
+.milestone-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--healio-shadow-sm);
+}
+
+.milestone-item.is-active {
+    border-color: rgba(var(--healio-primary-rgb), 0.45);
+}
+
+.milestone-item.is-unlocked {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: linear-gradient(180deg, var(--healio-bg-primary) 0%, rgba(16, 185, 129, 0.06) 100%);
+}
+
+.milestone-item__badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(var(--healio-primary-rgb), 0.14);
+    color: var(--healio-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.milestone-item.is-unlocked .milestone-item__badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--healio-success);
+}
+
+.milestone-item__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.milestone-item__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: var(--healio-font-semibold);
+    color: var(--healio-text-primary);
+}
+
+.milestone-item__status {
+    font-size: 10px;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-weight: var(--healio-font-semibold);
+    background: rgba(var(--healio-primary-rgb), 0.12);
+    color: var(--healio-primary);
+    white-space: nowrap;
+}
+
+.milestone-item.is-unlocked .milestone-item__status {
+    background: rgba(16, 185, 129, 0.14);
+    color: var(--healio-success);
+}
+
+.milestone-item__subtitle {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: var(--healio-text-muted);
+}
+
+.milestone-item__meta {
+    margin-top: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--healio-text-muted);
+    font-size: 12px;
+}
+
+/* Right badge panel */
+.badge-panel {
+    background:
+        radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.12), transparent 35%),
+        var(--healio-bg-primary);
+}
+
+.badge-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-filter-btn {
+    border: 1px solid var(--healio-border-light);
+    border-radius: 999px;
+    background: var(--healio-bg-primary);
+    color: var(--healio-text-secondary);
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: var(--healio-font-semibold);
+    transition: all var(--healio-transition-base);
+}
+
+.badge-filter-btn:hover {
+    border-color: rgba(var(--healio-primary-rgb), 0.35);
+    color: var(--healio-primary);
+}
+
+.badge-filter-btn.active {
+    background: rgba(var(--healio-primary-rgb), 0.16);
+    border-color: rgba(var(--healio-primary-rgb), 0.4);
+    color: var(--healio-primary);
+}
+
+#achievementBadgesGrid.badge-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 12px;
+}
+
+.badge-gallery-item {
+    position: relative;
+    border: 1px solid var(--healio-border-light);
+    border-radius: 14px;
+    background: var(--healio-bg-primary);
+    padding: 8px;
+    text-align: center;
+    overflow: hidden;
+    transition: transform var(--healio-transition-base), box-shadow var(--healio-transition-base), border-color var(--healio-transition-base);
+}
+
+.badge-gallery-item::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(125deg, transparent 25%, rgba(255, 255, 255, 0.4) 40%, transparent 55%);
+    pointer-events: none;
+    transform: translateX(-120%);
+}
+
+.badge-gallery-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 18px rgba(var(--healio-primary-rgb), 0.16);
+}
+
+.badge-gallery-item:hover::after {
+    animation: sheenMove 1.1s ease;
+}
+
+.badge-gallery-item.is-unlocked {
+    border-color: rgba(16, 185, 129, 0.42);
+    background:
+        radial-gradient(circle at 90% 8%, rgba(16, 185, 129, 0.14), transparent 35%),
+        var(--healio-bg-primary);
+}
+
+.badge-gallery-item.is-locked {
+    border-style: dashed;
+}
+
+.badge-gallery-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.badge-gallery-art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: iconFloat 3.6s ease-in-out infinite;
+}
+
+.badge-gallery-item.is-locked .badge-gallery-art {
+    filter: grayscale(0.92) saturate(0.18);
+    opacity: 0.6;
+}
+
+.badge-gallery-lock {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.72);
+    color: #f8fafc;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.badge-gallery-lock.is-unlocked {
+    background: rgba(16, 185, 129, 0.9);
+    color: #ffffff;
+}
+
+.badge-gallery-name {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.25;
+    color: var(--healio-text-primary);
+    font-weight: var(--healio-font-semibold);
+    min-height: 28px;
+}
+
+.badge-gallery-caption {
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--healio-text-muted);
+    min-height: 24px;
+    line-height: 1.25;
+}
+
+.badge-gallery-pie {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
+.badge-gallery-pie > span {
+    font-size: 8px;
+}
+
+/* Achievement history */
+.gamification-achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 #achievementsList .gamification-achievement {
-    background: linear-gradient(180deg, #ffffff 0%, #fbfaff 100%);
+    border: 1px solid var(--healio-border-light);
+    border-left: 4px solid rgba(var(--healio-primary-rgb), 0.52);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #f9f8ff 100%);
+    padding: 12px 14px;
+}
+
+.achievement-history-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.achievement-history-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--healio-primary-rgb), 0.12);
+    color: var(--healio-primary);
+    font-size: 13px;
+}
+
+/* Motivation */
+.motivation-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 14% 14%, rgba(16, 185, 129, 0.12), transparent 35%),
+        radial-gradient(circle at 85% 10%, rgba(var(--healio-primary-rgb), 0.14), transparent 40%),
+        var(--healio-bg-primary);
+}
+
+.motivation-card::after {
+    content: "";
+    position: absolute;
+    right: -28px;
+    bottom: -44px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, rgba(var(--healio-primary-rgb), 0.24), rgba(16, 185, 129, 0.08));
+    pointer-events: none;
+}
+
+.motivation-card__spark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, rgba(var(--healio-primary-rgb), 0.2), rgba(var(--healio-primary-rgb), 0.08));
+    color: var(--healio-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.motivation-quote {
+    font-size: 1.04rem;
+    line-height: 1.52;
+    color: var(--healio-text-primary);
+    font-weight: var(--healio-font-semibold);
+    max-width: 92%;
+    position: relative;
+    z-index: 1;
+}
+
+.motivation-note {
+    color: var(--healio-text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+    max-width: 92%;
+    position: relative;
+    z-index: 1;
+}
+
+.achievements-toast {
+    border: 1px solid var(--healio-border-light);
+    border-radius: 12px;
+    background: var(--healio-bg-primary);
+    color: var(--healio-text-primary);
+    box-shadow: var(--healio-shadow-lg);
+}
+
+.achievements-toast .toast-header {
+    background: rgba(var(--healio-primary-rgb), 0.08);
+    color: var(--healio-text-primary);
+    border-bottom: 1px solid var(--healio-border-light);
+}
+
+.gamification-empty {
+    color: var(--healio-text-muted);
+    font-size: 13px;
 }
 
 :root[data-theme="dark"] #achievementsList .gamification-achievement {
@@ -39,8 +659,88 @@
     color: #a78bfa;
 }
 
-@media (max-width: 992px) {
-    .achievement-summary-grid .gamification-stat {
-        min-height: 96px;
+:root[data-theme="dark"] .player-panel,
+:root[data-theme="dark"] .challenge-panel,
+:root[data-theme="dark"] .badge-panel,
+:root[data-theme="dark"] .motivation-card,
+:root[data-theme="dark"] .player-pie-card,
+:root[data-theme="dark"] .player-stat-chip,
+:root[data-theme="dark"] .milestone-item,
+:root[data-theme="dark"] .badge-gallery-item,
+:root[data-theme="dark"] .achievements-toast,
+:root[data-theme="dark"] .challenge-tab,
+:root[data-theme="dark"] .badge-filter-btn,
+:root[data-theme="dark"] .pie-ring::before {
+    border-color: var(--healio-border);
+}
+
+:root[data-theme="dark"] .badge-filter-btn.active {
+    color: #d7d0ff;
+}
+
+:root[data-theme="dark"] .badge-gallery-lock {
+    background: rgba(15, 23, 42, 0.85);
+}
+
+@media (max-width: 1399px) {
+    .milestone-roadmap {
+        max-height: 540px;
+    }
+}
+
+@media (max-width: 1199px) {
+    .milestone-roadmap {
+        max-height: none;
+    }
+
+    #achievementBadgesGrid.badge-gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .player-stat-chip__value {
+        font-size: 1rem;
+    }
+
+    .pie-ring-lg {
+        width: 74px;
+        height: 74px;
+    }
+
+    .player-pie-card {
+        padding: 9px;
+        gap: 10px;
+    }
+
+    .milestone-item {
+        grid-template-columns: 40px 1fr 56px;
+        gap: 10px;
+    }
+
+    #achievementBadgesGrid.badge-gallery-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .badge-filter-group,
+    .challenge-tabs {
+        width: 100%;
+    }
+
+    .badge-filter-btn,
+    .challenge-tab {
+        flex: 1;
+        text-align: center;
+    }
+
+    #achievementBadgesGrid.badge-gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .motivation-quote,
+    .motivation-note {
+        max-width: 100%;
     }
 }
