@@ -572,7 +572,11 @@ window.saveVitalData = async function() {
     showSuccessMessage(`${window.currentVitalData.name} updated successfully!`);
     
     // Reload dashboard data
-    setTimeout(() => loadDashboardData(), 1000);
+    setTimeout(async () => {
+        await loadDashboardData();
+        const gamificationSummary = await loadGamification();
+        await loadDashboardAchievements(gamificationSummary);
+    }, 1000);
 };
 
 // ==================== Save Biometric Entry ====================
@@ -791,6 +795,208 @@ function displayMedications(medications) {
     }).join('');
 }
 
+// ==================== Load Gamification ====================
+async function loadGamification() {
+    const endpoint = CONFIG?.ENDPOINTS?.PATIENT_GAMIFICATION || '/patients/me/gamification';
+
+    try {
+        const response = await fetch(getApiUrl(endpoint), {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load gamification summary');
+        }
+
+        const summary = await response.json();
+        renderGamification(summary);
+        return summary;
+    } catch (error) {
+        console.error('Error loading gamification:', error);
+        renderGamification(null, true);
+        return null;
+    }
+}
+
+// ==================== Render Gamification ====================
+function renderGamification(summary, isError = false) {
+    const points = summary?.points || {};
+    const totalPointsRaw = Number(points.total_points);
+    const levelRaw = Number(points.level);
+    const rankRaw = Number(points.rank);
+    const streakRaw = Number(summary?.current_streak);
+    const badgesEarnedRaw = Number(summary?.badges_earned);
+    const totalBadgesRaw = Number(summary?.total_badges_available);
+
+    const totalPoints = Number.isFinite(totalPointsRaw) ? totalPointsRaw : 0;
+    const level = Number.isFinite(levelRaw) && levelRaw > 0 ? levelRaw : 1;
+    const rank = Number.isFinite(rankRaw) && rankRaw > 0 ? `#${rankRaw}` : '-';
+    const streak = Number.isFinite(streakRaw) && streakRaw >= 0 ? streakRaw : 0;
+    const badgesEarned = Number.isFinite(badgesEarnedRaw) && badgesEarnedRaw >= 0 ? badgesEarnedRaw : 0;
+    const totalBadges = Number.isFinite(totalBadgesRaw) && totalBadgesRaw >= 0 ? totalBadgesRaw : 0;
+
+    setGamificationText('gamificationPointsValue', totalPoints.toLocaleString());
+    setGamificationText('gamificationLevelValue', String(level));
+    setGamificationText('gamificationRankValue', rank);
+    setGamificationText('gamificationStreakValue', `${streak} day${streak === 1 ? '' : 's'}`);
+    setGamificationText('badgeProgressPill', `${badgesEarned} / ${totalBadges} badges`);
+
+    const badgesContainer = document.getElementById('recentBadgesList');
+    if (!badgesContainer) {
+        return;
+    }
+
+    if (isError) {
+        badgesContainer.innerHTML = '<div class="gamification-empty">Unable to load badges right now.</div>';
+        return;
+    }
+
+    const badges = Array.isArray(summary?.badges) ? summary.badges.slice(0, 6) : [];
+    if (!badges.length) {
+        badgesContainer.innerHTML = '<div class="gamification-empty">No badges yet. Keep tracking to earn your first badge.</div>';
+        return;
+    }
+
+    badgesContainer.innerHTML = badges.map((badge) => {
+        const icon = escapeHtml(String(badge?.icon || '🏅'));
+        const name = escapeHtml(String(badge?.name || 'Badge'));
+        const dateLabel = escapeHtml(formatBadgeDate(badge?.date_awarded));
+
+        return `
+            <article class="gamification-badge">
+                <div class="gamification-badge__icon">${icon}</div>
+                <div>
+                    <div class="gamification-badge__title">${name}</div>
+                    <div class="gamification-badge__date">${dateLabel}</div>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+// ==================== Load Dashboard Achievements ====================
+async function loadDashboardAchievements(gamificationSummary = null) {
+    const endpoint = CONFIG?.ENDPOINTS?.PATIENT_ACHIEVEMENTS || '/patients/me/achievements';
+
+    try {
+        const response = await fetch(getApiUrl(endpoint), {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load achievements');
+        }
+
+        const achievements = await response.json();
+        const list = Array.isArray(achievements) ? achievements : [];
+
+        if (!list.length) {
+            const derived = deriveAchievementsFromBadges(gamificationSummary?.badges || []);
+            renderDashboardAchievements(derived, { derived: true });
+            return derived;
+        }
+
+        renderDashboardAchievements(list);
+        return list;
+    } catch (error) {
+        console.error('Error loading achievements:', error);
+        const derived = deriveAchievementsFromBadges(gamificationSummary?.badges || []);
+
+        if (derived.length) {
+            renderDashboardAchievements(derived, { derived: true });
+            return derived;
+        }
+
+        renderDashboardAchievements([], { error: true });
+        return [];
+    }
+}
+
+function deriveAchievementsFromBadges(badges) {
+    if (!Array.isArray(badges) || !badges.length) {
+        return [];
+    }
+
+    return badges.slice(0, 4).map((badge) => ({
+        title: `Badge unlocked: ${badge?.name || 'Achievement'}`,
+        description: badge?.description || 'Unlocked through your health tracking progress.',
+        points: null,
+        date_awarded: badge?.date_awarded || null
+    }));
+}
+
+function renderDashboardAchievements(items, options = {}) {
+    const container = document.getElementById('dashboardAchievementsList');
+    if (!container) {
+        return;
+    }
+
+    const { error = false, derived = false } = options;
+    if (error) {
+        container.innerHTML = '<div class="gamification-empty">Unable to load achievements right now.</div>';
+        return;
+    }
+
+    if (!Array.isArray(items) || !items.length) {
+        container.innerHTML = '<div class="gamification-empty">No achievements yet. Keep logging your health data to unlock milestones.</div>';
+        return;
+    }
+
+    container.innerHTML = items.slice(0, 3).map((item) => {
+        const title = escapeHtml(String(item?.title || item?.name || 'Achievement'));
+        const description = escapeHtml(String(item?.description || 'Milestone unlocked.'));
+        const dateLabel = escapeHtml(formatAchievementDate(item?.date_awarded));
+        const pointsRaw = Number(item?.points);
+        const pointsLabel = Number.isFinite(pointsRaw)
+            ? `+${Math.round(pointsRaw)} pts`
+            : (derived ? 'From badge progress' : 'Achievement');
+
+        return `
+            <article class="gamification-achievement">
+                <div class="gamification-achievement__title">${title}</div>
+                <div class="gamification-achievement__description">${description}</div>
+                <div class="gamification-achievement__meta">
+                    <span>${dateLabel}</span>
+                    <span class="gamification-achievement__points">${escapeHtml(pointsLabel)}</span>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+function formatAchievementDate(value) {
+    if (!value) {
+        return 'Recently unlocked';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return 'Recently unlocked';
+    }
+
+    return `Unlocked ${parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+function setGamificationText(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+function formatBadgeDate(value) {
+    if (!value) {
+        return 'Recently earned';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return 'Recently earned';
+    }
+
+    return `Earned ${parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
 // ==================== Utility: Escape HTML ====================
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -817,6 +1023,10 @@ async function initializeDashboard() {
         
         // Load dashboard data
         await loadDashboardData();
+
+        // Load gamification summary and achievements
+        const gamificationSummary = await loadGamification();
+        await loadDashboardAchievements(gamificationSummary);
         
         // Load medications (don't let it fail the whole dashboard)
         try {

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healio - Achievements</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="css/theme.css">
+
+    <!-- Shared dashboard CSS -->
+    <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-4">
+
+    <!-- Achievements CSS -->
+    <link rel="stylesheet" href="css/achievements.css?v=20260403-1">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-icon bg-gradient-primary">
+                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 2L16 30M2 16L30 16" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Healio</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard-v2.html" class="nav-item-custom">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="vitals.html" class="nav-item-custom">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Vitals</span>
+            </a>
+            <a href="appointments.html" class="nav-item-custom">
+                <i class="bi bi-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="reports.html" class="nav-item-custom">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Reports</span>
+            </a>
+            <a href="achievements.html" class="nav-item-custom active">
+                <i class="bi bi-trophy"></i>
+                <span>Achievements</span>
+            </a>
+            <a href="medications.html" class="nav-item-custom">
+                <i class="bi bi-capsule"></i>
+                <span>Medications</span>
+            </a>
+            <a href="notifications.html" class="nav-item-custom">
+                <i class="bi bi-bell"></i>
+                <span>Notifications</span>
+            </a>
+            <a href="settings.html" class="nav-item-custom">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="d-flex align-items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff" alt="Profile" class="rounded-circle" width="40" height="40" id="sidebarUserAvatar">
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark small" id="sidebarUserName">Loading...</div>
+                    <div class="text-muted" style="font-size: 12px;" id="sidebarUserEmail">Loading...</div>
+                </div>
+                <button class="btn btn-sm btn-light" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="greeting-title mb-1">Achievements 🏆</h1>
+                        <p class="greeting-subtitle mb-0">Your health milestones and earned rewards</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="notifications.html" class="btn-icon">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge" style="display: none;"></span>
+                        </a>
+                        <a href="settings.html" class="btn-icon">
+                            <i class="bi bi-gear"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid px-4 pb-4">
+            <div class="section-card gamification-card mb-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <h2 class="section-title mb-1">Progress Snapshot</h2>
+                        <p class="section-subtitle mb-0">Overview of your current rewards progress</p>
+                    </div>
+                    <span class="gamification-progress-pill" id="achievementsBadgeProgress">0 / 0 badges</span>
+                </div>
+
+                <div class="row g-3 achievement-summary-grid">
+                    <div class="col-6 col-lg-3">
+                        <article class="gamification-stat">
+                            <div class="gamification-stat__label">Total Points</div>
+                            <div class="gamification-stat__value" id="achievementsPointsValue">0</div>
+                        </article>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <article class="gamification-stat">
+                            <div class="gamification-stat__label">Level</div>
+                            <div class="gamification-stat__value" id="achievementsLevelValue">1</div>
+                        </article>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <article class="gamification-stat">
+                            <div class="gamification-stat__label">Rank</div>
+                            <div class="gamification-stat__value" id="achievementsRankValue">-</div>
+                        </article>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <article class="gamification-stat">
+                            <div class="gamification-stat__label">Current Streak</div>
+                            <div class="gamification-stat__value" id="achievementsStreakValue">0 days</div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="section-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="section-title mb-0">Achievement History</h2>
+                            <span class="achievement-count-pill" id="achievementCountPill">0 items</span>
+                        </div>
+                        <p class="section-subtitle mb-3">Recent milestones unlocked from your activity</p>
+                        <div id="achievementsList" class="gamification-achievements-list">
+                            <div class="gamification-empty">Loading achievements...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="section-card h-100">
+                        <h2 class="section-title mb-1">Unlocked Badges</h2>
+                        <p class="section-subtitle mb-3">Badges earned from consistent healthy tracking</p>
+                        <div id="achievementBadgesGrid" class="gamification-badges-grid">
+                            <div class="gamification-empty">Loading badges...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Config and Main JS -->
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- Achievements JS -->
+    <script src="js/achievements.js?v=20260403-1"></script>
+</body>
+</html>

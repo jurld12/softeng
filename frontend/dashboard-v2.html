@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="css/theme.css">
     
     <!-- Custom Dashboard CSS -->
-    <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-3">
+    <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-4">
 </head>
 <body>
     <!-- Sidebar -->
@@ -52,6 +52,10 @@
             <a href="reports.html" class="nav-item-custom">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Reports</span>
+            </a>
+            <a href="achievements.html" class="nav-item-custom">
+                <i class="bi bi-trophy"></i>
+                <span>Achievements</span>
             </a>
             <a href="medications.html" class="nav-item-custom">
                 <i class="bi bi-capsule"></i>
@@ -200,6 +204,65 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gamification Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="section-card gamification-card">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                            <div>
+                                <h2 class="section-title mb-1">Gamification</h2>
+                                <p class="section-subtitle mb-0">Track your progress and celebrate your consistency</p>
+                            </div>
+                            <span class="gamification-progress-pill" id="badgeProgressPill">0 / 0 badges</span>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-lg-3">
+                                <article class="gamification-stat">
+                                    <div class="gamification-stat__label">Total Points</div>
+                                    <div class="gamification-stat__value" id="gamificationPointsValue">0</div>
+                                </article>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <article class="gamification-stat">
+                                    <div class="gamification-stat__label">Level</div>
+                                    <div class="gamification-stat__value" id="gamificationLevelValue">1</div>
+                                </article>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <article class="gamification-stat">
+                                    <div class="gamification-stat__label">Rank</div>
+                                    <div class="gamification-stat__value" id="gamificationRankValue">-</div>
+                                </article>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <article class="gamification-stat">
+                                    <div class="gamification-stat__label">Current Streak</div>
+                                    <div class="gamification-stat__value" id="gamificationStreakValue">0 days</div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="h6 fw-semibold mb-3">Recent Badges</h3>
+                            <div id="recentBadgesList" class="gamification-badges-grid">
+                                <div class="text-muted small">Loading badges...</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3 class="h6 fw-semibold mb-0">Recent Achievements</h3>
+                                <a href="achievements.html" class="text-healio-primary text-decoration-none fw-semibold small">View All</a>
+                            </div>
+                            <div id="dashboardAchievementsList" class="gamification-achievements-list">
+                                <div class="gamification-empty">Loading achievements...</div>
                             </div>
                         </div>
                     </div>
@@ -576,7 +639,7 @@
     <script src="js/main.js"></script>
     
     <!-- Dashboard JS -->
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=20260403-gamification-2"></script>
     <script src="js/chatbot.js?v=20260403-2"></script>
     
     <!-- Vitals Toggle Script -->

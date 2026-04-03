@@ -23,6 +23,10 @@ const CONFIG = {
         PATIENT_BIOMETRICS: '/patients/me/biometrics',
         PATIENT_ALERTS: '/patients/me/alerts',
         PATIENT_ACHIEVEMENTS: '/patients/me/achievements',
+        PATIENT_GAMIFICATION: '/patients/me/gamification',
+        PATIENT_POINTS: '/patients/me/points',
+        PATIENT_BADGES: '/patients/me/badges',
+        PATIENT_STREAK: '/patients/me/streak',
         PATIENT_MEDICATIONS: '/patients/me/medications',
         PATIENT_CHATBOT: '/patients/me/chatbot/message',
         

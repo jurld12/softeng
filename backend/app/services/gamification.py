@@ -251,6 +251,8 @@ async def _award_badge(db, user_id: str, badge_id: str):
     badge_info = BADGES.get(badge_id)
     if not badge_info:
         return
+
+    awarded_at = datetime.utcnow()
     
     badge_doc = {
         "user_id": user_id,
@@ -258,10 +260,22 @@ async def _award_badge(db, user_id: str, badge_id: str):
         "name": badge_info["name"],
         "description": badge_info["description"],
         "icon": badge_info["icon"],
-        "date_awarded": datetime.utcnow()
+        "date_awarded": awarded_at
     }
     
     await db.user_badges.insert_one(badge_doc)
+
+    achievement_doc = {
+        "user_id": user_id,
+        "type": "badge_unlock",
+        "title": badge_info["name"],
+        "description": badge_info["description"],
+        "points": badge_info["points"],
+        "badge_id": badge_id,
+        "date_awarded": awarded_at
+    }
+
+    await db.achievements.insert_one(achievement_doc)
     
     # Award points for the badge
     await award_points(db, user_id, f"badge_{badge_id}", badge_info["points"])

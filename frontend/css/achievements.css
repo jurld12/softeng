@@ -1,0 +1,28 @@
+/* Achievements page specific styling */
+
+.achievement-summary-grid .gamification-stat {
+    min-height: 110px;
+}
+
+.achievement-count-pill {
+    border: 1px solid var(--healio-border-light);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--healio-text-secondary);
+    background: var(--healio-bg-primary);
+}
+
+#achievementBadgesGrid .gamification-badge {
+    min-height: 78px;
+}
+
+#achievementsList .gamification-achievement {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfaff 100%);
+}
+
+@media (max-width: 992px) {
+    .achievement-summary-grid .gamification-stat {
+        min-height: 96px;
+    }
+}
