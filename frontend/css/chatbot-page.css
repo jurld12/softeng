@@ -7,12 +7,12 @@
     font-size: 0.95rem;
     font-weight: 700;
     margin-bottom: 0.75rem;
-    color: #1f2937;
+    color: var(--healio-text-primary);
 }
 
 .chatbot-side-note {
     font-size: 0.82rem;
-    color: #6b7280;
+    color: var(--healio-text-muted);
     line-height: 1.4;
 }
 
@@ -35,9 +35,9 @@
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    border: 1px solid #dbeafe;
-    background: #eff6ff;
-    color: #1d4ed8;
+    border: 1px solid rgba(var(--healio-primary-rgb), 0.28);
+    background: rgba(var(--healio-primary-rgb), 0.14);
+    color: var(--healio-primary);
     font-weight: 600;
     font-size: 0.78rem;
     letter-spacing: 0.01em;

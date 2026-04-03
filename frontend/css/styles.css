@@ -1,14 +1,31 @@
 /* Healio Frontend Styles */
 
 :root {
-    --primary-color: #1e40af;
-    --secondary-color: #0891b2;
-    --success-color: #16a34a;
-    --warning-color: #ea580c;
-    --danger-color: #dc2626;
-    --bg-color: #f8fafc;
-    --text-color: #1e293b;
-    --border-color: #e2e8f0;
+    --primary-color: var(--healio-primary, #1e40af);
+    --secondary-color: var(--healio-secondary, #0891b2);
+    --success-color: var(--healio-success, #16a34a);
+    --warning-color: var(--healio-warning, #ea580c);
+    --danger-color: var(--healio-danger, #dc2626);
+    --bg-color: var(--healio-bg-secondary, #f8fafc);
+    --text-color: var(--healio-text-primary, #1e293b);
+    --border-color: var(--healio-border-light, #e2e8f0);
+    --card-bg: var(--healio-bg-primary, #ffffff);
+}
+
+:root[data-theme="dark"] {
+    --bg-color: #020617;
+    --text-color: #e5e7eb;
+    --border-color: #263143;
+    --card-bg: #0f172a;
+}
+
+:root[data-theme="ocean"] {
+    --bg-color: #f5fbfd;
+    --card-bg: #ffffff;
+}
+
+:root[data-theme="sunset"] {
+    --bg-color: #fff8f3;
     --card-bg: #ffffff;
 }
 
@@ -45,7 +62,7 @@ header h1 {
 
 .tagline {
     font-size: 1.2rem;
-    color: #64748b;
+    color: var(--healio-text-muted);
 }
 
 /* Hero Section */
@@ -146,7 +163,7 @@ header h1 {
 }
 
 .feature-card p {
-    color: #64748b;
+    color: var(--healio-text-muted);
 }
 
 /* System Status */
@@ -184,7 +201,7 @@ header h1 {
 footer {
     text-align: center;
     padding: 30px 0;
-    color: #64748b;
+    color: var(--healio-text-muted);
     border-top: 1px solid var(--border-color);
 }
 

@@ -275,7 +275,7 @@
 
 /* Gamification */
 .gamification-card {
-    background: linear-gradient(180deg, #ffffff 0%, #f8f7ff 100%);
+    background: linear-gradient(180deg, var(--healio-gamification-start) 0%, var(--healio-gamification-end) 100%);
 }
 
 .gamification-progress-pill {
@@ -472,6 +472,31 @@
     text-align: center;
 }
 
+.dashboard-theme-trigger::after {
+    display: none;
+}
+
+.dashboard-theme-menu {
+    min-width: 170px;
+    border-radius: var(--healio-radius-md);
+}
+
+.dashboard-theme-menu .dropdown-item {
+    font-size: var(--healio-font-size-sm);
+    font-weight: var(--healio-font-medium);
+    color: var(--healio-text-secondary);
+}
+
+.dashboard-theme-menu .dropdown-item:hover {
+    background: var(--healio-bg-tertiary);
+    color: var(--healio-text-primary);
+}
+
+.dashboard-theme-menu .dropdown-item.is-active {
+    color: var(--healio-primary);
+    background: rgba(var(--healio-primary-rgb), 0.12);
+}
+
 /* Chatbot Drawer */
 .healio-chatbot-drawer {
     position: fixed;
@@ -494,7 +519,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: rgba(255,255,255,0.96);
+    background: var(--healio-surface-glass);
     border: 1px solid var(--healio-border-light);
     border-radius: var(--healio-radius-xl);
     box-shadow: var(--healio-shadow-lg);
@@ -536,7 +561,7 @@
     margin: 0 18px 14px;
     padding: 10px 12px;
     border-radius: var(--healio-radius-md);
-    background: rgba(124,58,237,0.08);
+    background: rgba(var(--healio-primary-rgb), 0.1);
     color: var(--healio-text-secondary);
     font-size: 12px;
     font-weight: var(--healio-font-medium);
@@ -583,7 +608,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 6px 18px 18px;
-    background: linear-gradient(180deg, rgba(248,250,252,0.5), rgba(255,255,255,0.95));
+    background: linear-gradient(180deg, var(--healio-chatbot-messages-start), var(--healio-chatbot-messages-end));
 }
 
 .healio-chatbot-message {
@@ -760,15 +785,15 @@
 
 /* Expandable Vital Cards */
 .vital-expandable-card {
-    background: white;
+    background: var(--healio-panel-bg);
     border-radius: 12px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--healio-panel-border);
     margin-bottom: 1rem;
     transition: box-shadow 0.3s ease;
 }
 
 .vital-expandable-card:hover {
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+    box-shadow: var(--healio-panel-hover-shadow);
 }
 
 .vital-card-header {
@@ -780,19 +805,19 @@
 .vital-value-inline {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--healio-text-primary);
     margin-top: 0.25rem;
 }
 
 .vital-expand-btn {
-    color: #6b7280;
+    color: var(--healio-text-muted);
     padding: 0.5rem;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 .vital-expand-btn:hover {
-    color: #7c3aed;
+    color: var(--healio-primary);
 }
 
 .vital-expand-btn i {

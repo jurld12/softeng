@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCurrentUser();
     loadAvailableDoctors();
     loadUserProfile();
+    ensureAppearanceSection();
+    loadThemePreferences();
     loadNotificationPreferences();
     setupAllergyHandlers();
     setupHeightWeightHandlers();
@@ -246,6 +248,143 @@ function normalizeEmergencyContact(contact) {
     };
 }
 
+function ensureAppearanceSection() {
+    if (document.getElementById('themeSelect')) {
+        return;
+    }
+
+    const grid = document.querySelector('.dashboard-content .container-fluid .row.g-4');
+    if (!grid) {
+        return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'col-12';
+    wrapper.innerHTML = `
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-palette fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-1">Appearance</h5>
+                        <p class="text-muted small mb-0">Switch themes instantly across the entire website</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-5">
+                        <label for="themeSelect" class="form-label fw-semibold">Theme Mode</label>
+                        <select class="form-select" id="themeSelect">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="ocean">Ocean</option>
+                            <option value="sunset">Sunset</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-7">
+                        <label class="form-label fw-semibold">Quick Presets</label>
+                        <div class="theme-option-grid" id="themePresetGrid">
+                            <button type="button" class="theme-option-btn" data-theme-option="light">
+                                <span>
+                                    <span class="d-block fw-semibold">Light</span>
+                                    <small class="text-muted">Bright and clean</small>
+                                </span>
+                                <span class="theme-swatch theme-swatch--light"></span>
+                            </button>
+                            <button type="button" class="theme-option-btn" data-theme-option="dark">
+                                <span>
+                                    <span class="d-block fw-semibold">Dark</span>
+                                    <small class="text-muted">Low-light comfort</small>
+                                </span>
+                                <span class="theme-swatch theme-swatch--dark"></span>
+                            </button>
+                            <button type="button" class="theme-option-btn" data-theme-option="ocean">
+                                <span>
+                                    <span class="d-block fw-semibold">Ocean</span>
+                                    <small class="text-muted">Cool teal-blue calm</small>
+                                </span>
+                                <span class="theme-swatch theme-swatch--ocean"></span>
+                            </button>
+                            <button type="button" class="theme-option-btn" data-theme-option="sunset">
+                                <span>
+                                    <span class="d-block fw-semibold">Sunset</span>
+                                    <small class="text-muted">Warm orange-magenta glow</small>
+                                </span>
+                                <span class="theme-swatch theme-swatch--sunset"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="small text-muted mb-0">Your selected theme is saved automatically and applied on every page.</p>
+            </div>
+        </div>
+    `;
+
+    const notificationsIcon = document.querySelector('.dashboard-content .bi-bell');
+    const notificationsBlock = notificationsIcon ? notificationsIcon.closest('.col-12') : null;
+
+    if (notificationsBlock && notificationsBlock.parentElement === grid) {
+        grid.insertBefore(wrapper, notificationsBlock);
+    } else {
+        grid.appendChild(wrapper);
+    }
+}
+
+function loadThemePreferences() {
+    const themeSelect = document.getElementById('themeSelect');
+    const presetButtons = Array.from(document.querySelectorAll('[data-theme-option]'));
+
+    if (!themeSelect || !window.HealioTheme) {
+        return;
+    }
+
+    const activeTheme = window.HealioTheme.getTheme();
+    themeSelect.value = activeTheme;
+    syncThemePresetState(activeTheme, presetButtons);
+
+    themeSelect.addEventListener('change', () => {
+        const selected = themeSelect.value;
+        const applied = window.HealioTheme.setTheme(selected);
+        syncThemePresetState(applied, presetButtons);
+        showSuccess(`Theme switched to ${capitalizeThemeName(applied)} mode`);
+    });
+
+    presetButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const selected = button.getAttribute('data-theme-option');
+            const applied = window.HealioTheme.setTheme(selected);
+            themeSelect.value = applied;
+            syncThemePresetState(applied, presetButtons);
+            showSuccess(`Theme switched to ${capitalizeThemeName(applied)} mode`);
+        });
+    });
+
+    window.addEventListener('healio:theme-changed', (event) => {
+        const appliedTheme = event.detail?.theme;
+        if (!appliedTheme) {
+            return;
+        }
+        themeSelect.value = appliedTheme;
+        syncThemePresetState(appliedTheme, presetButtons);
+    });
+}
+
+function syncThemePresetState(activeTheme, buttons) {
+    buttons.forEach((button) => {
+        const isActive = button.getAttribute('data-theme-option') === activeTheme;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+}
+
+function capitalizeThemeName(name) {
+    const value = String(name || 'theme');
+    return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 // Load notification preferences from localStorage
 function loadNotificationPreferences() {
     const prefs = localStorage.getItem(CONFIG.STORAGE_KEYS.NOTIFICATION_PREFS);
@@ -453,7 +592,10 @@ async function triggerExport() {
 
 // Logout function
 function logout() {
-    localStorage.clear();
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
     window.location.href = 'login-v2.html';
 }
 

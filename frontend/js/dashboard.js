@@ -997,6 +997,44 @@ function formatBadgeDate(value) {
     return `Earned ${parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 }
 
+function initializeDashboardThemePicker() {
+    const trigger = document.getElementById('dashboardThemeDropdown');
+    const options = Array.from(document.querySelectorAll('.dashboard-theme-option'));
+
+    if (!trigger || !window.HealioTheme || !options.length) {
+        return;
+    }
+
+    const capitalizeTheme = (theme) => {
+        const value = String(theme || 'theme');
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    };
+
+    const syncActiveOption = (activeTheme) => {
+        options.forEach((option) => {
+            const isActive = option.getAttribute('data-theme') === activeTheme;
+            option.classList.toggle('is-active', isActive);
+            option.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    };
+
+    syncActiveOption(window.HealioTheme.getTheme());
+
+    options.forEach((option) => {
+        option.addEventListener('click', () => {
+            const selectedTheme = option.getAttribute('data-theme');
+            const appliedTheme = window.HealioTheme.setTheme(selectedTheme);
+            syncActiveOption(appliedTheme);
+            showSuccessMessage(`Theme switched to ${capitalizeTheme(appliedTheme)} mode`);
+        });
+    });
+
+    window.addEventListener('healio:theme-changed', (event) => {
+        const activeTheme = event.detail?.theme || window.HealioTheme.getTheme();
+        syncActiveOption(activeTheme);
+    });
+}
+
 // ==================== Utility: Escape HTML ====================
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -1014,6 +1052,8 @@ async function initializeDashboard() {
     try {
         // Show loading state
         console.log('Initializing dashboard...');
+
+        initializeDashboardThemePicker();
         
         // Load user data
         await loadCurrentUser();

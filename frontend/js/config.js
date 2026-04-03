@@ -67,7 +67,8 @@ const CONFIG = {
         USER_ROLE: 'healio_user_role',
         USER_ID: 'healio_user_id',
         USER_NAME: 'healio_user_name',
-        NOTIFICATION_PREFS: 'healio_notification_prefs'
+        NOTIFICATION_PREFS: 'healio_notification_prefs',
+        THEME: 'healio_theme'
     }
 };
 

@@ -17,10 +17,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <!-- Theme CSS -->
-    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/theme.css?v=20260403-2">
+    <script src="js/theme.js?v=20260403-3"></script>
     
     <!-- Custom Dashboard CSS -->
-    <link rel="stylesheet" href="css/dashboard-bootstrap.css">
+    <link rel="stylesheet" href="css/dashboard-bootstrap.css?v=20260403-5">
 </head>
 <body>
     <!-- Sidebar -->
@@ -65,7 +66,7 @@
                 <i class="bi bi-bell"></i>
                 <span>Notifications</span>
             </a>
-            <a href="settings.html" class="nav-item-custom active">
+            <a href="settings.html?v=20260403-theme-3" class="nav-item-custom active">
                 <i class="bi bi-gear"></i>
                 <span>Settings</span>
             </a>
@@ -253,6 +254,70 @@
                         </div>
                     </div>
 
+                    <!-- Appearance -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                        <i class="bi bi-palette fs-4 text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title mb-1">Appearance</h5>
+                                        <p class="text-muted small mb-0">Switch themes instantly across the entire website</p>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-lg-5">
+                                        <label for="themeSelect" class="form-label fw-semibold">Theme Mode</label>
+                                        <select class="form-select" id="themeSelect">
+                                            <option value="light">Light</option>
+                                            <option value="dark">Dark</option>
+                                            <option value="ocean">Ocean</option>
+                                            <option value="sunset">Sunset</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-7">
+                                        <label class="form-label fw-semibold">Quick Presets</label>
+                                        <div class="theme-option-grid" id="themePresetGrid">
+                                            <button type="button" class="theme-option-btn" data-theme-option="light">
+                                                <span>
+                                                    <span class="d-block fw-semibold">Light</span>
+                                                    <small class="text-muted">Bright and clean</small>
+                                                </span>
+                                                <span class="theme-swatch theme-swatch--light"></span>
+                                            </button>
+                                            <button type="button" class="theme-option-btn" data-theme-option="dark">
+                                                <span>
+                                                    <span class="d-block fw-semibold">Dark</span>
+                                                    <small class="text-muted">Low-light comfort</small>
+                                                </span>
+                                                <span class="theme-swatch theme-swatch--dark"></span>
+                                            </button>
+                                            <button type="button" class="theme-option-btn" data-theme-option="ocean">
+                                                <span>
+                                                    <span class="d-block fw-semibold">Ocean</span>
+                                                    <small class="text-muted">Cool teal-blue calm</small>
+                                                </span>
+                                                <span class="theme-swatch theme-swatch--ocean"></span>
+                                            </button>
+                                            <button type="button" class="theme-option-btn" data-theme-option="sunset">
+                                                <span>
+                                                    <span class="d-block fw-semibold">Sunset</span>
+                                                    <small class="text-muted">Warm orange-magenta glow</small>
+                                                </span>
+                                                <span class="theme-swatch theme-swatch--sunset"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="small text-muted mb-0">Your selected theme is saved automatically and applied on every page.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Notifications -->
                     <div class="col-12">
                         <div class="card">
@@ -434,6 +499,6 @@
     <script src="js/main.js"></script>
     
     <!-- Settings JS -->
-    <script src="js/settings.js"></script>
+    <script src="js/settings.js?v=20260403-theme-3"></script>
 </body>
 </html>

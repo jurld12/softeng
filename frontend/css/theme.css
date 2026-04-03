@@ -4,6 +4,7 @@
 :root {
     /* Primary Brand Colors */
     --healio-primary: #7c3aed;
+    --healio-primary-rgb: 124, 58, 237;
     --healio-primary-hover: #6d28d9;
     --healio-primary-light: #a78bfa;
     --healio-primary-lighter: #ddd6fe;
@@ -47,6 +48,18 @@
     --healio-bg-primary: #ffffff;
     --healio-bg-secondary: #fafbfc;
     --healio-bg-tertiary: #f9fafb;
+
+    /* Surface Tokens */
+    --healio-surface-glass: rgba(255, 255, 255, 0.96);
+    --healio-chatbot-messages-start: rgba(248, 250, 252, 0.5);
+    --healio-chatbot-messages-end: rgba(255, 255, 255, 0.95);
+    --healio-gamification-start: #ffffff;
+    --healio-gamification-end: #f8f7ff;
+    --healio-panel-bg: #ffffff;
+    --healio-panel-border: #e5e7eb;
+    --healio-panel-hover-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+    --healio-success-soft: rgba(16, 185, 129, 0.02);
+    --healio-auth-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     
     /* Border Colors */
     --healio-border-light: #e8eaed;
@@ -116,11 +129,101 @@
     --healio-z-tooltip: 1070;
 }
 
+:root[data-theme="dark"] {
+    --healio-primary: #9b8bff;
+    --healio-primary-rgb: 155, 139, 255;
+    --healio-primary-hover: #b7abff;
+    --healio-primary-light: #c7bcff;
+    --healio-primary-lighter: #211a45;
+    --healio-primary-dark: #7b6aff;
+
+    --healio-secondary: #4fd1c5;
+    --healio-secondary-light: #8de3db;
+
+    --healio-success: #34d399;
+    --healio-warning: #fbbf24;
+    --healio-danger: #fb7185;
+    --healio-info: #60a5fa;
+
+    --healio-critical: #f87171;
+    --healio-critical-bg: rgba(248, 113, 113, 0.12);
+    --healio-attention: #fbbf24;
+    --healio-attention-bg: rgba(251, 191, 36, 0.14);
+    --healio-normal: #34d399;
+    --healio-normal-bg: rgba(52, 211, 153, 0.14);
+
+    --healio-bg-primary: #0f172a;
+    --healio-bg-secondary: #020617;
+    --healio-bg-tertiary: #111827;
+
+    --healio-border-light: #263143;
+    --healio-border: #334155;
+    --healio-border-dark: #475569;
+
+    --healio-text-primary: #e5e7eb;
+    --healio-text-secondary: #cbd5e1;
+    --healio-text-muted: #94a3b8;
+    --healio-text-light: #64748b;
+
+    --healio-surface-glass: rgba(15, 23, 42, 0.94);
+    --healio-chatbot-messages-start: rgba(2, 6, 23, 0.7);
+    --healio-chatbot-messages-end: rgba(15, 23, 42, 0.92);
+    --healio-gamification-start: #111827;
+    --healio-gamification-end: #0b1224;
+    --healio-panel-bg: #111827;
+    --healio-panel-border: #243244;
+    --healio-panel-hover-shadow: 0 8px 20px rgba(2, 6, 23, 0.5);
+    --healio-success-soft: rgba(52, 211, 153, 0.12);
+    --healio-auth-background: linear-gradient(135deg, #0b1224 0%, #111827 100%);
+
+    --healio-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --healio-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+    --healio-shadow-md: 0 8px 18px rgba(0, 0, 0, 0.45);
+    --healio-shadow-lg: 0 12px 26px rgba(0, 0, 0, 0.5);
+    --healio-shadow-xl: 0 20px 34px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme="ocean"] {
+    --healio-primary: #0f766e;
+    --healio-primary-rgb: 15, 118, 110;
+    --healio-primary-hover: #0f5f59;
+    --healio-primary-light: #2dd4bf;
+    --healio-primary-lighter: #ccfbf1;
+    --healio-primary-dark: #115e59;
+
+    --healio-secondary: #0284c7;
+    --healio-secondary-light: #7dd3fc;
+
+    --healio-bg-secondary: #f5fbfd;
+    --healio-bg-tertiary: #eff8fa;
+    --healio-gamification-end: #e8f8fb;
+    --healio-success-soft: rgba(5, 150, 105, 0.06);
+    --healio-auth-background: linear-gradient(135deg, #0f766e 0%, #0284c7 100%);
+}
+
+:root[data-theme="sunset"] {
+    --healio-primary: #c2410c;
+    --healio-primary-rgb: 194, 65, 12;
+    --healio-primary-hover: #9a3412;
+    --healio-primary-light: #fb923c;
+    --healio-primary-lighter: #ffedd5;
+    --healio-primary-dark: #9a3412;
+
+    --healio-secondary: #db2777;
+    --healio-secondary-light: #f9a8d4;
+
+    --healio-bg-secondary: #fff8f3;
+    --healio-bg-tertiary: #fff5ef;
+    --healio-gamification-end: #ffefea;
+    --healio-success-soft: rgba(16, 185, 129, 0.05);
+    --healio-auth-background: linear-gradient(135deg, #c2410c 0%, #db2777 100%);
+}
+
 /* Bootstrap Variable Overrides */
 /* These override Bootstrap's default theme colors */
 :root {
     --bs-primary: var(--healio-primary);
-    --bs-primary-rgb: 124, 58, 237;
+    --bs-primary-rgb: var(--healio-primary-rgb);
     --bs-secondary: var(--healio-secondary);
     --bs-success: var(--healio-success);
     --bs-danger: var(--healio-danger);
@@ -147,8 +250,11 @@
 /* Global Styles */
 body {
     font-family: var(--healio-font-family);
+    background-color: var(--healio-bg-secondary);
+    color: var(--healio-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--healio-transition-slow), color var(--healio-transition-slow);
 }
 
 /* Custom Utility Classes */
@@ -230,7 +336,7 @@ body {
 /* Reminder Card Styles */
 .section-card.border-success {
     border-left: 4px solid var(--healio-success) !important;
-    background-color: rgba(16, 185, 129, 0.02);
+    background-color: var(--healio-success-soft);
 }
 
 .form-check-input:checked {
@@ -240,10 +346,106 @@ body {
 
 .form-check-input:focus {
     border-color: var(--healio-primary);
-    box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(var(--healio-primary-rgb), 0.25);
 }
 
 .section-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.3s ease;
+}
+
+/* Theme Picker UI */
+.theme-option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 10px;
+}
+
+.theme-option-btn {
+    border: 1px solid var(--healio-border-light);
+    background: var(--healio-bg-primary);
+    border-radius: var(--healio-radius-md);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    color: var(--healio-text-primary);
+    transition: all var(--healio-transition-base);
+}
+
+.theme-option-btn:hover {
+    border-color: var(--healio-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--healio-shadow-sm);
+}
+
+.theme-option-btn.is-active {
+    border-color: var(--healio-primary);
+    box-shadow: 0 0 0 2px rgba(var(--healio-primary-rgb), 0.2);
+}
+
+.theme-swatch {
+    width: 34px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid var(--healio-border-light);
+    flex-shrink: 0;
+}
+
+.theme-swatch--light {
+    background: linear-gradient(135deg, #ffffff, #ece8ff);
+}
+
+.theme-swatch--dark {
+    background: linear-gradient(135deg, #0f172a, #1f2937);
+}
+
+.theme-swatch--ocean {
+    background: linear-gradient(135deg, #0f766e, #0284c7);
+}
+
+.theme-swatch--sunset {
+    background: linear-gradient(135deg, #c2410c, #db2777);
+}
+
+/* Dark Theme Bootstrap Surface Tuning */
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .modal-content,
+:root[data-theme="dark"] .list-group-item,
+:root[data-theme="dark"] .dropdown-menu {
+    background-color: var(--healio-bg-primary);
+    color: var(--healio-text-primary);
+    border-color: var(--healio-border-light);
+}
+
+:root[data-theme="dark"] .form-control,
+:root[data-theme="dark"] .form-select,
+:root[data-theme="dark"] .form-check-input {
+    background-color: var(--healio-bg-tertiary);
+    color: var(--healio-text-primary);
+    border-color: var(--healio-border-light);
+}
+
+:root[data-theme="dark"] .form-control::placeholder,
+:root[data-theme="dark"] .form-select::placeholder {
+    color: var(--healio-text-light);
+}
+
+:root[data-theme="dark"] .btn-light {
+    background-color: var(--healio-bg-tertiary);
+    color: var(--healio-text-secondary);
+    border-color: var(--healio-border-light);
+}
+
+:root[data-theme="dark"] .btn-outline-secondary {
+    border-color: var(--healio-border-light);
+    color: var(--healio-text-secondary);
+}
+
+:root[data-theme="dark"] .text-muted,
+:root[data-theme="dark"] .form-text {
+    color: var(--healio-text-muted) !important;
 }
