@@ -1,6 +1,21 @@
 /* Healio Dashboard Custom Styles (Bootstrap Enhanced) */
 /* This file contains custom styling that extends Bootstrap */
 
+:root {
+    --healio-dashboard-hover-bg: var(--healio-gray-100);
+    --healio-dashboard-hover-bg-soft: var(--healio-bg-tertiary);
+    --healio-dashboard-hover-border: rgba(124,58,237,0.1);
+    --healio-dashboard-hover-border-strong: rgba(124,58,237,0.3);
+    --healio-dashboard-hover-accent-bg: var(--healio-primary);
+    --healio-dashboard-hover-accent-text: #ffffff;
+    --healio-dashboard-hover-chip-border: rgba(124,58,237,0.25);
+    --healio-dashboard-hover-chip-bg: rgba(124,58,237,0.05);
+    --healio-dashboard-hover-chip-text: var(--healio-primary);
+    --healio-dashboard-hover-link-text: var(--healio-primary);
+    --healio-dashboard-hover-sheen-spot: rgba(255, 255, 255, 0.4);
+    --healio-dashboard-hover-card-shadow: 0 10px 18px rgba(var(--healio-primary-rgb), 0.16);
+}
+
 /* Sidebar Styling */
 .sidebar {
     position: fixed;
@@ -66,7 +81,7 @@
 }
 
 .nav-item-custom:hover {
-    background: var(--healio-gray-100);
+    background: var(--healio-dashboard-hover-bg);
     color: var(--healio-text-primary);
 }
 
@@ -220,13 +235,13 @@
 .vital-card.clickable:hover {
     transform: translateY(-2px);
     box-shadow: var(--healio-shadow-md);
-    border-color: var(--healio-primary);
+    border-color: var(--healio-dashboard-hover-border-strong);
 }
 
 .vital-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--healio-shadow-md);
-    border-color: rgba(124,58,237,0.3);
+    border-color: var(--healio-dashboard-hover-border-strong);
 }
 
 .vital-icon {
@@ -527,14 +542,14 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(125deg, transparent 25%, rgba(255, 255, 255, 0.4) 40%, transparent 55%);
+    background: linear-gradient(125deg, transparent 25%, var(--healio-dashboard-hover-sheen-spot) 40%, transparent 55%);
     pointer-events: none;
     transform: translateX(-120%);
 }
 
 .badge-gallery-item:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 18px rgba(var(--healio-primary-rgb), 0.16);
+    box-shadow: var(--healio-dashboard-hover-card-shadow);
 }
 
 .badge-gallery-item:hover::after {
@@ -713,6 +728,21 @@
     background: rgba(15, 23, 42, 0.85);
 }
 
+:root[data-theme="dark"] {
+    --healio-dashboard-hover-bg: rgba(148, 163, 184, 0.14);
+    --healio-dashboard-hover-bg-soft: rgba(148, 163, 184, 0.12);
+    --healio-dashboard-hover-border: rgba(var(--healio-primary-rgb), 0.3);
+    --healio-dashboard-hover-border-strong: rgba(var(--healio-primary-rgb), 0.45);
+    --healio-dashboard-hover-accent-bg: rgba(var(--healio-primary-rgb), 0.28);
+    --healio-dashboard-hover-accent-text: #f8fafc;
+    --healio-dashboard-hover-chip-border: rgba(var(--healio-primary-rgb), 0.42);
+    --healio-dashboard-hover-chip-bg: rgba(var(--healio-primary-rgb), 0.18);
+    --healio-dashboard-hover-chip-text: #e6edf8;
+    --healio-dashboard-hover-link-text: #e6edf8;
+    --healio-dashboard-hover-sheen-spot: rgba(148, 163, 184, 0.22);
+    --healio-dashboard-hover-card-shadow: 0 10px 18px rgba(2, 6, 23, 0.58);
+}
+
 @media (max-width: 1199px) {
     .gamification-badge-gallery {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -757,8 +787,8 @@
 
 .medication-item:hover,
 .appointment-item:hover {
-    background: var(--healio-gray-100);
-    border-color: rgba(124,58,237,0.1);
+    background: var(--healio-dashboard-hover-bg);
+    border-color: var(--healio-dashboard-hover-border);
 }
 
 .medication-icon {
@@ -803,8 +833,8 @@
 }
 
 .btn-icon:hover {
-    background: var(--healio-primary);
-    color: white;
+    background: var(--healio-dashboard-hover-accent-bg);
+    color: var(--healio-dashboard-hover-accent-text);
     transform: translateY(-2px);
     box-shadow: var(--healio-shadow-md);
 }
@@ -839,7 +869,7 @@
 }
 
 .dashboard-theme-menu .dropdown-item:hover {
-    background: var(--healio-bg-tertiary);
+    background: var(--healio-dashboard-hover-bg-soft);
     color: var(--healio-text-primary);
 }
 
@@ -946,9 +976,9 @@
 }
 
 .healio-chatbot-chip:hover {
-    border-color: rgba(124,58,237,0.25);
-    color: var(--healio-primary);
-    background: rgba(124,58,237,0.05);
+    border-color: var(--healio-dashboard-hover-chip-border);
+    color: var(--healio-dashboard-hover-chip-text);
+    background: var(--healio-dashboard-hover-chip-bg);
 }
 
 .healio-chatbot-toggle input {
@@ -1168,7 +1198,7 @@
 }
 
 .vital-expand-btn:hover {
-    color: var(--healio-primary);
+    color: var(--healio-dashboard-hover-link-text);
 }
 
 .vital-expand-btn i {
