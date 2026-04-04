@@ -309,7 +309,7 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/config.js?v=20260403-9"></script>
+    <script src="js/config.js?v=20260405-1"></script>
     
     <!-- Login JS -->
     <script>
@@ -323,7 +323,8 @@
                 ACCESS_TOKEN: 'healio_access_token',
                 USER_ID: 'healio_user_id',
                 USER_ROLE: 'healio_user_role',
-                USER_NAME: 'healio_user_name'
+                USER_NAME: 'healio_user_name',
+                AUTH_PERSIST: 'healio_auth_persist'
             };
 
         const loginForm = document.getElementById('loginForm');
@@ -332,24 +333,47 @@
         const submitSpinner = document.getElementById('submitSpinner');
         const alertContainer = document.getElementById('alertContainer');
 
+        function isAuthPersisted() {
+            return localStorage.getItem(STORAGE_KEYS.AUTH_PERSIST) === '1';
+        }
+
+        function getActiveAuthStorage() {
+            return isAuthPersisted() ? localStorage : sessionStorage;
+        }
+
         function clearStoredAuth() {
             if (typeof clearAuthState === 'function') {
                 clearAuthState();
                 return;
             }
 
-            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-            localStorage.removeItem(STORAGE_KEYS.USER_ID);
-            localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
-            localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-            localStorage.removeItem('healio_refresh_token');
+            [localStorage, sessionStorage].forEach((storage) => {
+                storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+                storage.removeItem(STORAGE_KEYS.USER_ID);
+                storage.removeItem(STORAGE_KEYS.USER_ROLE);
+                storage.removeItem(STORAGE_KEYS.USER_NAME);
+                storage.removeItem('healio_refresh_token');
+                storage.removeItem('healio_last_activity_at');
+            });
+
+            localStorage.setItem(STORAGE_KEYS.AUTH_PERSIST, '0');
         }
 
         async function validateExistingSession() {
             const token = (typeof getStoredAccessToken === 'function')
                 ? getStoredAccessToken()
-                : localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+                : (sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN));
             if (!token) {
+                return;
+            }
+
+            if (typeof isStoredAccessTokenExpired === 'function' && isStoredAccessTokenExpired()) {
+                clearStoredAuth();
+                return;
+            }
+
+            if (typeof isSessionInactive === 'function' && isSessionInactive()) {
+                clearStoredAuth();
                 return;
             }
 
@@ -366,16 +390,22 @@
                 }
 
                 const sessionUser = await response.json().catch(() => ({}));
-                let role = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+                let role = (typeof getStoredUserRole === 'function')
+                    ? getStoredUserRole()
+                    : getActiveAuthStorage().getItem(STORAGE_KEYS.USER_ROLE);
 
                 if (!role && sessionUser.role) {
                     role = sessionUser.role;
-                    localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
+                    getActiveAuthStorage().setItem(STORAGE_KEYS.USER_ROLE, role);
                 }
 
                 if (!role) {
                     clearStoredAuth();
                     return;
+                }
+
+                if (typeof markSessionActivity === 'function') {
+                    markSessionActivity(true);
                 }
 
                 if (typeof redirectToRoleHome === 'function' && redirectToRoleHome(role)) {
@@ -419,6 +449,7 @@
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
             
             // Show loading state
             submitBtn.disabled = true;
@@ -442,12 +473,29 @@
                 
                 // Store authentication data
                 if (typeof storeAuthState === 'function') {
-                    storeAuthState(data);
+                    storeAuthState(data, { persist: rememberMe });
                 } else {
-                    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
-                    localStorage.setItem(STORAGE_KEYS.USER_ID, data.user_id);
-                    localStorage.setItem(STORAGE_KEYS.USER_ROLE, data.role);
-                    localStorage.setItem(STORAGE_KEYS.USER_NAME, data.name);
+                    const targetStorage = rememberMe ? localStorage : sessionStorage;
+                    const otherStorage = rememberMe ? sessionStorage : localStorage;
+
+                    localStorage.setItem(STORAGE_KEYS.AUTH_PERSIST, rememberMe ? '1' : '0');
+
+                    [
+                        STORAGE_KEYS.ACCESS_TOKEN,
+                        STORAGE_KEYS.USER_ID,
+                        STORAGE_KEYS.USER_ROLE,
+                        STORAGE_KEYS.USER_NAME,
+                        'healio_refresh_token',
+                        'healio_last_activity_at'
+                    ].forEach((key) => {
+                        targetStorage.removeItem(key);
+                        otherStorage.removeItem(key);
+                    });
+
+                    targetStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
+                    targetStorage.setItem(STORAGE_KEYS.USER_ID, data.user_id);
+                    targetStorage.setItem(STORAGE_KEYS.USER_ROLE, data.role);
+                    targetStorage.setItem(STORAGE_KEYS.USER_NAME, data.name);
                 }
                 
                 // Show success message

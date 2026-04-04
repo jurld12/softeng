@@ -37,6 +37,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCurrentVitals();
     await loadMedications();
     await loadVitalsTrend();
+    
+    // Set up health insights refresh every 10 minutes (600000 ms)
+    setInterval(async () => {
+        try {
+            await loadCurrentVitals();
+        } catch (error) {
+            console.error('Error refreshing health insights:', error);
+        }
+    }, 600000);
 });
 
 // Load user data for sidebar
@@ -527,9 +536,12 @@ function generateHealthInsights() {
     const warningVitals = latestVitalStatusSummary.filter((vital) => vital.statusClass === 'warning');
     const healthyVitals = latestVitalStatusSummary.filter((vital) => vital.statusClass === 'success');
 
+    // Add primary insights (max 3 total before mandatory ones)
+    const primaryInsights = [];
+
     if (criticalOrHigh.length > 0) {
         const labels = criticalOrHigh.map((vital) => `${vital.label} (${vital.status})`).join(', ');
-        insights.push({
+        primaryInsights.push({
             type: 'danger',
             icon: 'exclamation-octagon',
             message: `Some vitals need urgent attention: ${labels}. Please consult your doctor.`
@@ -538,7 +550,7 @@ function generateHealthInsights() {
 
     if (warningVitals.length > 0) {
         const labels = warningVitals.map((vital) => `${vital.label} (${vital.status})`).join(', ');
-        insights.push({
+        primaryInsights.push({
             type: 'warning',
             icon: 'exclamation-triangle',
             message: `The following vitals are outside normal range: ${labels}. Monitor closely and consider follow-up.`
@@ -547,13 +559,13 @@ function generateHealthInsights() {
 
     if (criticalOrHigh.length === 0 && warningVitals.length === 0) {
         if (healthyVitals.length > 0) {
-            insights.push({
+            primaryInsights.push({
                 type: 'success',
                 icon: 'check-circle',
                 message: 'Your current vital signs are within normal ranges. Keep up the great work!'
             });
         } else {
-            insights.push({
+            primaryInsights.push({
                 type: 'secondary',
                 icon: 'info-circle',
                 message: 'Not enough vital data is available yet. Add readings to generate personalized insights.'
@@ -561,6 +573,10 @@ function generateHealthInsights() {
         }
     }
 
+    // Limit to max 3 primary insights
+    insights.push(...primaryInsights.slice(0, 3));
+
+    // Add mandatory insights
     insights.push({
         type: 'info',
         icon: 'info-circle',

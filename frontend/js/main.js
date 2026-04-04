@@ -11,6 +11,10 @@ const patientDoctorPickerState = {
     modal: null
 };
 
+const MAIN_REALTIME_REFRESH_MS = 30000;
+let mainRealtimeRefreshTimer = null;
+let mainRealtimeRefreshInFlight = false;
+
 /**
  * Update notification badge with active reminder count
  */
@@ -63,11 +67,64 @@ window.updateNotificationBadge = async function() {
     }
 };
 
+async function refreshMainRealtimeWidgets(options = {}) {
+    if (mainRealtimeRefreshInFlight) {
+        return;
+    }
+
+    if (!options.force && typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+    }
+
+    const token = typeof getStoredAccessToken === 'function'
+        ? getStoredAccessToken()
+        : localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+
+    if (!token) {
+        return;
+    }
+
+    mainRealtimeRefreshInFlight = true;
+
+    try {
+        await window.updateNotificationBadge();
+
+        if (patientDoctorPickerState.initialized && !patientDoctorPickerState.loading && !patientDoctorPickerState.saving) {
+            await refreshPatientDoctorPicker(false);
+        }
+    } catch (error) {
+        console.error('Realtime widget refresh failed:', error);
+    } finally {
+        mainRealtimeRefreshInFlight = false;
+    }
+}
+
+function startMainRealtimeRefresh() {
+    if (mainRealtimeRefreshTimer || typeof window === 'undefined') {
+        return;
+    }
+
+    mainRealtimeRefreshTimer = window.setInterval(() => {
+        refreshMainRealtimeWidgets();
+    }, MAIN_REALTIME_REFRESH_MS);
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            refreshMainRealtimeWidgets({ force: true });
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        refreshMainRealtimeWidgets({ force: true });
+    });
+}
+
 // Check backend connection on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await checkBackendStatus();
     await window.updateNotificationBadge();
     await initializePatientDoctorPicker();
+    startMainRealtimeRefresh();
 });
 
 /**
@@ -248,7 +305,11 @@ function ensurePatientDoctorPickerUi() {
         `;
 
         const firstIconButton = actionsContainer.querySelector('.btn-icon');
-        actionsContainer.insertBefore(doctorButton, firstIconButton || null);
+        if (firstIconButton && actionsContainer.contains(firstIconButton)) {
+            actionsContainer.insertBefore(doctorButton, firstIconButton);
+        } else {
+            actionsContainer.appendChild(doctorButton);
+        }
     }
 
     if (!document.getElementById('patientDoctorModal')) {

@@ -9,9 +9,19 @@ function checkAuthentication() {
 
     const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
     const role = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ROLE);
+
+    const isExpired = typeof isAccessTokenExpired === 'function'
+        ? isAccessTokenExpired(token)
+        : false;
+    const isInactive = typeof isSessionInactive === 'function'
+        ? isSessionInactive()
+        : false;
     
-    if (!token) {
+    if (!token || isExpired || isInactive) {
         console.log('No token found, redirecting to login');
+        if (typeof clearAuthState === 'function') {
+            clearAuthState();
+        }
         window.location.href = 'login-v2.html';
         return false;
     }
@@ -130,157 +140,95 @@ async function loadDashboardProfile(userData) {
     }
 }
 
-const VITAL_STATUS_RULES = {
-    bloodSugar: {
-        normal: [70, 130],
-        attention: [54, 180]
-    },
-    heartRate: {
-        normal: [60, 100],
-        attention: [50, 120]
-    },
-    steps: {
-        normal: [10000, 25000],
-        attention: [5000, 35000]
-    },
-    sleep: {
-        normal: [7, 9],
-        attention: [6, 10]
-    },
-    oxygen: {
-        normal: [95, 100],
-        attention: [90, 94]
-    },
-    temp: {
-        normal: [97, 99],
-        attention: [95, 100.4]
-    },
-    respRate: {
-        normal: [12, 20],
-        attention: [10, 24]
-    },
-    hydration: {
-        normal: [2, 3.5],
-        attention: [1.5, 4]
-    }
-};
-
-function resolveRangeStatus(value, rule) {
-    if (!rule || !Number.isFinite(value)) {
-        return 'attention';
-    }
-
-    const [normalMin, normalMax] = rule.normal;
-    const [attentionMin, attentionMax] = rule.attention;
-
-    if (value >= normalMin && value <= normalMax) {
-        return 'normal';
-    }
-
-    if (value >= attentionMin && value <= attentionMax) {
-        return 'attention';
-    }
-
-    return 'critical';
-}
-
-function resolveBloodPressureStatus(systolic, diastolic) {
-    if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
-        return 'attention';
-    }
-
-    const isNormal = systolic >= 90 && systolic <= 120 && diastolic >= 60 && diastolic <= 80;
-    if (isNormal) {
-        return 'normal';
-    }
-
-    const isAttention = systolic >= 80 && systolic <= 139 && diastolic >= 50 && diastolic <= 89;
-    if (isAttention) {
-        return 'attention';
-    }
-
-    return 'critical';
-}
+// Vital status determination uses resolveSharedVitalStatusLevel() from config.js
 
 // ==================== Update Profile Section ====================
 function updateProfileSection(userData) {
-    // Update profile name and avatar
-    document.getElementById('profileName').textContent = userData.name || 'N/A';
-    
-    // Update profile avatar URLs
-    const avatarName = encodeURIComponent(userData.name || 'User');
-    const avatarUrls = document.querySelectorAll('img[src*="ui-avatars.com"]');
-    avatarUrls.forEach(img => {
-        img.src = `https://ui-avatars.com/api/?name=${avatarName}&background=7c3aed&color=fff&size=${img.width || 80}`;
+    const profile = userData || {};
+    const setText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    };
+
+    const toNumber = (value) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    setText('profileName', profile.name || 'N/A');
+
+    const avatarName = encodeURIComponent(profile.name || 'User');
+    document.querySelectorAll('#sidebarUserAvatar, .profile-avatar').forEach((img) => {
+        const size = Number(img.getAttribute('width')) || img.clientWidth || 80;
+        img.src = `https://ui-avatars.com/api/?name=${avatarName}&background=7c3aed&color=fff&size=${size}`;
     });
-    
-    // Calculate age if date_of_birth exists
-    if (userData.date_of_birth) {
-        const dob = new Date(userData.date_of_birth);
-        const today = new Date();
-        const age = today.getFullYear() - dob.getFullYear();
-        document.getElementById('profileAge').textContent = `${age} years`;
-        document.getElementById('profileDOB').textContent = dob.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
+
+    if (profile.date_of_birth) {
+        const dob = new Date(profile.date_of_birth);
+        if (!Number.isNaN(dob.getTime())) {
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const birthdayPassed =
+                today.getMonth() > dob.getMonth()
+                || (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+            if (!birthdayPassed) {
+                age -= 1;
+            }
+
+            setText('profileAge', `${Math.max(0, age)} years`);
+            setText('profileDOB', dob.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }));
+        } else {
+            setText('profileAge', 'N/A');
+            setText('profileDOB', 'Not provided');
+        }
     } else {
-        document.getElementById('profileAge').textContent = 'N/A';
-        document.getElementById('profileDOB').textContent = 'Not provided';
+        setText('profileAge', 'N/A');
+        setText('profileDOB', 'Not provided');
     }
-    
-    // Update gender
-    if (userData.gender) {
-        document.getElementById('profileGender').style.display = '';
-        document.getElementById('profileGender').textContent = 
-            userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1);
-    } else {
-        document.getElementById('profileGender').textContent = 'Not provided';
-    }
-    
-    // Update blood type
-    if (userData.blood_type) {
-        document.getElementById('profileBlood').style.display = '';
-        document.getElementById('profileBlood').textContent = userData.blood_type;
-    } else {
-        document.getElementById('profileBlood').textContent = 'Not provided';
-    }
-    
-    // Update height and weight
-    document.getElementById('profileHeight').textContent = 
-        userData.height ? `${userData.height} cm` : 'Not provided';
-    document.getElementById('profileWeight').textContent = 
-        userData.weight ? `${userData.weight} kg` : 'Not provided';
-    
-    // Update phone
-    document.getElementById('profilePhone').textContent = userData.phone || 'Not provided';
-    
-    // Update email
-    document.getElementById('profileEmail').textContent = userData.email || 'N/A';
-    
-    // Update address
-    document.getElementById('profileAddress').textContent = userData.address || 'Not provided';
-    
-    // Update allergies
+
+    const gender = String(profile.gender || '').trim();
+    setText('profileGender', gender ? `${gender.charAt(0).toUpperCase()}${gender.slice(1)}` : 'Not provided');
+
+    setText('profileBlood', profile.blood_type || 'Not provided');
+
+    const height = toNumber(profile.height);
+    const weight = toNumber(profile.weight);
+    setText('profileHeight', Number.isFinite(height) ? `${height} cm` : 'Not provided');
+    setText('profileWeight', Number.isFinite(weight) ? `${weight} kg` : 'Not provided');
+
+    setText('profilePhone', profile.phone || 'Not provided');
+    setText('profileEmail', profile.email || 'N/A');
+    setText('profileAddress', profile.address || 'Not provided');
+
     const allergiesList = document.getElementById('allergiesList');
-    if (userData.allergies && userData.allergies.length > 0) {
-        allergiesList.innerHTML = userData.allergies.map(allergy => 
-            `<span class="badge" style="background: #fee; color: #c33;">${allergy}</span>`
-        ).join('');
-    } else {
-        allergiesList.innerHTML = '<span class="text-muted small">No known allergies</span>';
+    if (allergiesList) {
+        const allergies = Array.isArray(profile.allergies)
+            ? profile.allergies
+            : (typeof profile.allergies === 'string' && profile.allergies.trim() ? [profile.allergies.trim()] : []);
+
+        if (allergies.length > 0) {
+            allergiesList.innerHTML = allergies.map((allergy) =>
+                `<span class="badge" style="background: #fee; color: #c33;">${escapeHtml(String(allergy))}</span>`
+            ).join('');
+        } else {
+            allergiesList.innerHTML = '<span class="text-muted small">No known allergies</span>';
+        }
     }
-    
-    // Update emergency contact
-    if (typeof userData.emergency_contact === 'object' && userData.emergency_contact !== null) {
-        const emergencyName = userData.emergency_contact.name || '';
-        const emergencyPhone = userData.emergency_contact.phone || '';
-        const emergencyRelationship = userData.emergency_contact.relationship || '';
+
+    if (typeof profile.emergency_contact === 'object' && profile.emergency_contact !== null) {
+        const emergencyName = profile.emergency_contact.name || '';
+        const emergencyPhone = profile.emergency_contact.phone || '';
+        const emergencyRelationship = profile.emergency_contact.relationship || '';
         const parts = [emergencyName, emergencyRelationship, emergencyPhone].filter(Boolean);
-        document.getElementById('profileEmergency').textContent = parts.join(' - ') || 'Not provided';
+        setText('profileEmergency', parts.join(' - ') || 'Not provided');
     } else {
-        document.getElementById('profileEmergency').textContent = userData.emergency_contact || 'Not provided';
+        setText('profileEmergency', profile.emergency_contact || 'Not provided');
     }
 }
 
@@ -468,31 +416,32 @@ function updateVitalStatus(vitalId, value, secondaryValue = null) {
     
     // Remove all status classes
     vitalCard.classList.remove('vital-card-normal', 'vital-card-attention', 'vital-card-critical');
-    statusBadge.classList.remove('badge-normal', 'badge-attention', 'badge-critical');
+    statusBadge.classList.remove('badge-normal', 'badge-attention', 'badge-critical', 'bg-secondary');
 
     const numericValue = Number(value);
     const secondaryNumericValue = Number(secondaryValue);
+    const isMissingValue = !Number.isFinite(numericValue) || (vitalId === 'bp' && !Number.isFinite(secondaryNumericValue));
 
-    let statusLevel = 'attention';
-    if (vitalId === 'bp') {
-        statusLevel = resolveBloodPressureStatus(numericValue, secondaryNumericValue);
-    } else {
-        statusLevel = resolveRangeStatus(numericValue, VITAL_STATUS_RULES[vitalId]);
+    if (isMissingValue) {
+        statusBadge.classList.add('bg-secondary');
+        statusBadge.textContent = 'No Data';
+        return;
     }
 
-    if (statusLevel === 'normal') {
-        vitalCard.classList.add('vital-card-normal');
-        statusBadge.classList.add('badge-normal');
-        statusBadge.textContent = 'Normal';
-    } else if (statusLevel === 'attention') {
-        vitalCard.classList.add('vital-card-attention');
-        statusBadge.classList.add('badge-attention');
-        statusBadge.textContent = 'Attention';
+    // Use shared resolver from config.js
+    const statusLevel = resolveSharedVitalStatusLevel(vitalId, numericValue, secondaryNumericValue);
+
+    const cardClass = `vital-card-${statusLevel}`;
+    const badgeClass = `badge-${statusLevel}`;
+    const label = statusLevel.charAt(0).toUpperCase() + statusLevel.slice(1);
+
+    if (['normal', 'attention', 'critical'].includes(statusLevel)) {
+        vitalCard.classList.add(cardClass);
+        statusBadge.classList.add(badgeClass);
     } else {
-        vitalCard.classList.add('vital-card-critical');
-        statusBadge.classList.add('badge-critical');
-        statusBadge.textContent = 'Critical';
+        statusBadge.classList.add('bg-secondary');
     }
+    statusBadge.textContent = label;
 }
 
 function parseApiErrorMessage(payload, fallback = 'Failed to save data') {
@@ -543,6 +492,16 @@ function parseApiErrorMessage(payload, fallback = 'Failed to save data') {
 
 // ==================== Save Vital Data ====================
 window.saveVitalData = async function() {
+    const modalElement = document.getElementById('vitalInputModal');
+    const saveButton = document.getElementById('saveVitalBtn');
+    const originalSaveButtonContent = saveButton ? saveButton.innerHTML : '';
+
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+    }
+
+    try {
     const timestamp = document.getElementById('vitalTimestamp').value;
     let value;
     let metric;
@@ -644,25 +603,51 @@ window.saveVitalData = async function() {
             : Math.round(numericValue);
         document.getElementById(`${vitalId}Value`).textContent = displayValue;
 
-        if (VITAL_STATUS_RULES[vitalId]) {
-            updateVitalStatus(vitalId, numericValue);
-        }
+        updateVitalStatus(vitalId, numericValue);
     }
     
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('vitalInputModal'));
-    modal.hide();
+    // Close modal (force fallback if Bootstrap instance is missing/stuck)
+    closeVitalInputModal(modalElement);
     
     // Show success message
     showSuccessMessage(`${window.currentVitalData.name} updated successfully!`);
-    
-    // Reload dashboard data
-    setTimeout(async () => {
-        await loadDashboardData();
-        const gamificationSummary = await loadGamification();
-        await loadDashboardAchievements(gamificationSummary);
-    }, 1000);
+
+    // Refresh all dashboard widgets after successful save.
+    await refreshDashboardRealtimeData({ force: true });
+    } catch (error) {
+        console.error('Error saving vital data:', error);
+    } finally {
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalSaveButtonContent;
+        }
+    }
 };
+
+function closeVitalInputModal(modalElement = document.getElementById('vitalInputModal')) {
+    if (!modalElement) {
+        return;
+    }
+
+    const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+    modalInstance.hide();
+
+    // Fallback cleanup for occasional stuck backdrop/modal state.
+    window.setTimeout(() => {
+        if (!modalElement.classList.contains('show')) {
+            return;
+        }
+
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        modalElement.setAttribute('aria-hidden', 'true');
+        modalElement.removeAttribute('aria-modal');
+
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('padding-right');
+        document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.remove());
+    }, 300);
+}
 
 // ==================== Save Biometric Entry ====================
 async function saveBiometricEntry(metric, value, timestamp) {
@@ -882,6 +867,10 @@ function displayMedications(medications) {
 
 let dashboardGamificationBadgeStates = [];
 let dashboardGamificationBiometricStats = createEmptyDashboardBiometricStats();
+const DASHBOARD_REALTIME_REFRESH_MS = 30000;
+let dashboardRealtimeRefreshTimer = null;
+let dashboardRealtimeRefreshInFlight = false;
+let dashboardRealtimeListenersBound = false;
 
 const DASHBOARD_BADGE_ART_THEMES = {
     first_entry: { start: '#2563eb', end: '#06b6d4', rim: '#f59e0b', symbol: '🎯' },
@@ -1585,6 +1574,66 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+async function refreshDashboardRealtimeData(options = {}) {
+    if (dashboardRealtimeRefreshInFlight) {
+        return;
+    }
+
+    if (!options.force && typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+    }
+
+    dashboardRealtimeRefreshInFlight = true;
+
+    try {
+        await loadDashboardData();
+
+        const gamificationSummary = await loadGamification();
+        await loadDashboardAchievements(gamificationSummary);
+
+        await Promise.allSettled([
+            loadMedications(),
+            loadAppointments(),
+            typeof window.updateNotificationBadge === 'function'
+                ? window.updateNotificationBadge()
+                : Promise.resolve()
+        ]);
+    } catch (error) {
+        console.error('Realtime dashboard refresh failed:', error);
+    } finally {
+        dashboardRealtimeRefreshInFlight = false;
+    }
+}
+
+function bindDashboardRealtimeListeners() {
+    if (dashboardRealtimeListenersBound || typeof window === 'undefined') {
+        return;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            refreshDashboardRealtimeData({ force: true });
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        refreshDashboardRealtimeData({ force: true });
+    });
+
+    dashboardRealtimeListenersBound = true;
+}
+
+function startDashboardRealtimeUpdates() {
+    if (dashboardRealtimeRefreshTimer || typeof window === 'undefined') {
+        return;
+    }
+
+    bindDashboardRealtimeListeners();
+    dashboardRealtimeRefreshTimer = window.setInterval(() => {
+        refreshDashboardRealtimeData();
+    }, DASHBOARD_REALTIME_REFRESH_MS);
+}
+
 // ==================== Initialize Dashboard ====================
 async function initializeDashboard() {
     // Check authentication first
@@ -1633,6 +1682,8 @@ async function initializeDashboard() {
                 `;
             }
         }
+
+        startDashboardRealtimeUpdates();
         
         console.log('Dashboard initialized successfully');
     } catch (error) {

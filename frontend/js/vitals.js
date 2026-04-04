@@ -130,6 +130,60 @@ const VITAL_MOTIVATION_QUOTES = [
     'You showed up today. That is what wins long term.'
 ];
 
+// Update vital status badge - uses shared config helpers
+function updateVitalStatusBadge(vitalId, value, secondaryValue = null) {
+    const statusBadge = document.getElementById(`status-${vitalId}`);
+    if (!statusBadge) return;
+
+    const vital = ALL_VITALS.find(v => v.id === vitalId);
+    
+    // Hide status badge entirely for vitals without thresholds (optimalRange is null)
+    if (!vital || !vital.optimalRange) {
+        statusBadge.style.display = 'none';
+        return;
+    }
+
+    const isMissingValue = String(vitalId) === 'bp'
+        ? !Number.isFinite(Number(value)) || !Number.isFinite(Number(secondaryValue))
+        : !Number.isFinite(Number(value));
+
+    if (isMissingValue) {
+        statusBadge.classList.remove('badge-normal', 'badge-attention', 'badge-critical');
+        statusBadge.classList.add('bg-secondary');
+        statusBadge.textContent = 'No Data';
+        statusBadge.style.display = 'inline-block';
+        return;
+    }
+
+    // Call shared status resolver from config.js
+    if (typeof resolveSharedVitalStatusLevel !== 'function') {
+        console.error('resolveSharedVitalStatusLevel not available from config.js');
+        return;
+    }
+
+    const statusLevel = resolveSharedVitalStatusLevel(vitalId, value, secondaryValue);
+    const classMap = {
+        'normal': 'badge-normal',
+        'attention': 'badge-attention',
+        'critical': 'badge-critical'
+    };
+    const labelMap = {
+        'normal': 'Normal',
+        'attention': 'Attention',
+        'critical': 'Critical'
+    };
+
+    statusBadge.classList.remove('badge-normal', 'badge-attention', 'badge-critical', 'bg-secondary');
+    if (classMap[statusLevel]) {
+        statusBadge.classList.add(classMap[statusLevel]);
+        statusBadge.textContent = labelMap[statusLevel];
+        statusBadge.style.display = 'inline-block';
+    } else {
+        statusBadge.classList.add('bg-secondary');
+        statusBadge.textContent = 'No Data';
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     if (!checkAuthentication()) {
@@ -262,7 +316,7 @@ function displayVitals() {
                         <div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="vital-title">${vital.name}</span>
-                                <span class="badge badge-normal vital-status" id="status-${vital.id}">Normal</span>
+                                ${vital.optimalRange ? `<span class="badge bg-secondary vital-status" id="status-${vital.id}">No Data</span>` : ''}
                             </div>
                             <div class="vital-value-inline">
                                 <span id="${vital.id}Value">--</span> 
@@ -367,10 +421,11 @@ async function loadLatestVitalValue(vitalId) {
     try {
         const vital = ALL_VITALS.find(v => v.id === vitalId);
         if (!vital) return;
+
+        const valueElement = document.getElementById(`${vitalId}Value`);
         
         // Special handling for blood pressure
         if (vitalId === 'bp') {
-            console.log('Loading BP latest values...');
             const [systolicRes, diastolicRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/patients/me/biometrics?metric=blood_pressure_systolic&limit=1`, {
                     headers: getAuthHeaders()
@@ -379,43 +434,79 @@ async function loadLatestVitalValue(vitalId) {
                     headers: getAuthHeaders()
                 })
             ]);
-            
-            console.log('BP responses:', systolicRes.status, diastolicRes.status);
-            
-            if (systolicRes.ok && diastolicRes.ok) {
-                const systolicData = await systolicRes.json();
-                const diastolicData = await diastolicRes.json();
-                
-                console.log('BP data:', systolicData, diastolicData);
-                
-                if (systolicData && systolicData.length > 0 && diastolicData && diastolicData.length > 0) {
-                    const systolic = systolicData[0].value;
-                    const diastolic = diastolicData[0].value;
-                    const valueElement = document.getElementById(`${vitalId}Value`);
-                    if (valueElement) {
-                        valueElement.textContent = `${systolic}/${diastolic}`;
-                        console.log('BP value updated:', `${systolic}/${diastolic}`);
-                    }
+
+            if (!systolicRes.ok || !diastolicRes.ok) {
+                if (typeof handleUnauthorizedResponse === 'function') {
+                    handleUnauthorizedResponse(systolicRes);
+                    handleUnauthorizedResponse(diastolicRes);
                 }
+
+                if (valueElement) {
+                    valueElement.textContent = '--';
+                }
+                updateVitalStatusBadge(vitalId, null, null);
+                return;
             }
+
+            const [systolicData, diastolicData] = await Promise.all([
+                systolicRes.json(),
+                diastolicRes.json()
+            ]);
+
+            const systolic = Array.isArray(systolicData) && systolicData.length > 0
+                ? Number(systolicData[0].value)
+                : NaN;
+            const diastolic = Array.isArray(diastolicData) && diastolicData.length > 0
+                ? Number(diastolicData[0].value)
+                : NaN;
+
+            if (Number.isFinite(systolic) && Number.isFinite(diastolic)) {
+                if (valueElement) {
+                    valueElement.textContent = `${systolic}/${diastolic}`;
+                }
+                updateVitalStatusBadge(vitalId, systolic, diastolic);
+            } else {
+                if (valueElement) {
+                    valueElement.textContent = '--';
+                }
+                updateVitalStatusBadge(vitalId, null, null);
+            }
+
+            return;
         } else {
             const response = await fetch(`${API_BASE_URL}/patients/me/biometrics?metric=${vital.apiMetric}&limit=1`, {
                 headers: getAuthHeaders()
             });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const value = data[0].value;
-                    const valueElement = document.getElementById(`${vitalId}Value`);
-                    if (valueElement) {
-                        valueElement.textContent = value;
-                    }
+
+            if (!response.ok) {
+                if (typeof handleUnauthorizedResponse === 'function') {
+                    handleUnauthorizedResponse(response);
                 }
+
+                if (valueElement) {
+                    valueElement.textContent = '--';
+                }
+                updateVitalStatusBadge(vitalId, null);
+                return;
+            }
+
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const latestValue = data[0].value;
+                if (valueElement) {
+                    valueElement.textContent = latestValue;
+                }
+                updateVitalStatusBadge(vitalId, latestValue);
+            } else {
+                if (valueElement) {
+                    valueElement.textContent = '--';
+                }
+                updateVitalStatusBadge(vitalId, null);
             }
         }
     } catch (error) {
         console.error(`Error loading ${vitalId} value:`, error);
+        updateVitalStatusBadge(vitalId, null, null);
     }
 }
 
@@ -1032,17 +1123,39 @@ window.addVitalReading = async function(vitalId) {
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             timeInput.value = now.toISOString().slice(0, 16);
             
+            // Show success message first
+            const motivation = getVitalMotivationQuote();
+            showSuccessMessage(`${vital.name} reading added successfully! ${motivation}`);
+            
+            // Close the card after a short delay (gives user time to see the success message)
+            setTimeout(() => {
+                const cardBody = document.getElementById(`vital-details-${vitalId}`);
+                if (cardBody && cardBody.classList.contains('show')) {
+                    const collapseInstance = new bootstrap.Collapse(cardBody, { toggle: true });
+                    collapseInstance.hide();
+                }
+            }, 600);
+            
             // Reload history
             await loadVitalHistory(vitalId);
             
             // Update main display value
-            document.getElementById(`${vitalId}Value`).textContent = value;
+            const valueElement = document.getElementById(`${vitalId}Value`);
+            if (valueElement) {
+                valueElement.textContent = value;
+            }
+
+            if (vitalId === 'bp') {
+                const [systolicValue, diastolicValue] = String(value)
+                    .split('/')
+                    .map((part) => Number(part));
+                updateVitalStatusBadge(vitalId, systolicValue, diastolicValue);
+            } else {
+                updateVitalStatusBadge(vitalId, value);
+            }
             
             // Keep a short-lived record so the achievements page can celebrate recent progress.
             rememberRecentHealthEntry(vital.name, value, responseData?.badges_earned || []);
-
-            const motivation = getVitalMotivationQuote();
-            showSuccessMessage(`${vital.name} reading added successfully! ${motivation}`);
 
             if (Array.isArray(responseData?.badges_earned) && responseData.badges_earned.length) {
                 const badgeNames = responseData.badges_earned
