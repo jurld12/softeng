@@ -6,66 +6,293 @@
     <title>Healio - Virtual Health Companion</title>
     <link rel="stylesheet" href="css/theme.css?v=20260403-7">
     <script src="js/theme.js?v=20260403-8"></script>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=20260406-landing-6">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🏥 Healio</h1>
-            <p class="tagline">Your Virtual Health Companion</p>
+<body class="landing-page">
+    <div class="landing-shell">
+        <header class="landing-header">
+            <div class="container landing-header-inner">
+                <a href="index.html" class="brand" aria-label="Healio home">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 4V28M4 16H28" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="brand-copy">
+                        <strong>Healio</strong>
+                        <span>Virtual Health Companion</span>
+                    </span>
+                </a>
+
+                <nav class="nav" aria-label="Primary">
+                    <a href="#features">Features</a>
+                    <a href="#insights">Insights</a>
+                </nav>
+
+                <div class="header-actions">
+                    <a href="login-v2.html" class="landing-btn landing-btn-secondary">Log In</a>
+                    <a href="signup.html" class="landing-btn landing-btn-primary">Get Started</a>
+                </div>
+            </div>
         </header>
 
         <main>
-            <section class="hero">
-                <h2>Welcome to Healio</h2>
-                <p>Monitor your health, track your progress, and stay connected with your healthcare providers.</p>
-                
-                <div class="cta-buttons">
-                    <a href="login-v2.html" class="btn btn-primary">Login</a>
-                    <a href="signup.html" class="btn btn-secondary">Register</a>
+            <section class="landing-hero">
+                <div class="container hero-grid">
+                    <div class="hero-copy">
+                        <p class="eyebrow">Vitals. Reports. Reminders.</p>
+                        <h1>Health tracking that stays clear, organized, and actionable.</h1>
+                        <p>Monitor daily vitals, manage medications and appointments, and keep your care routines in one focused dashboard.</p>
+
+                        <div class="hero-actions">
+                            <a href="signup.html" class="landing-btn landing-btn-primary">Get Started</a>
+                            <a href="login-v2.html" class="landing-btn landing-btn-ghost">Log In</a>
+                        </div>
+
+                        <div class="hero-pills" aria-label="Core Healio features">
+                            <span>Blood Pressure</span>
+                            <span>Heart Rate</span>
+                            <span>Reports</span>
+                            <span>Medications</span>
+                            <span>Appointments</span>
+                            <span>Assistant Support</span>
+                        </div>
+                    </div>
+
+                    <div class="preview" aria-label="Healio dashboard preview">
+                        <div class="preview-head">
+                            <div class="profile">
+                                <div class="avatar" aria-hidden="true">JD</div>
+                                <div class="profile-copy">
+                                    <h2>Jane Doe</h2>
+                                    <div class="profile-meta">
+                                        <span>45 years</span>
+                                        <span>Female</span>
+                                        <span>A+</span>
+                                    </div>
+                                    <div class="profile-sub">Daily health overview</div>
+                                </div>
+                            </div>
+                            <span class="chip">Vitals updated</span>
+                        </div>
+
+                        <div class="stats">
+                            <article class="stat-card">
+                                <div class="stat-top">
+                                    <span class="stat-label">Blood Sugar</span>
+                                    <span class="status is-good">Normal</span>
+                                </div>
+                                <div class="stat-value">88</div>
+                                <div class="stat-unit">mg/dL</div>
+                                <div class="stat-note">Within your target range today.</div>
+                            </article>
+
+                            <article class="stat-card">
+                                <div class="stat-top">
+                                    <span class="stat-label">Heart Rate</span>
+                                    <span class="status is-good">Normal</span>
+                                </div>
+                                <div class="stat-value">76</div>
+                                <div class="stat-unit">bpm</div>
+                                <div class="stat-note">Recent readings are stable.</div>
+                            </article>
+
+                            <article class="stat-card">
+                                <div class="stat-top">
+                                    <span class="stat-label">Blood Pressure</span>
+                                    <span class="status is-focus">Tracked</span>
+                                </div>
+                                <div class="stat-value">118/76</div>
+                                <div class="stat-unit">mmHg</div>
+                                <div class="stat-note">Easy to log and review over time.</div>
+                            </article>
+
+                            <article class="stat-card">
+                                <div class="stat-top">
+                                    <span class="stat-label">Sleep Duration</span>
+                                    <span class="status is-watch">Attention</span>
+                                </div>
+                                <div class="stat-value">6.4</div>
+                                <div class="stat-unit">hours</div>
+                                <div class="stat-note">Watch patterns across your week.</div>
+                            </article>
+                        </div>
+
+                        <div class="micro-grid">
+                            <article class="landing-micro-card">
+                                <span class="micro-kicker">Next medication</span>
+                                <strong>Metformin - 08:00</strong>
+                                <p>Dosage, schedule, and instructions stay visible.</p>
+                            </article>
+                            <article class="landing-micro-card">
+                                <span class="micro-kicker">Upcoming appointment</span>
+                                <strong>Tuesday - 2:30 PM</strong>
+                                <p>Keep visits and reminders connected in one place.</p>
+                            </article>
+                            <article class="landing-micro-card">
+                                <span class="micro-kicker">Health insight</span>
+                                <strong>7-day report ready</strong>
+                                <p>Review trends, summaries, and current vital signs.</p>
+                            </article>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <section class="features">
-                <h3>Features</h3>
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h4>Track Your Health</h4>
-                        <p>Monitor heart rate, steps, calories, blood pressure, and more.</p>
+            <section class="section" id="features">
+                <div class="container">
+                    <div class="section-head">
+                        <p class="section-kicker">Features</p>
+                        <h2>Everything you need to stay on top of your health.</h2>
+                        <p>Healio keeps the most important parts of day-to-day care clear, visible, and easy to act on.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📈</div>
-                        <h4>Visualize Progress</h4>
-                        <p>View your health data through interactive charts and graphs.</p>
+
+                    <div class="feature-grid">
+                        <article class="landing-feature-card">
+                            <span class="feature-tag">VT</span>
+                            <h3>Vitals Tracking</h3>
+                            <p>Log blood sugar, heart rate, blood pressure, oxygen, sleep, steps, hydration, and more.</p>
+                        </article>
+                        <article class="landing-feature-card">
+                            <span class="feature-tag">RP</span>
+                            <h3>Reports and Trends</h3>
+                            <p>Review current vital signs, 7-day summaries, charts, downloadable reports, and health insights.</p>
+                        </article>
+                        <article class="landing-feature-card">
+                            <span class="feature-tag">MD</span>
+                            <h3>Medication Management</h3>
+                            <p>Keep active medications, dosage details, frequency, schedules, and instructions in one place.</p>
+                        </article>
+                        <article class="landing-feature-card">
+                            <span class="feature-tag">AP</span>
+                            <h3>Appointments</h3>
+                            <p>Track upcoming visits through a calendar view and keep care plans easy to follow.</p>
+                        </article>
+                        <article class="landing-feature-card">
+                            <span class="feature-tag">RM</span>
+                            <h3>Smart Reminders</h3>
+                            <p>Set medication and health reminders so important routines stay visible and on time.</p>
+                        </article>
+                        <article class="landing-feature-card">
+                            <span class="feature-tag">AI</span>
+                            <h3>Healio Assistant</h3>
+                            <p>Ask about vitals, medications, appointments, reminders, and general wellness when you need quick help.</p>
+                        </article>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔔</div>
-                        <h4>Get Alerts</h4>
-                        <p>Receive notifications for abnormal readings and health insights.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🏆</div>
-                        <h4>Earn Achievements</h4>
-                        <p>Stay motivated with gamification, badges, and streaks.</p>
+
+                    <div class="feature-strip" aria-label="Additional Healio capabilities">
+                        <span>Current Vital Signs</span>
+                        <span>7-Day Activity Summary</span>
+                        <span>Health Insights</span>
+                        <span>Calendar View</span>
+                        <span>Reminder Auto-Generate</span>
+                        <span>Badges and Streaks</span>
                     </div>
                 </div>
             </section>
 
-            <section class="system-status">
-                <h3>System Status</h3>
-                <div id="status-container">
-                    <p>Checking backend connection...</p>
+            <section class="section" id="insights">
+                <div class="container">
+                    <div class="section-head">
+                        <p class="section-kicker">Insights</p>
+                        <h2>A clearer picture of your health every day.</h2>
+                        <p>From daily vitals to weekly reports and reminders, the experience stays focused on what matters most.</p>
+                    </div>
+
+                    <div class="story-layout">
+                        <article class="landing-story-card story-wide">
+                            <span class="story-kicker">Reports and trends</span>
+                            <h3>See changes over time, not just isolated numbers.</h3>
+                            <p>Current readings, trend charts, downloadable reports, and health insights make it easier to understand progress.</p>
+
+                            <div class="metric-grid">
+                                <div class="metric">
+                                    <strong>7 days</strong>
+                                    <span>Activity summaries and trend views</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>PDF export</strong>
+                                    <span>Download recent vitals when needed</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Insights</strong>
+                                    <span>Quick summaries based on current readings</span>
+                                </div>
+                            </div>
+
+                            <div class="bullet-list">
+                                <div class="bullet">
+                                    <span class="bullet-dot"></span>
+                                    <div>
+                                        <strong>Current vital signs</strong>
+                                        <p>Review important readings in one section instead of jumping between pages.</p>
+                                    </div>
+                                </div>
+                                <div class="bullet">
+                                    <span class="bullet-dot"></span>
+                                    <div>
+                                        <strong>Health insights</strong>
+                                        <p>Get readable summaries when values stay normal, need attention, or suggest follow-up.</p>
+                                    </div>
+                                </div>
+                                <div class="bullet">
+                                    <span class="bullet-dot"></span>
+                                    <div>
+                                        <strong>Routine visibility</strong>
+                                        <p>Keep medications, reminders, and appointments close to the health data they support.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <div class="story-stack">
+                            <article class="landing-story-card">
+                                <span class="story-kicker">Reminders and appointments</span>
+                                <h3>Keep daily care on schedule.</h3>
+                                <p>Use reminders, appointment lists, and calendar views to stay ahead of medications and check-ins.</p>
+                            </article>
+                            <article class="landing-story-card">
+                                <span class="story-kicker">Assistant support</span>
+                                <h3>Get quick help when you need context.</h3>
+                                <p>The assistant can help explain vitals, medications, reminders, appointments, and general wellness questions.</p>
+                            </article>
+                            <article class="landing-story-card">
+                                <span class="story-kicker">Consistency</span>
+                                <h3>Small progress still feels visible.</h3>
+                                <p>Badges, milestones, and streaks support healthy routines without taking focus away from care.</p>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="container">
+                    <div class="landing-cta-panel">
+                        <div class="cta-copy">
+                            <p class="section-kicker">Get Started</p>
+                            <h2>Take control of your health in one place.</h2>
+                            <p>Start tracking what matters, keep routines organized, and move into the full Healio experience.</p>
+                        </div>
+                        <div class="cta-actions">
+                            <a href="signup.html" class="landing-btn landing-btn-primary">Create Account</a>
+                            <a href="login-v2.html" class="landing-btn landing-btn-secondary">Log In</a>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
 
-        <footer>
-            <p>&copy; 2026 Healio - Group 12 | F29SO Software Engineering Project</p>
+        <footer class="landing-footer">
+            <div class="container landing-footer-inner">
+                <p class="footer-copy">&copy; 2026 Healio</p>
+                <div class="footer-links">
+                    <a href="terms.html">Terms</a>
+                    <a href="signup.html">Get Started</a>
+                    <a href="login-v2.html">Log In</a>
+                </div>
+            </div>
         </footer>
     </div>
-
-    <script src="js/config.js?v=20260405-1"></script>
-    <script src="js/main.js?v=20260405-1"></script>
 </body>
 </html>
