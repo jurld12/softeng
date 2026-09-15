@@ -14,19 +14,27 @@ Doctors — access relevant patient health records and monitor biometric informa
 The project focuses on creating a more connected healthcare experience while reducing the need for patients to manually manage different aspects of their healthcare.
 
 Key Features
+
 Real-Time Biometric Monitoring
+
 Collects and displays patient biometric information in real time.
 Allows patients to monitor changes in their health data.
 Provides a centralised view of recorded health metrics.
+
 Appointment Management
+
 Allows patients to book healthcare appointments.
 Provides an organised view of upcoming appointments.
 Helps patients keep track of their scheduled consultations.
+
 Patient Reminders
+
 Sends reminders for upcoming appointments and other important healthcare activities.
 Helps reduce the likelihood of missed appointments.
 Keeps important information accessible to patients.
+
 Doctor Dashboard
+
 Allows doctors to view relevant patient health records.
 Provides access to collected biometric information.
 Helps healthcare professionals review patient information in one place.
@@ -42,8 +50,6 @@ Application development
 Database and health-record management
 User-focused application design
 
-Add the exact frameworks, libraries, database technologies, or APIs used in the project here if applicable.
-
 Project Goals
 
 The main goals of the project were to:
@@ -54,5 +60,6 @@ Provide useful health information to healthcare professionals.
 Explore how real-time biometric data could be incorporated into a healthcare application.
 Design a system around the needs of both patients and doctors.
 
+Disclaimer
 
 This project was developed as an educational/undergraduate project and is not intended to provide medical advice, diagnosis, or treatment. Any real-world healthcare implementation would require appropriate clinical validation, privacy protections, security measures, and regulatory compliance.
