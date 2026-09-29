@@ -1,65 +1,71 @@
 # Health Monitoring & Patient Management Platform
 
-A health-focused application designed to improve communication between patients and healthcare providers by combining **real-time biometric monitoring, appointment management, reminders, and patient health records** into one platform.
+A health-focused application designed to improve communication and information management between patients and healthcare professionals by integrating **real-time biometric monitoring, appointment management, reminders, and patient health records** into a single platform.
 
-**Overview**
+## Overview
 
-This project explores how technology can support patients and healthcare professionals by making health information easier to monitor and manage.
+The **Health Monitoring & Patient Management Platform** explores how technology can support patients and healthcare professionals by making health information more accessible, organised, and easier to manage.
 
-The platform was designed around two main user groups:
+The platform is designed around two primary user groups:
 
-- **Patients** — monitor their health metrics, manage appointments, and receive reminders.
-- **Doctors** — access relevant patient health records and monitor biometric information to better understand a patient's health status.
+- **Patients** — Monitor health metrics, manage appointments, and receive reminders for important healthcare activities.
+- **Doctors** — Access relevant patient health records and biometric information to support the monitoring and review of patient health data.
 
-The project focuses on creating a more connected healthcare experience while reducing the need for patients to manually manage different aspects of their healthcare.
+By consolidating these capabilities into a single platform, the project aims to provide a more connected and streamlined healthcare management experience.
 
-**Key Features**
+## Features
 
-**Real-Time Biometric Monitoring**
+### Real-Time Biometric Monitoring
 
-- Collects and displays patient biometric information in real time.
-- Allows patients to monitor changes in their health data.
-- Provides a centralised view of recorded health metrics.
+- Collects and displays patient biometric data in real time.
+- Enables patients to monitor changes in their health metrics.
+- Provides a centralised view of recorded biometric information.
 
-**Appointment Management**
+### Appointment Management
 
-- Allows patients to book healthcare appointments.
-- Provides an organised view of upcoming appointments.
-- Helps patients keep track of their scheduled consultations.
+- Allows patients to schedule healthcare appointments.
+- Displays upcoming appointments in an organised format.
+- Helps patients keep track of scheduled consultations.
 
-**Patient Reminders**
+### Patient Reminders
 
-- Sends reminders for upcoming appointments and other important healthcare activities.
+- Provides reminders for upcoming appointments and important healthcare activities.
 - Helps reduce the likelihood of missed appointments.
-- Keeps important information accessible to patients.
+- Keeps important healthcare information easily accessible.
 
-**Doctor Dashboard**
+### Doctor Dashboard
 
-- Allows doctors to view relevant patient health records.
+- Allows doctors to access relevant patient health records.
 - Provides access to collected biometric information.
-- Helps healthcare professionals review patient information in one place.
+- Consolidates patient information into a centralised dashboard for review.
 
-**Technologies**
+## Technologies & Concepts
 
-The project involved working with concepts including:
+The project incorporates concepts and technologies including:
 
-- Python
-- Real-time data processing
-- Health/biometric data
-- Application development
-- Database and health-record management
-- User-focused application design
+- **Python**
+- **Real-time data processing**
+- **Biometric and health data management**
+- **Application development**
+- **Database management**
+- **Health-record management**
+- **User-centred application design**
 
-**Project Goals**
+## Project Objectives
 
-The main goals of the project were to:
+The main objectives of the project are to:
 
-- Make health information easier for patients to monitor.
-- Improve appointment organisation and communication.
-- Provide useful health information to healthcare professionals.
-- Explore how real-time biometric data could be incorporated into a healthcare application.
-- Design a system around the needs of both patients and doctors.
+- Improve the accessibility and management of health information for patients.
+- Simplify appointment management and healthcare-related communication.
+- Provide healthcare professionals with relevant patient information through a centralised platform.
+- Explore the integration of real-time biometric data within a healthcare application.
+- Design a system that addresses the requirements of both patients and healthcare professionals.
+- Demonstrate the potential application of digital technologies in healthcare management.
 
-**Disclaimer**
+## Disclaimer
 
-This project was developed as an educational/undergraduate project and is **not intended to provide medical advice, diagnosis, or treatment**. Any real-world healthcare implementation would require appropriate clinical validation, privacy protections, security measures, and regulatory compliance.
+> **This project was developed for educational and undergraduate purposes.**
+>
+> It is **not intended to provide medical advice, diagnosis, or treatment**.
+>
+> Any real-world implementation would require appropriate **clinical validation, privacy and security measures, regulatory compliance, and integration with applicable healthcare standards and systems**.
